@@ -207,7 +207,7 @@ namespace ZoneControl.Notification
             string playerZoneName;
             bool inZone = false;
             MessageType messageType = MessageType.None;
-            Log.Msg($"Position {playerPosition} zonePositions.count={zonePositions.Count}");
+            //Log.Msg($"Position {playerPosition} zonePositions.count={zonePositions.Count}");
             foreach (var zone in zonePositions)
             {
                 if (zone.AlertRadius == 0)
@@ -218,7 +218,7 @@ namespace ZoneControl.Notification
                     inZone = playerZoneName == zone.UniqueName;
 
                 distanceSqr = Vector3D.DistanceSquared(zone.Position, playerPosition);
-                Log.Msg($"Zone {zone.UniqueName} Position {zone.Position} distance={System.Math.Sqrt(distanceSqr)} inZone={inZone} noIntruding={zone.NoIntruders}");
+                //Log.Msg($"Zone {zone.UniqueName} Position {zone.Position} distance={System.Math.Sqrt(distanceSqr)} inZone={inZone} noIntruding={zone.NoIntruders}");
                 if (distanceSqr < zone.AlertRadius)
                 {
                     if (inZone)
@@ -251,7 +251,7 @@ namespace ZoneControl.Notification
 
             }
 
-            Log.Msg($"MessageType={messageType} ClosestZone={closestZone.UniqueName} FactionTag={closestZone.FactionTag}");
+            //Log.Msg($"MessageType={messageType} ClosestZone={closestZone.UniqueName} FactionTag={closestZone.FactionTag}");
             switch (messageType)
             {
                 case MessageType.Enter:
