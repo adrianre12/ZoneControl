@@ -6,11 +6,12 @@
                 <TypeId>GuiBlockCategoryDefinition</TypeId>
                 <SubtypeId/>
             </Id>
-            <DisplayName>Admin</DisplayName>
-            <Name>Admin</Name>
+            <DisplayName>Wormdrive</DisplayName>
+            <Name>Wormdrive</Name>
 			<StrictSearch>true</StrictSearch>
             <ItemIds>
                 <string>JumpDrive/LargeWormholeDrive</string>
+				<string>BatteryBlock/LargeWormChargerBlock</string>
             </ItemIds>
         </Category>
     </CategoryClasses>

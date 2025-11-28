@@ -7,7 +7,7 @@ namespace ZoneControl
 {
     internal class FunctionalBlockBase : MyGameLogicComponent
     {
-        private IMyFunctionalBlock block;
+        internal IMyFunctionalBlock block;
 
         public enum OverrideState
         {
@@ -38,7 +38,7 @@ namespace ZoneControl
 
         public override void UpdateAfterSimulation100()
         {
-            Log.Msg($"Tick {block.CubeGrid.DisplayName}");
+            //Log.Msg($"Tick {block.CubeGrid.DisplayName}");
         }
 
         private void Block_EnabledChanged(IMyTerminalBlock obj)
@@ -55,6 +55,8 @@ namespace ZoneControl
         public void SetOverride(OverrideState state)
         {
             overrideSetting = state;
+            if (overrideSetting == OverrideState.None)
+                block.Enabled = originalEnabledState;
             Block_EnabledChanged(null);
         }
 

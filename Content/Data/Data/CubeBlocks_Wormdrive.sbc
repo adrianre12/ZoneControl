@@ -101,7 +101,7 @@
 			<ResourceSinkGroup>BatteryBlock</ResourceSinkGroup>
 			<RequiredPowerInput>0</RequiredPowerInput>
 			<AdaptibleInput>true</AdaptibleInput>
-			<MaxStoredPower>1000</MaxStoredPower>
+			<MaxStoredPower>36</MaxStoredPower>
 			<InitialStoredPowerRatio>1</InitialStoredPowerRatio>
 			<RechargeMultiplier>1</RechargeMultiplier>
 

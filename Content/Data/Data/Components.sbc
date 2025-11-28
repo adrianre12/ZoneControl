@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-    <Components>
-        <Component>
+	<Components>
+        <!--Component>
             <Public>false</Public>
             <Id>
                 <TypeId>Component</TypeId>
@@ -23,6 +23,6 @@
             <Health>18</Health>
 
             <CanPlayerOrder>false</CanPlayerOrder>
-        </Component>
+        </Component-->
     </Components>
 </Definitions>

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Blueprints>
-    <Blueprint>
+	  <!--Blueprint>
       <Id>
         <TypeId>BlueprintDefinition</TypeId>
         <SubtypeId>TestRestrictedConstruction</SubtypeId>
@@ -14,6 +14,6 @@
       <Result Amount="1" TypeId="Component" SubtypeId="TestRestrictedConstruction" />
       <BaseProductionTimeInSeconds>1</BaseProductionTimeInSeconds>
       <IsPrimary>true</IsPrimary>
-    </Blueprint>
+    </Blueprint-->
   </Blueprints>
 </Definitions>
