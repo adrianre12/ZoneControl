@@ -56,7 +56,7 @@ namespace ZoneControl
 
         public override void UpdateAfterSimulation100()
         {
-            Log.Msg($"Tick {block.CustomName} {overrideCounter}");
+            //Log.Msg($"Tick {block.CustomName} {overrideCounter}");
             if (overrideCounter > 0 && --overrideCounter <= 0)
                 SetDefaultOverride();
         }
@@ -85,11 +85,11 @@ namespace ZoneControl
             {
                 originalEnabledState = DefaultEnabledState;
                 block.Enabled = DefaultEnabledState;
-                Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
+                //Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
                 return;
             }
 
-            Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
+            //Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
             block.Enabled = overrideSetting == OverrideState.Enabled;
 
         }
