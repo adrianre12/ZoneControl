@@ -26,6 +26,8 @@ namespace ZoneControl.Wormhole
             base.Init(objectBuilder);
             Log.Msg($"Init WormdriveCharger...");
             chargerBlock = Entity as MyBatteryBlock;
+            OverrideDefault = OverrideState.Disabled;
+            OverrideDefaultTimeout = 1;// 10;
         }
 
         public override void UpdateOnceBeforeFrame()
@@ -49,7 +51,7 @@ namespace ZoneControl.Wormhole
             //Log.Msg($"charge={chargerBlock.CurrentStoredPower} min={minPower}  minChangePerTick={minChangePerTick} change={storedPowerChange}");
             if (storedPowerChange <= 0 && storedPowerChange > minChangePerTick)
             {
-                SetOverride(OverrideState.Disabled);
+                SetOverride(OverrideDefault);
                 return;
             }
             lastStoredPower = chargerBlock.CurrentStoredPower;

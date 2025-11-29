@@ -11,6 +11,8 @@ namespace ZoneControl.Wormhole
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
+            OverrideDefault = OverrideState.None;
+            OverrideDefaultTimeout = 2; //15 ;
         }
 
         public override void UpdateOnceBeforeFrame()
@@ -28,16 +30,22 @@ namespace ZoneControl.Wormhole
         {
             base.Block_EnabledChanged(obj);
             Log.Msg($"Wormhole Enable changed chargerRegister.Count={chargerRegister.Count}");
+            if (block.Enabled)
+                SetOverrideCounter();
             //check for wormhole zone
+
             //look for charger and enable/disable
             IMyFunctionalBlock charger;
             if (chargerRegister.TryGetValue(gridId, out charger) && charger != null)
             {
-                Log.Msg($"Set charger {charger.EntityId}");
                 WormdriveCharger wc = charger.GameLogic?.GetAs<WormdriveCharger>();
                 if (wc != null)
+                {
                     wc.SetOverride(block.Enabled ? OverrideState.Enabled : OverrideState.Disabled);
+                    Log.Msg($"Set charger {charger.EntityId}");
+                }
             }
+
             //look for jumpdrives enable/disable
 
         }

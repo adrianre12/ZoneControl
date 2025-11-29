@@ -79,13 +79,10 @@ namespace ZoneControl.Notification
 
             if (++tickCounter < DefaultTickCounter) return;
             tickCounter = 0;
-            //Log.Msg("Tick");
-            //MyVisualScriptLogicProvider.ShowNotification("Tick", 1500, font: "Red", playerId: -1);
 
             if (++refreshPlayersCounter < DefaultRefreshPlayersCounter) return;
             refreshPlayersCounter = 0;
             RefreshPlayers();
-            //Log.Msg("Tock");
 
             CheckPlayerPositions();
         }
@@ -248,7 +245,7 @@ namespace ZoneControl.Notification
                         break;
                     }
                 }
-
+                MyDynamicAABBTreeD aABBTreeD = new MyDynamicAABBTreeD();
             }
 
             //Log.Msg($"MessageType={messageType} ClosestZone={closestZone.UniqueName} FactionTag={closestZone.FactionTag}");

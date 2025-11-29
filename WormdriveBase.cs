@@ -23,6 +23,10 @@ namespace ZoneControl
 
         private OverrideState overrideSetting;
         private bool originalEnabledState;
+        private long overrideCounter = 0;
+        internal OverrideState OverrideDefault = OverrideState.None;
+        internal bool DefaultEnabledState = false;
+        internal long OverrideDefaultTimeout = 0;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
@@ -43,16 +47,18 @@ namespace ZoneControl
 
             NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
 
-            CheckDuplicate();
-            block.Enabled = false;
-            Log.Msg("TODO SetOverride(OverrideState.Disabled)");
+            SetDefaultOverride();
+            if (CheckDuplicate())
+                block.Enabled = false;
 
             block.EnabledChanged += Block_EnabledChanged;
         }
 
         public override void UpdateAfterSimulation100()
         {
-            //Log.Msg($"Tick {block.CubeGrid.DisplayName}");
+            Log.Msg($"Tick {block.CustomName} {overrideCounter}");
+            if (overrideCounter > 0 && --overrideCounter <= 0)
+                SetDefaultOverride();
         }
 
         public virtual void Block_EnabledChanged(IMyTerminalBlock obj)
@@ -72,11 +78,34 @@ namespace ZoneControl
             block.Enabled = overrideSetting == OverrideState.Enabled;
         }
 
+        public void SetDefaultOverride()
+        {
+            overrideSetting = OverrideDefault;
+            if (overrideSetting == OverrideState.None)
+            {
+                originalEnabledState = DefaultEnabledState;
+                block.Enabled = DefaultEnabledState;
+                Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
+                return;
+            }
+
+            Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
+            block.Enabled = overrideSetting == OverrideState.Enabled;
+
+        }
+
+        public void SetOverrideCounter()
+        {
+            overrideCounter = 36 * OverrideDefaultTimeout; //ticks
+        }
+
         public void SetOverride(OverrideState state)
         {
             overrideSetting = state;
+            SetOverrideCounter();
             if (overrideSetting == OverrideState.None)
                 block.Enabled = originalEnabledState;
+
             Block_EnabledChanged(null);
         }
 
