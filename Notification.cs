@@ -2,6 +2,7 @@
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System.Collections.Generic;
+using System.Linq;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -9,7 +10,7 @@ using static ZoneControl.Notification.NotificationConfig;
 
 namespace ZoneControl.Notification
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
+    //[MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     internal class Notification : MySessionComponentBase
     {
         const int DefaultTickCounter = 120; // 2s
@@ -66,6 +67,10 @@ namespace ZoneControl.Notification
                     Log.Msg($"Adding Planet Zone {planet.PlanetName} to Zone list");
                 }
             }
+
+
+            zonePositions = zonePositions.OrderBy(x => x.AlertRadius).ToList();
+            //foreach (var zone in zonePositions) Log.Msg($"Zone {zone.UniqueName} radius {zone.AlertRadius}");
         }
         protected override void UnloadData()
         {
