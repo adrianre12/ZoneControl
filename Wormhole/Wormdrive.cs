@@ -17,7 +17,7 @@ namespace ZoneControl.Wormhole
         {
             base.Init(objectBuilder);
             OverrideDefault = OverrideState.None;
-            OverrideDefaultTimeout = 2; //15 ;
+            OverrideDefaultTimeout = 15;
             DefaultEnabledState = false;
         }
 
@@ -45,7 +45,7 @@ namespace ZoneControl.Wormhole
         {
             base.Block_EnabledChanged(obj);
 
-            Log.Msg($"Wormhole Enable changed chargerRegister.Count={chargerRegister.Count}");
+            //Log.Msg($"Wormhole Enable changed chargerRegister.Count={chargerRegister.Count}");
             if (block.Enabled)
             {
                 //check for wormhole zone
@@ -84,21 +84,15 @@ namespace ZoneControl.Wormhole
         private void SetJumpdriveState(OverrideState overrideState)
         {
             var subTypeId = block.SlimBlock.GetObjectBuilder().SubtypeId;
-            Log.Msg($"SubTypeId={subTypeId}");
             foreach (var jd in block.CubeGrid.GetFatBlocks<IMyJumpDrive>())
             {
-                var jdSubTypeId = jd.SlimBlock.GetObjectBuilder().SubtypeId;
-                Log.Msg($"Found {jd.CustomName} {jdSubTypeId}");
                 var fb = jd as IMyFunctionalBlock;
-                if (fb == null || jdSubTypeId == subTypeId)
+                if (fb == null || subTypeId == jd.SlimBlock.GetObjectBuilder().SubtypeId)
                     continue;
-
-                Log.Msg($"selected {jd.CustomName}");
                 ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
                 if (gl == null)
                     continue;
 
-                Log.Msg($"gamelogic {jd.CustomName}");
                 gl.SetOverride(overrideState);
             }
         }

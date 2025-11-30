@@ -27,7 +27,7 @@ namespace ZoneControl.Wormhole
             Log.Msg($"Init WormdriveCharger...");
             chargerBlock = Entity as MyBatteryBlock;
             OverrideDefault = OverrideState.Disabled;
-            OverrideDefaultTimeout = 1;// 10;
+            OverrideDefaultTimeout = 5;
             DefaultEnabledState = false;
         }
 
