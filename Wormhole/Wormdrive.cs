@@ -62,6 +62,7 @@ namespace ZoneControl.Wormhole
             SetChargerState(block.Enabled ? OverrideState.Enabled : OverrideState.Disabled);
 
             //look for jumpdrives enable/disable
+            SetJumpdriveState(block.Enabled ? OverrideState.Enabled : OverrideState.Disabled);
         }
 
         private void SetChargerState(OverrideState overrideState)
@@ -78,6 +79,24 @@ namespace ZoneControl.Wormhole
             }
         }
 
+        private void SetJumpdriveState(OverrideState overrideState)
+        {
+            //Log.Msg($"My subtype {block.GetObjectBuilder().SubtypeId}");
+            foreach (var jd in block.CubeGrid.GetFatBlocks<IMyJumpDrive>())
+            {
+                Log.Msg($"Found {jd.CustomName}");// {jd.GetObjectBuilder().SubtypeId}");
+                var fb = jd as IMyFunctionalBlock;
+                if (fb == null || fb == block)
+                    continue;
+
+                Log.Msg($"selected {jd.CustomName}");
+                ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
+                if (gl == null)
+                    continue;
+
+                Log.Msg($"gamelogic {jd.CustomName}");
+            }
+        }
         internal override bool CheckDuplicate()
         {
             Log.Msg("Check for duplicate");
