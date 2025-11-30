@@ -33,10 +33,13 @@ namespace ZoneControl
 
         [XmlIgnore]
         public bool ConfigLoaded;
+        [XmlIgnore]
+        private static HashSet<string> fonts = new HashSet<string>() {"Debug","Red","Green","Blue", "White","DarkBlue","UrlNormal","UrlHighlight","ErrorMessageBoxCaption","ErrorMessageBoxText",
+            "InfoMessageBoxCaption","InfoMessageBoxText","ScreenCaption","GameCredits","LoadingScreen","BuildInfo","BuildInfoHighlight"};
+
 
         public class InfoBase
         {
-            public Vector3D Position;
             public double AlertRadius = 0;
             public string AlertMessageEnter = "";
             public string ColourEnter = "";
@@ -49,12 +52,11 @@ namespace ZoneControl
             public InfoBase() { }
             protected void Set(InfoBase info)
             {
-                Position = info.Position;
                 AlertRadius = info.AlertRadius;
                 AlertMessageEnter = info.AlertMessageEnter;
-                ColourEnter = info.ColourEnter;
+                ColourEnter = CheckFontColour(info.ColourEnter);
                 AlertMessageLeave = info.AlertMessageLeave;
-                ColourLeave = info.ColourLeave;
+                ColourLeave = CheckFontColour(info.ColourLeave);
                 AlertTimeMs = info.AlertTimeMs;
                 FactionTag = info.FactionTag;
                 NoIntruders = info.NoIntruders;
@@ -64,6 +66,7 @@ namespace ZoneControl
         public class ZoneInfo : InfoBase
         {
             public string UniqueName;
+            public Vector3D Position;
             public double AlertRadiusSqrd;
 
             public ZoneInfo()
@@ -74,20 +77,32 @@ namespace ZoneControl
             {
                 Set(info);
                 UniqueName = info.UniqueName;
+                Position = info.Position;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
             }
 
-            public ZoneInfo(PlanetInfo info)
+            public ZoneInfo(PlanetInfo info, Vector3D position)
             {
                 Set(info);
                 UniqueName = info.PlanetName;
+                Position = position;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
+            }
+
+            public bool InZone(Vector3D position)
+            {
+                return Vector3D.DistanceSquared(position, Position) < AlertRadiusSqrd;
+
+                /*                var d = Vector3D.DistanceSquared(position, Position);
+                                Log.Msg($"Distance={d} AlertRadiusSqrd={AlertRadiusSqrd}");
+                                return d < AlertRadiusSqrd;*/
             }
         }
 
         public class PositionInfo : InfoBase
         {
             public string UniqueName = "";
+            public Vector3D Position;
 
             public PositionInfo() { }
         }
@@ -159,6 +174,15 @@ namespace ZoneControl
             }
 
             return defaultSettings;
+        }
+
+        private static string CheckFontColour(string font)
+        {
+            if (fonts.Contains(font))
+                return font;
+
+            Log.Msg($"Invalid colour in config: {font}");
+            return "White";
         }
     }
 }
