@@ -2,12 +2,16 @@
 using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRage.ObjectBuilders;
+using VRageMath;
 
 namespace ZoneControl.Wormhole
 {
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_JumpDrive), false, new string[] { "LargeWormholeDrive" })]
     internal class Wormdrive : WormdriveBase
     {
+        const double MaxMovementSqrd = 1d;
+        private Vector3D activationPosition;
+
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
@@ -24,6 +28,15 @@ namespace ZoneControl.Wormhole
         public override void UpdateAfterSimulation100()
         {
             base.UpdateAfterSimulation100();
+            if (block.Enabled)
+            {
+                double movedSqrd = Vector3D.DistanceSquared(activationPosition, block.CubeGrid.GetPosition());
+                if (movedSqrd > MaxMovementSqrd)
+                {
+                    SetDefaultOverride();
+                    return;
+                }
+            }
         }
 
         public override void Block_EnabledChanged(IMyTerminalBlock obj)
@@ -31,23 +44,33 @@ namespace ZoneControl.Wormhole
             base.Block_EnabledChanged(obj);
             Log.Msg($"Wormhole Enable changed chargerRegister.Count={chargerRegister.Count}");
             if (block.Enabled)
+            {
+                //check for wormhole zone
+
+                // return if not found
+
+                activationPosition = block.CubeGrid.GetPosition();
                 SetOverrideCounter();
-            //check for wormhole zone
+            }
 
             //look for charger and enable/disable
+            SetChargerState(block.Enabled ? OverrideState.Enabled : OverrideState.Disabled);
+
+            //look for jumpdrives enable/disable
+        }
+
+        private void SetChargerState(OverrideState overrideState)
+        {
             IMyFunctionalBlock charger;
             if (chargerRegister.TryGetValue(gridId, out charger) && charger != null)
             {
                 WormdriveCharger wc = charger.GameLogic?.GetAs<WormdriveCharger>();
                 if (wc != null)
                 {
-                    wc.SetOverride(block.Enabled ? OverrideState.Enabled : OverrideState.Disabled);
+                    wc.SetOverride(overrideState);
                     Log.Msg($"Set charger {charger.EntityId}");
                 }
             }
-
-            //look for jumpdrives enable/disable
-
         }
 
         internal override bool CheckDuplicate()
