@@ -3,6 +3,7 @@ using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRage.ObjectBuilders;
 using VRageMath;
+using static ZoneControl.ZonesConfig;
 
 namespace ZoneControl.Wormhole
 {
@@ -46,8 +47,12 @@ namespace ZoneControl.Wormhole
             if (block.Enabled)
             {
                 //check for wormhole zone
-
-                // return if not found
+                ZoneInfo closetZone = ZonesSession.Instance.FindClosestZoneCached(gridId, block.CubeGrid.GetPosition());
+                if (closetZone == null || !closetZone.Wormhole)
+                {
+                    SetDefaultOverride();
+                    return;
+                }
 
                 activationPosition = block.CubeGrid.GetPosition();
                 SetOverrideCounter();

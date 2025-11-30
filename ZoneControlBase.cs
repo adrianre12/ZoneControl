@@ -1,18 +1,14 @@
 ﻿using Sandbox.ModAPI;
-using System.Collections.Generic;
 using VRage.Game.Components;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
 
 namespace ZoneControl
 {
-    internal abstract class WormdriveBase : MyGameLogicComponent
+    internal abstract class ZoneControlBase : MyGameLogicComponent
     {
         internal IMyFunctionalBlock block;
         internal long gridId;
-
-        internal static Dictionary<long, IMyFunctionalBlock> driveRegister = new Dictionary<long, IMyFunctionalBlock>();
-        internal static Dictionary<long, IMyFunctionalBlock> chargerRegister = new Dictionary<long, IMyFunctionalBlock>();
 
         public enum OverrideState
         {
@@ -34,7 +30,7 @@ namespace ZoneControl
             //    return;
 
             block = Entity as IMyFunctionalBlock;
-            gridId = block.CubeGrid.EntityId;
+            //gridId = block.CubeGrid.EntityId;
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
         }
 

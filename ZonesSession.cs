@@ -167,8 +167,7 @@ namespace ZoneControl
             foreach (var player in players)
             {
                 ZoneInfo closestZone = CheckPlayerPosition(player);
-                /*                if (closestZone.NoIntruders && intruderNotificationCounter == 0)
-                                    CheckIfIntruding(player, closestZone);*/
+                CheckIfIntruding(player, closestZone);
             }
 
         }
@@ -244,6 +243,45 @@ namespace ZoneControl
             }
 
             return currentZone;
+        }
+
+        private void CheckIfIntruding(IMyPlayer player, ZoneInfo closestZone)
+        {
+            if (closestZone == null || player == null)//|| player.PromoteLevel != MyPromoteLevel.None)
+            {
+                return;
+            }
+
+            Log.Msg($"CheckIfIntruding {player.DisplayName} zone {closestZone.UniqueName} {closestZone.FactionTag}");
+            if (!closestZone.NoIntruders || closestZone.FactionTag == null || closestZone.FactionTag.Trim().Length == 0)
+                return;
+
+            Vector3D position = player.GetPosition();
+
+            MyVisualScriptLogicProvider.ShowNotification(config.IntruderMessage, config.IntruderAlertTimeMs, config.IntruderColour, playerId: player.IdentityId);
+
+            if (player.Character.UsingEntity is MyCockpit)
+            {
+                Log.Msg("----------------- Cockpit");
+                var cockpit = player.Character.UsingEntity as IMyCockpit;
+                if (cockpit.CubeGrid == null)
+                {
+                    Log.Msg("cubegrid null");
+                }
+                else
+                {
+                    Log.Msg($"grid name {cockpit.CubeGrid.DisplayName}");
+                    //cockpit.RemovePilot();
+                    //cockpit.CubeGrid.Close();
+                }
+            }
+
+            //MyVisualScriptLogicProvider.ShowNotification(config.IntruderMessage, config.IntruderAlertTimeMs, config.IntruderColour, playerId: player.IdentityId);
+            //player.Character.GetInventory().Clear();
+
+            //MyVisualScriptLogicProvider.SetPlayersHydrogenLevel(player.IdentityId, 0);
+            //if (MyVisualScriptLogicProvider.GetPlayersEnergyLevel(player.IdentityId) > 0.01) MyVisualScriptLogicProvider.SetPlayersEnergyLevel(player.IdentityId, 0.01f);
+            MyVisualScriptLogicProvider.SendChatMessage($"{config.IntruderChatMessagePt1} '{player.DisplayName}' {config.IntruderChatMessagePt2}", config.ChatSenderName, -1, config.IntruderColour);
         }
 
     }

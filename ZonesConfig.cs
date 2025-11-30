@@ -48,6 +48,7 @@ namespace ZoneControl
             public int AlertTimeMs = 0;
             public string FactionTag = "";
             public bool NoIntruders = false;
+            public bool Wormhole = false;
 
             public InfoBase() { }
             protected void Set(InfoBase info)
@@ -60,6 +61,7 @@ namespace ZoneControl
                 AlertTimeMs = info.AlertTimeMs;
                 FactionTag = info.FactionTag;
                 NoIntruders = info.NoIntruders;
+                Wormhole = info.Wormhole;
             }
         }
 
