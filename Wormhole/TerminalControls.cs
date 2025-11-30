@@ -27,7 +27,7 @@ namespace ZoneControl.Wormhole
 
         static bool CustomHiddenCondition(IMyTerminalBlock b)
         {
-            return b?.GameLogic?.GetAs<Wormdrive>() == null;
+            return b?.GameLogic?.GetAs<WormDrive>() == null;
         }
 
         /*        static void CreateControls()

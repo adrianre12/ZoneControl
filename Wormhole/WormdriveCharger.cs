@@ -7,7 +7,7 @@ using VRage.ObjectBuilders;
 namespace ZoneControl.Wormhole
 {
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_BatteryBlock), false, new[] { "LargeWormChargerBlock" })]
-    internal class WormdriveCharger : WormdriveBase
+    internal class WormDriveCharger : WormDriveBase
     {
         const float MinCharge = 0.10f;
         const float MaxCharge = 0.99f;
@@ -28,6 +28,7 @@ namespace ZoneControl.Wormhole
             chargerBlock = Entity as MyBatteryBlock;
             OverrideDefault = OverrideState.Disabled;
             OverrideDefaultTimeout = 1;// 10;
+            DefaultEnabledState = false;
         }
 
         public override void UpdateOnceBeforeFrame()

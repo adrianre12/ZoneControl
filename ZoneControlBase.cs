@@ -21,7 +21,7 @@ namespace ZoneControl
         private bool originalEnabledState;
         private long overrideCounter = 0;
         internal OverrideState OverrideDefault = OverrideState.None;
-        internal bool DefaultEnabledState = false;
+        internal bool? DefaultEnabledState = null;
         internal long OverrideDefaultTimeout = 0;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -41,12 +41,15 @@ namespace ZoneControl
             if (!MyAPIGateway.Session.IsServer)
                 return;
 
-            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
-
+            originalEnabledState = block.Enabled;
             SetDefaultOverride();
             if (CheckDuplicate())
+            {
                 block.Enabled = false;
+                return;
+            }
 
+            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
             block.EnabledChanged += Block_EnabledChanged;
         }
 
@@ -79,8 +82,9 @@ namespace ZoneControl
             overrideSetting = OverrideDefault;
             if (overrideSetting == OverrideState.None)
             {
-                originalEnabledState = DefaultEnabledState;
-                block.Enabled = DefaultEnabledState;
+                if (DefaultEnabledState != null)
+                    originalEnabledState = (bool)DefaultEnabledState;
+                block.Enabled = originalEnabledState;
                 //Log.Msg($"{block.CustomName} overrideSetting={overrideSetting} originalEnabledState={originalEnabledState} enabled={block.Enabled}");
                 return;
             }
@@ -97,6 +101,7 @@ namespace ZoneControl
 
         public void SetOverride(OverrideState state)
         {
+            Log.Msg($"{block.CustomName} overrideState={state}");
             overrideSetting = state;
             SetOverrideCounter();
             if (overrideSetting == OverrideState.None)
