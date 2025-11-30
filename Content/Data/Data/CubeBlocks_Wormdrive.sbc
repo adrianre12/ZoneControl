@@ -8,7 +8,7 @@
 			</Id>
 			<DisplayName>Wormhole Drive</DisplayName>
 			<Icon>Textures\GUI\Icons\Cubes\JumpDrive.dds</Icon>
-			<Description>Wormhole Drive</Description>
+			<Description>Wormhole Drive. Only one per grid can be used.</Description>
 			<CubeSize>Large</CubeSize>
 			<BlockTopology>TriangleMesh</BlockTopology>
 			<Size x="3" y="3" z="2" />
@@ -20,7 +20,7 @@
 				<Component Subtype="GravityGenerator" Count="20" />
 				<Component Subtype="Detector" Count="20" />
 				<Component Subtype="PowerCell" Count="120" />
-				<Component Subtype="Superconductor" Count="1000" />
+				<Component Subtype="Superconductor" Count="100" />
 				<Component Subtype="Computer" Count="300" />
 				<Component Subtype="Construction" Count="40" />
 				<Component Subtype="SteelPlate" Count="20" />
@@ -71,7 +71,7 @@
 			</Id>
 			<DisplayName>Wormdrive Charger</DisplayName>
 			<Icon>Textures\GUI\Icons\Cubes\Battery.dds</Icon>
-			<Description>Wormdrive dedicated charger.</Description>
+			<Description>Wormdrive dedicated charger. Only one per grid can be used.</Description>
 			<CubeSize>Large</CubeSize>
 			<BlockTopology>TriangleMesh</BlockTopology>
 			<Size x="1" y="1" z="1" />
@@ -80,7 +80,7 @@
 			<Components>
 				<Component Subtype="SteelPlate" Count="20" />
 				<Component Subtype="Construction" Count="10" />
-				<Component Subtype="Superconductor" Count="500" />
+				<Component Subtype="Superconductor" Count="100" />
 				<Component Subtype="Computer" Count="25" />
 				<Component Subtype="Construction" Count="20" />
 				<Component Subtype="SteelPlate" Count="60" />
