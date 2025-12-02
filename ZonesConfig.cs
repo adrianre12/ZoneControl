@@ -118,10 +118,11 @@ namespace ZoneControl
 
         public string ChatSenderName = "DSM";
         public string IntruderMessage = "You are an Intruder!";
-        public string IntruderChatMessagePt1 = "Good news; intruder";
+        public string IntruderChatMessagePt1 = "Good news; Intruder";
         public string IntruderChatMessagePt2 = "did not read the rules and is now dying in space.";
         public string IntruderColour = "Red";
-        public int IntruderAlertTimeMs = 5000;
+        public string IntruderPunishmentMsg = "Your Gyros and JumpDrives are disabled. Ask an admin for help.";
+        public int IntruderAlertTimeMs = 9000;
         public List<PositionInfo> Positions;
         public List<PlanetInfo> Planets;
 

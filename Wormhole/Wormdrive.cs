@@ -50,7 +50,8 @@ namespace ZoneControl.Wormhole
             {
                 //check for wormhole zone
                 ZoneInfo closetZone = ZonesSession.Instance.FindClosestZoneCached(gridId, block.CubeGrid.GetPosition());
-                if (closetZone == null || !closetZone.Wormhole)
+                if (closetZone == null || !closetZone.Wormhole ||
+                    (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag()))
                 {
                     SetDefaultOverride();
                     return;

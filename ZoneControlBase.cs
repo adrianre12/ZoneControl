@@ -38,7 +38,7 @@ namespace ZoneControl
         {
             base.UpdateOnceBeforeFrame();
 
-            if (!MyAPIGateway.Session.IsServer)
+            if (!MyAPIGateway.Session.IsServer || block?.CubeGrid?.Physics == null)
                 return;
 
             originalEnabledState = block.Enabled;
