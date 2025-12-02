@@ -96,12 +96,12 @@
 			<BuildTimeSeconds>40</BuildTimeSeconds>
 
 			<ResourceSourceGroup>Battery</ResourceSourceGroup>
-			<MaxPowerOutput>10000</MaxPowerOutput>
+			<MaxPowerOutput>11000</MaxPowerOutput>
 
 			<ResourceSinkGroup>BatteryBlock</ResourceSinkGroup>
 			<RequiredPowerInput>0</RequiredPowerInput>
 			<AdaptibleInput>true</AdaptibleInput>
-			<MaxStoredPower>36</MaxStoredPower>
+			<MaxStoredPower>10000</MaxStoredPower>
 			<InitialStoredPowerRatio>1</InitialStoredPowerRatio>
 			<RechargeMultiplier>1</RechargeMultiplier>
 

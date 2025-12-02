@@ -77,7 +77,7 @@ namespace ZoneControl.Wormhole
                 if (wc != null)
                 {
                     wc.SetOverride(overrideState);
-                    Log.Msg($"Set charger {charger.EntityId}");
+                    Log.Msg($"Set charger {charger.DisplayName} {overrideState}");
                 }
             }
         }

@@ -170,7 +170,7 @@ namespace ZoneControl
 
         private void NextPlayer()
         {
-            Log.Msg($"NextPlayer {nextPlayerIndex}");
+            //Log.Msg($"NextPlayer {nextPlayerIndex}");
             if (nextPlayerIndex >= players.Count)
             {
                 ps = new PlayerState();

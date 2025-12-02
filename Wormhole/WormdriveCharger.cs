@@ -15,10 +15,9 @@ namespace ZoneControl.Wormhole
         const float GW2MWH = 1 / 2160f; // * 100 / 60 /3600f
 
         private MyBatteryBlock chargerBlock;
-        private float minPower;
         private float maxPower;
         private float minChangePerTick;
-        private float lastStoredPower;
+        private int lowPowerCounter;
 
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -34,11 +33,9 @@ namespace ZoneControl.Wormhole
         public override void UpdateOnceBeforeFrame()
         {
             base.UpdateOnceBeforeFrame();
-            minPower = chargerBlock.MaxStoredPower * MinCharge;
             maxPower = chargerBlock.MaxStoredPower * MaxCharge;
-            minChangePerTick = -MinLoadPower * GW2MWH;
+            minChangePerTick = MinLoadPower * GW2MWH;
             chargerBlock.CurrentStoredPower = maxPower;
-            lastStoredPower = 0;
         }
 
         public override void UpdateAfterSimulation100()
@@ -48,18 +45,30 @@ namespace ZoneControl.Wormhole
             if (!block.Enabled || !block.IsFunctional)
                 return;
 
-            float storedPowerChange = chargerBlock.CurrentStoredPower - lastStoredPower;
-            //Log.Msg($"charge={chargerBlock.CurrentStoredPower} min={minPower}  minChangePerTick={minChangePerTick} change={storedPowerChange}");
-            if (storedPowerChange <= 0 && storedPowerChange > minChangePerTick)
+            float storedPowerChange = maxPower - chargerBlock.CurrentStoredPower;
+            //Log.Msg($"charge={chargerBlock.CurrentStoredPower} lowPowerCounter={lowPowerCounter}  minChangePerTick={minChangePerTick} change={storedPowerChange}");
+            if (storedPowerChange < minChangePerTick)
             {
-                SetOverride(OverrideDefault);
-                return;
+                if (++lowPowerCounter > 1)
+                {
+                    //Log.Msg("End charge");
+                    SetOverride(OverrideDefault);
+                    return;
+                }
             }
-            lastStoredPower = chargerBlock.CurrentStoredPower;
-            if (chargerBlock.CurrentStoredPower > minPower)
-                return;
+            else
+                lowPowerCounter = 0;
 
             chargerBlock.CurrentStoredPower = maxPower;
+        }
+
+        public override void Block_EnabledChanged(IMyTerminalBlock obj)
+        {
+            base.Block_EnabledChanged(obj);
+            if (!block.Enabled)
+            {
+                lowPowerCounter = 0;
+            }
         }
 
         internal override bool CheckDuplicate()
