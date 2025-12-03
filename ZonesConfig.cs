@@ -41,11 +41,11 @@ namespace ZoneControl
         public class InfoBase
         {
             public double AlertRadius = 0;
-            public string AlertMessageEnter = "";
-            public string ColourEnter = "";
-            public string AlertMessageLeave = "";
-            public string ColourLeave = "";
-            public int AlertTimeMs = 0;
+            public string AlertMessageEnter = "Enter";
+            public string ColourEnter = "Red";
+            public string AlertMessageLeave = "Leave";
+            public string ColourLeave = "Green";
+            public int AlertTimeMs = 9000;
             public string FactionTag = "";
             public bool NoIntruders = false;
             public bool Wormhole = false;
@@ -119,9 +119,9 @@ namespace ZoneControl
         public string ChatSenderName = "DSM";
         public string IntruderMessage = "You are an Intruder!";
         public string IntruderChatMessagePt1 = "Good news; Intruder";
-        public string IntruderChatMessagePt2 = "did not read the rules and is now dying in space.";
+        public string IntruderChatMessagePt2 = "did not read the rules and is now being punished.";
         public string IntruderColour = "Red";
-        public string IntruderPunishmentMsg = "Your Gyros and JumpDrives are disabled. Ask an admin for help.";
+        public string IntruderPunishmentMsg = "Your Gyros and JumpDrives are disabled for 20 minutes. Ask an admin for help.";
         public int IntruderAlertTimeMs = 9000;
         public List<PositionInfo> Positions;
         public List<PlanetInfo> Planets;
@@ -160,7 +160,7 @@ namespace ZoneControl
 
             var defaultSettings = new ZonesConfig();
             defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "Example1", Position = Vector3D.Zero });
-            defaultSettings.Planets.Add(new PlanetInfo() { PlanetName = "EarthLike-12345d120000" });
+            defaultSettings.Planets.Add(new PlanetInfo() { PlanetName = "EarthLike-12345d120000", AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 });
 
             try
             {

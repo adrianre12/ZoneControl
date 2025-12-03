@@ -336,7 +336,7 @@ namespace ZoneControl
 
                 punishmentCache.Add(grid.EntityId, MyAPIGateway.Session.GameplayFrameCounter + DefaultPunishmentPeriod);
                 MyVisualScriptLogicProvider.ShowNotification(config.IntruderPunishmentMsg, config.IntruderAlertTimeMs, config.IntruderColour, playerId: ps.Player.IdentityId);
-                MyVisualScriptLogicProvider.SendChatMessage($"{config.IntruderChatMessagePt1} '{ps.Player.DisplayName}' {config.IntruderChatMessagePt2}", config.ChatSenderName, -1, config.IntruderColour);
+                MyVisualScriptLogicProvider.SendChatMessage($"{config.IntruderChatMessagePt1} '{ps.Player.DisplayName}' {config.IntruderChatMessagePt2}", config.ChatSenderName, 0, config.IntruderColour);
 
                 foreach (var jd in grid.GetFatBlocks<IMyGyro>())
                 {
