@@ -17,6 +17,7 @@ namespace ZoneControl.Wormhole
             Done = true;
 
             EditControls();
+            EditActions();
             //CreateControls();
         }
 
@@ -60,11 +61,11 @@ namespace ZoneControl.Wormhole
                 {
                     case "OnOff":
                     case "ShowInTerminal":
-                    case "ShowInInventory":
+                    //                    case "ShowInInventory":
                     case "ShowInToolbarConfig":
                     case "Name":
                     case "ShowOnHUD":
-                    case "CustomData":
+                        //                    case "CustomData":
                         {
                             break;
                         }
@@ -81,6 +82,39 @@ namespace ZoneControl.Wormhole
                         {
                             //c.Enabled = TerminalChainedDelegate.Create(c.Enabled, CustomHiddenCondition); // grays out
                             c.Visible = TerminalChainedDelegate.Create(c.Visible, CustomHiddenCondition); // hides
+                            break;
+                        }
+                }
+            }
+        }
+
+        static void EditActions()
+        {
+            List<IMyTerminalAction> actions;
+            MyAPIGateway.TerminalControls.GetActions<IMyJumpDrive>(out actions);
+
+            foreach (IMyTerminalAction a in actions)
+            {
+                // a quick way to dump all IDs to SE's log 
+                //MyLog.Default.WriteLine($"[DEV] toolbar action: id='{a.Id}'; displayName='{a.Name}'");
+
+                switch (a.Id)
+                {
+                    case "OnOff":
+                    case "OnOff_On":
+                    case "OnOff_Off":
+                    case "ShowOnHUD":
+                    case "ShowOnHUD_On":
+                    case "ShowOnHUD_Off":
+                    case "Jump":
+                        {
+
+                            break;
+                        }
+
+                    default:
+                        {
+                            a.Enabled = TerminalChainedDelegate.Create(a.Enabled, CustomHiddenCondition);
                             break;
                         }
                 }
