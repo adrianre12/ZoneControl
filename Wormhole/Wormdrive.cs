@@ -45,7 +45,7 @@ namespace ZoneControl.Wormhole
         {
             base.Block_EnabledChanged(obj);
 
-            //Log.Msg($"Wormhole Enable changed chargerRegister.Count={chargerRegister.Count}");
+            Log.Msg($"Wormhole Enable changed");
             if (block.Enabled)
             {
                 //check for wormhole zone
@@ -83,16 +83,22 @@ namespace ZoneControl.Wormhole
 
         internal override bool CheckDuplicate()
         {
-            Log.Msg("Check for duplicate");
+            //Log.Msg($"Check for duplicate count={driveRegister.Count}");
 
             IMyFunctionalBlock fblock;
             if (!driveRegister.TryGetValue(gridId, out fblock))
             {
+                //Log.Msg("Dupe not in reg");
                 driveRegister[gridId] = block;
                 return false;
             }
             if (fblock.EntityId == block.EntityId)
+            {
+                //Log.Msg("Not a Dupe");
                 return false;
+            }
+            //Log.Msg("Its a Dupe");
+
             return true;
         }
 
@@ -101,12 +107,19 @@ namespace ZoneControl.Wormhole
             if (!MyAPIGateway.Session.IsServer)
                 return;
             base.Close();
+            //Log.Msg($"Closing {block.DisplayName} driveRegister {driveRegister.Count}");
 
-            var gridId = block.CubeGrid.EntityId;
             IMyFunctionalBlock fblock;
             if (driveRegister.TryGetValue(gridId, out fblock))
+            {
+                //Log.Msg($"Found {fblock.DisplayName}");
                 if (fblock.EntityId == block.EntityId)
+                {
+
                     driveRegister.Remove(gridId);
+                    //Log.Msg($"Removing {driveRegister.Count}");
+                }
+            }
         }
 
     }

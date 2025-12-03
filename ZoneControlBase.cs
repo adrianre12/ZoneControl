@@ -46,7 +46,8 @@ namespace ZoneControl
             if (CheckDuplicate())
             {
                 block.Enabled = false;
-                return;
+                OverrideDefault = OverrideState.Disabled;
+                overrideSetting = OverrideState.Disabled;
             }
 
             NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
@@ -62,6 +63,7 @@ namespace ZoneControl
 
         public virtual void Block_EnabledChanged(IMyTerminalBlock obj)
         {
+            //Log.Msg("Base Block_EnabledChanged");
             if (CheckDuplicate())
             {
                 Log.Msg($"Duplicate block grid='{block.CubeGrid.CustomName}' block='{block.CustomName}'");

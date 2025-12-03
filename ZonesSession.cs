@@ -230,7 +230,7 @@ namespace ZoneControl
             if (ps.Player == null)
                 return null;
 
-            Log.Msg($"CheckPlayerPosition... {ps.Player.DisplayName} ------------------------");
+            //Log.Msg($"CheckPlayerPosition... {ps.Player.DisplayName} ------------------------");
 
             Vector3D playerPosition = ps.Player.GetPosition();
 
@@ -243,7 +243,7 @@ namespace ZoneControl
             {
                 if (cacheHit) //we were in a zone
                 {
-                    Log.Msg($"Left zone {cached.Zone.UniqueName} to void");
+                    //Log.Msg($"Left zone {cached.Zone.UniqueName} to void");
                     zoneCache.Remove(ps.Player.IdentityId); // become zoneless, find it on the next pass
                     if (cached.Zone.AlertMessageLeave.Length > 0)
                         MyVisualScriptLogicProvider.ShowNotification(cached.Zone.AlertMessageLeave,
@@ -258,11 +258,11 @@ namespace ZoneControl
             {
                 if (currentZone == cached.Zone) // In the same zone
                 {
-                    Log.Msg($"Already in zone {currentZone.UniqueName}");
+                    //Log.Msg($"Already in zone {currentZone.UniqueName}");
                     return currentZone;
                 }
 
-                Log.Msg($"Change zone from {cached.Zone.UniqueName} to {currentZone.UniqueName}");
+                //Log.Msg($"Change zone from {cached.Zone.UniqueName} to {currentZone.UniqueName}");
                 if (cached.Zone.AlertMessageLeave.Length > 0)
                     MyVisualScriptLogicProvider.ShowNotification(cached.Zone.AlertMessageLeave,
                     disappearTimeMs: cached.Zone.AlertTimeMs, font: cached.Zone.ColourLeave,
@@ -276,7 +276,7 @@ namespace ZoneControl
 
             // cache miss 
 
-            Log.Msg($"Entered zone {currentZone.UniqueName} from void");
+            //Log.Msg($"Entered zone {currentZone.UniqueName} from void");
             if (currentZone.AlertMessageEnter.Length > 0)
                 MyVisualScriptLogicProvider.ShowNotification(currentZone.AlertMessageEnter,
                 disappearTimeMs: currentZone.AlertTimeMs, font: currentZone.ColourEnter, playerId: ps.Player.IdentityId);
@@ -295,7 +295,7 @@ namespace ZoneControl
             string playerFactionTag = MyVisualScriptLogicProvider.GetPlayersFactionTag(ps.Player.IdentityId).Trim();
 
 
-            Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {currentZone.UniqueName} {currentZone.FactionTag}");
+            //Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {currentZone.UniqueName} {currentZone.FactionTag}");
 
             if (!currentZone.NoIntruders || currentZone.FactionTag == null || currentZone.FactionTag.Trim().Length == 0)
                 return false;
@@ -315,16 +315,16 @@ namespace ZoneControl
         {
             if (ps.Player.Character.UsingEntity is MyCockpit)
             {
-                Log.Msg("Punish -----------------");
+                //Log.Msg("Punish -----------------");
                 var cockpit = ps.Player.Character.UsingEntity as IMyCockpit;
                 if (cockpit.CubeGrid == null)
                 {
-                    Log.Msg("cubegrid null");
+                    Log.Msg("Punish cubegrid null");
                     return;
                 }
                 var grid = cockpit.CubeGrid;
 
-                Log.Msg($"Player '{ps.Player.DisplayName}' grid name '{grid.DisplayName}' ");
+                Log.Msg($"Punish Player '{ps.Player.DisplayName}' grid name '{grid.DisplayName}' ");
 
                 int expiryFrame;
                 if (punishmentCache.TryGetValue(grid.EntityId, out expiryFrame))
