@@ -61,25 +61,8 @@ namespace ZoneControl.Wormhole
                 SetOverrideCounter();
             }
 
-            //look for charger and enable/disable
-            SetChargerState(block.Enabled ? OverrideState.Enabled : OverrideState.Disabled);
-
             //look for jumpdrives enable/disable
             SetJumpdriveState(block.Enabled ? OverrideState.Disabled : OverrideState.None);
-        }
-
-        private void SetChargerState(OverrideState overrideState)
-        {
-            IMyFunctionalBlock charger;
-            if (chargerRegister.TryGetValue(gridId, out charger) && charger != null)
-            {
-                WormDriveCharger wc = charger.GameLogic?.GetAs<WormDriveCharger>();
-                if (wc != null)
-                {
-                    wc.SetOverride(overrideState);
-                    Log.Msg($"Set charger {charger.DisplayName} {overrideState}");
-                }
-            }
         }
 
         private void SetJumpdriveState(OverrideState overrideState)
