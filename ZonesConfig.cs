@@ -1,4 +1,5 @@
-﻿using Sandbox.ModAPI;
+﻿using ProtoBuf;
+using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
@@ -49,25 +50,26 @@ namespace ZoneControl
 
         public class ZoneInfo : InfoBase
         {
+            public ushort? Id = null;
             public string UniqueName = "";
             public Vector3D Position;
             public bool Wormhole = false;
             public double AlertRadiusSqrd;
-            public List<GPSposition> Targets;
+            public List<GPSposition> Targets = new List<GPSposition>();
 
             public ZoneInfo()
             {
             }
 
-            public ZoneInfo(PositionInfo info)
+            public ZoneInfo(ushort id, PositionInfo info)
             {
                 Set(info);
+                Id = id;
                 UniqueName = info.UniqueName;
                 GPSposition gp = new GPSposition(info.GPS);
                 Position = gp.Position;
                 Wormhole = info.Wormhole;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
-                Targets = new List<GPSposition>();
                 foreach (string location in info.Locations)
                 {
                     Targets.Add(new GPSposition(location));
@@ -76,9 +78,10 @@ namespace ZoneControl
                 Log.Msg($"Zone {UniqueName} Targets.Count={Targets.Count}");
             }
 
-            public ZoneInfo(PlanetInfo info, Vector3D position)
+            public ZoneInfo(ushort id, PlanetInfo info, Vector3D position)
             {
                 Set(info);
+                Id = id;
                 UniqueName = info.PlanetName;
                 Position = position;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
@@ -180,9 +183,12 @@ namespace ZoneControl
             return "White";
         }
 
+        [ProtoContract]
         public class GPSposition
         {
+            [ProtoMember(1)]
             public string Name = "Error";
+            [ProtoMember(2)]
             public Vector3D Position = Vector3D.Zero;
 
             public GPSposition() { }

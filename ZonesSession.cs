@@ -1,6 +1,8 @@
-﻿using Sandbox.Game;
+﻿using ProtoBuf;
+using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using VRage.Game.Components;
@@ -17,15 +19,27 @@ namespace ZoneControl
         const int DefaultRefreshPeriod = 600; // 10s
         const int DefaultPunishmentPeriod = 18000; // 5 mins
         const double CacheMovementLimitSqrd = 100; //10m
+        const string VariableId = nameof(ZonesSession);
 
         public static ZonesSession Instance;
 
+        private IMyModContext Mod;
         private ZonesConfig config;
         private List<ZoneInfo> zones = new List<ZoneInfo>();
         private List<IMyPlayer> players = new List<IMyPlayer>();
         private int nextRefreshFrame = 0;
         private int nextPlayerIndex = 0;
         private ZoneInfo currentZone = null;
+
+        [ProtoContract]
+        private class ZoneTargets
+        {
+            [ProtoMember(1)]
+            public Dictionary<ushort, List<GPSposition>> Targets = new Dictionary<ushort, List<GPSposition>>();
+
+            public ZoneTargets() { }
+        }
+        private ZoneTargets zoneTargets = new ZoneTargets();
 
         private struct ZoneCacheItem
         {
@@ -56,25 +70,31 @@ namespace ZoneControl
         public override void LoadData()
         {
             Instance = this;
+            Mod = ModContext;
+            Log.Msg("LoadData...........");
+            if (MyAPIGateway.Session.IsServer)
+                LoadDataOnHost();
+            else
+                LoadDataOnClient();
         }
         protected override void UnloadData()
         {
             Instance = null;
         }
 
-        public override void BeforeStart()
+        public void LoadDataOnHost()
         {
-            if (!MyAPIGateway.Session.IsServer)
-                return;
-
-            Log.Msg("ZoneNotification Start");
+            Log.Msg("ZoneNotification Host Start");
             config = ZonesConfig.Load();
 
             Dictionary<string, Vector3D> planetPositions = GetPlanetPositions();
-
+            ushort zoneId = 0;
             foreach (var info in config.Positions)
             {
-                zones.Add(new ZoneInfo(info));
+                var zone = new ZoneInfo(zoneId, info);
+                zoneTargets.Targets.Add(zoneId, zone.Targets);
+                zones.Add(zone);
+                ++zoneId;
                 Log.Msg($"Adding Zone {info.UniqueName} to Zones list");
             }
 
@@ -82,8 +102,9 @@ namespace ZoneControl
             foreach (var info in config.Planets)
             {
                 if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
-                {
-                    zones.Add(new ZoneInfo(info, planetPosition));
+                { // Planets cant be wormholes so no targets.
+                    zones.Add(new ZoneInfo(zoneId, info, planetPosition));
+                    ++zoneId;
                     Log.Msg($"Adding Planet Zone {info.PlanetName} to Zones list");
                 }
             }
@@ -91,12 +112,47 @@ namespace ZoneControl
 
             zones = zones.OrderBy(x => x.AlertRadius).ToList();
             //foreach (var zone in zones) Log.Msg($"Zone {zone.UniqueName} radius {zone.AlertRadius}");
+
+            try
+            {
+                string saveText = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(zoneTargets));
+                MyAPIGateway.Utilities.SetVariable<string>(VariableId, saveText);
+            }
+            catch (Exception e)
+            {
+                Log.Msg($"Error serializing zoneTargets\n {e}");
+            }
+        }
+
+        public void LoadDataOnClient()
+        {
+            Log.Msg("ZoneNotification Client Start");
+
+            try
+            {
+                string saveText;
+                if (!MyAPIGateway.Utilities.GetVariable<string>(VariableId, out saveText))
+                    throw new Exception($"Variable {VariableId} not found in sandbox.sbc!");
+                zoneTargets = MyAPIGateway.Utilities.SerializeFromBinary<ZoneTargets>(Convert.FromBase64String(saveText));
+            }
+            catch (Exception e)
+            {
+                Log.Msg($"Error deserializing zoneTargets\n {e}");
+                zoneTargets = new ZoneTargets();
+            }
+
         }
 
         public override void UpdateAfterSimulation()
         {
-            if (!MyAPIGateway.Session.IsServer)
-                return;
+            if (MyAPIGateway.Session.IsServer)
+                UpdateAfterSimulationHost();
+            else
+                UpdateAfterSimulationClient();
+        }
+
+        public void UpdateAfterSimulationHost()
+        {
             var currentFrame = MyAPIGateway.Session.GameplayFrameCounter;
 
             if (ps.Player != null)
@@ -136,6 +192,12 @@ namespace ZoneControl
             Log.Msg($"{FindClosestZoneCached(1, Vector3D.Zero).UniqueName}");
             Log.Msg($"{FindClosestZoneCached(1, new Vector3D(100, 0, 0)).UniqueName}");
             */
+        }
+
+        public void UpdateAfterSimulationClient()
+        {
+            Log.Msg($"Client {zoneTargets.Targets.Count}");
+
         }
 
         private Dictionary<string, Vector3D> GetPlanetPositions()
