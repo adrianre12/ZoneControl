@@ -48,7 +48,6 @@ namespace ZoneControl
             public int AlertTimeMs = 9000;
             public string FactionTag = "";
             public bool NoIntruders = false;
-            public bool Wormhole = false;
 
             public InfoBase() { }
             protected void Set(InfoBase info)
@@ -61,7 +60,6 @@ namespace ZoneControl
                 AlertTimeMs = info.AlertTimeMs;
                 FactionTag = info.FactionTag;
                 NoIntruders = info.NoIntruders;
-                Wormhole = info.Wormhole;
             }
         }
 
@@ -69,6 +67,7 @@ namespace ZoneControl
         {
             public string UniqueName;
             public Vector3D Position;
+            public bool Wormhole = false;
             public double AlertRadiusSqrd;
 
             public ZoneInfo()
@@ -80,6 +79,7 @@ namespace ZoneControl
                 Set(info);
                 UniqueName = info.UniqueName;
                 Position = info.Position;
+                Wormhole = info.Wormhole;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
             }
 
@@ -94,10 +94,6 @@ namespace ZoneControl
             public bool InZone(Vector3D position)
             {
                 return Vector3D.DistanceSquared(position, Position) < AlertRadiusSqrd;
-
-                /*                var d = Vector3D.DistanceSquared(position, Position);
-                                Log.Msg($"Distance={d} AlertRadiusSqrd={AlertRadiusSqrd}");
-                                return d < AlertRadiusSqrd;*/
             }
         }
 
@@ -105,6 +101,7 @@ namespace ZoneControl
         {
             public string UniqueName = "";
             public Vector3D Position;
+            public bool Wormhole = false;
 
             public PositionInfo() { }
         }

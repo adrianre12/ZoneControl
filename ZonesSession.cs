@@ -191,14 +191,14 @@ namespace ZoneControl
                 {
                     if (cacheItem.Zone.InZone(position))
                     {
-                        Log.Msg("Cache Hit");
+                        //Log.Msg("Cache Hit");
                         return cacheItem.Zone;
                     }
                 }
                 zoneCache.Remove(Id);
             }
             // cache miss find closest
-            Log.Msg("Cache Miss");
+            //Log.Msg("Cache Miss");
 
             ZoneInfo zone = FindClosestZone(Id, position);
             if (zone != null)
@@ -224,6 +224,7 @@ namespace ZoneControl
             }
             return null;
         }
+
 
         private ZoneInfo CheckPlayerPosition()
         {
