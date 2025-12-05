@@ -4,26 +4,10 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using VRageMath;
 
-
-/*Font color string can be one of the following;
-    Debug
-    Red
-    Green
-    Blue
-    White
-    DarkBlue
-    UrlNormal
-    UrlHighlight
-    ErrorMessageBoxCaption
-    ErrorMessageBoxText
-    InfoMessageBoxCaption
-    InfoMessageBoxText
-    ScreenCaption
-    GameCredits
-    LoadingScreen
-    BuildInfo
-    BuildInfoHighlight
-*/
+// GPS format
+// GPS:Wormhole:76263.33:-78030.57:-35966.69:#FF75C9F1:
+// GPS:Name:X:Y:Z:Colour:
+// Colour not used.
 
 namespace ZoneControl
 {
@@ -65,10 +49,11 @@ namespace ZoneControl
 
         public class ZoneInfo : InfoBase
         {
-            public string UniqueName;
+            public string UniqueName = "";
             public Vector3D Position;
             public bool Wormhole = false;
             public double AlertRadiusSqrd;
+            public List<GPSposition> Targets;
 
             public ZoneInfo()
             {
@@ -78,9 +63,17 @@ namespace ZoneControl
             {
                 Set(info);
                 UniqueName = info.UniqueName;
-                Position = info.Position;
+                GPSposition gp = new GPSposition(info.GPS);
+                Position = gp.Position;
                 Wormhole = info.Wormhole;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
+                Targets = new List<GPSposition>();
+                foreach (string location in info.Locations)
+                {
+                    Targets.Add(new GPSposition(location));
+                }
+
+                Log.Msg($"Zone {UniqueName} Targets.Count={Targets.Count}");
             }
 
             public ZoneInfo(PlanetInfo info, Vector3D position)
@@ -100,8 +93,9 @@ namespace ZoneControl
         public class PositionInfo : InfoBase
         {
             public string UniqueName = "";
-            public Vector3D Position;
+            public string GPS = "";
             public bool Wormhole = false;
+            public List<string> Locations;
 
             public PositionInfo() { }
         }
@@ -156,7 +150,8 @@ namespace ZoneControl
             Log.Msg($"{configFilename} Doesn't Exist. Creating Default Configuration. ");
 
             var defaultSettings = new ZonesConfig();
-            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "Example1", Position = Vector3D.Zero });
+            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "Example1", GPS = "GPS:Anything:0:0:0:Anything:" });
+            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "ExampleWormhole", GPS = "GPS:Anything:0:0:0:Anything:", Wormhole = true, Locations = new List<string>() { "GPS:TargetName1:0:0:0:Anything:", "GPS:TargetName2:0:0:0:Anything:" } });
             defaultSettings.Planets.Add(new PlanetInfo() { PlanetName = "EarthLike-12345d120000", AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 });
 
             try
@@ -184,5 +179,43 @@ namespace ZoneControl
             Log.Msg($"Invalid colour in config: {font}");
             return "White";
         }
+
+        public class GPSposition
+        {
+            public string Name = "Error";
+            public Vector3D Position = Vector3D.Zero;
+
+            public GPSposition() { }
+
+            public GPSposition(string name, Vector3D position)
+            {
+                Name = name;
+                Position = position;
+            }
+
+            public GPSposition(string gps)
+            {
+                string[] tmp = gps.ToLower().Split(':');
+                if (tmp[0] != "gps" || tmp.Length < 5)
+                {
+                    Log.Msg($"Invalid GPS, does not start with GPS or is too short '{gps}'");
+                    return;
+                }
+
+                double x;
+                double y;
+                double z;
+                if (!double.TryParse(tmp[2], out x) || !double.TryParse(tmp[3], out y) || !double.TryParse(tmp[4], out z))
+                {
+                    Log.Msg($"Invalid GPS, failed to parse X,Y,Z '{gps}'");
+                    return;
+                }
+
+                Name = tmp[2];
+                Position = new Vector3D(x, y, z);
+            }
+        }
+
+
     }
 }
