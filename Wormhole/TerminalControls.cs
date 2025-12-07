@@ -2,12 +2,14 @@
 using Sandbox.ModAPI.Interfaces.Terminal;
 using System.Collections.Generic;
 using VRage.Game.ModAPI;
+using VRage.ModAPI;
+using VRage.Utils;
 
 namespace ZoneControl.Wormhole
 {
     public static class TerminalControls
     {
-        //const string IdPrefix = "ZoneControl_Wormhole_";
+        const string IdPrefix = "ZoneControl_Wormhole_";
         static bool Done = false;
 
         public static void DoOnce(IMyModContext context)
@@ -18,30 +20,104 @@ namespace ZoneControl.Wormhole
 
             EditControls();
             EditActions();
-            //CreateControls();
+            CreateControls();
         }
 
-        /*        static bool CustomVisibleCondition(IMyTerminalBlock b)
-                {
-                    return b?.GameLogic?.GetAs<WormholeComp>() != null;
-                }*/
+        static bool CustomVisibleCondition(IMyTerminalBlock b)
+        {
+            return b?.GameLogic?.GetAs<WormDrive>() != null;
+        }
 
         static bool CustomHiddenCondition(IMyTerminalBlock b)
         {
             return b?.GameLogic?.GetAs<WormDrive>() == null;
         }
 
-        /*        static void CreateControls()
+        static bool CustomHiddenEnabledCondition(IMyTerminalBlock b)
+        {
+            //return (b?.GameLogic?.GetAs<WormDrive>() == null) && (b as IMyFunctionalBlock).Enabled == false;
+            var wd = b?.GameLogic?.GetAs<WormDrive>();
+            return (b as IMyFunctionalBlock).Enabled && wd != null && wd.SelectedTargetListItem > -1;
+        }
+
+        static void CreateControls()
+        {
+            {
+                var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSeparator, IMyJumpDrive>(""); // separators don't store the id
+                c.SupportsMultipleBlocks = true;
+                c.Visible = CustomVisibleCondition;
+
+                MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
+            }
+
+            {
+                var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlListbox, IMyJumpDrive>(IdPrefix + "TargetListBox");
+                c.Title = MyStringId.GetOrCompute("Locations");
+                c.Tooltip = MyStringId.GetOrCompute("Select Wormhole target location");
+                c.SupportsMultipleBlocks = true;
+                c.Visible = CustomVisibleCondition;
+
+                c.VisibleRowsCount = 5;
+                c.Multiselect = false;
+                c.ListContent = (b, content, preSelect) =>
                 {
+                    //Log.Msg("ListContent");
+                    WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
+                    if (wd == null)
+                        return;
+                    var targets = ZonesSession.Instance.GetZoneTargets(wd.WormholeZoneId);
+                    //Log.Msg($"targets[{wd.WormholeZoneId}] {targets.Count}");
+
+                    for (int i = 0; i < targets.Count; i++)
                     {
-                        var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlSeparator, IMyJumpDrive>(""); // separators don't store the id
-                        c.SupportsMultipleBlocks = true;
-                        c.Visible = CustomVisibleCondition;
 
-                        MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
+                        //Log.Msg($"list content add index = {i}, Value = {targets[i].Name}");
+                        var item = new MyTerminalControlListBoxItem(MyStringId.GetOrCompute(targets[i].Name),
+                                                                    tooltip: MyStringId.NullOrEmpty,
+                                                                    userData: i);
+
+                        content.Add(item);
+                        //Log.Msg($"SelectedTargetListItem={wd.SelectedTargetListItem}");
+                        if (i == wd.SelectedTargetListItem)
+                            preSelect.Add(item);
                     }
+                };
+                c.ItemSelected = (b, selected) =>
+                {
+                    Log.Msg($"Selected {selected[0].Text}");
+                    WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
+                    if (wd == null)
+                        return;
+                    wd.SelectedTargetListItem = (int)selected[0].UserData;
+                };
 
-                }*/
+                MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
+            }
+
+            {
+                var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyJumpDrive>(IdPrefix + "JumpButton");
+                c.Title = MyStringId.GetOrCompute("Jump");
+                c.Tooltip = MyStringId.GetOrCompute("Start Wormhole Jump");
+                c.SupportsMultipleBlocks = true;
+                c.Visible = CustomVisibleCondition;
+                c.Enabled = CustomHiddenEnabledCondition;
+
+                c.Action = (b) =>
+                {
+                    WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
+                    if (wd == null)
+                        return;
+                    var targets = ZonesSession.Instance.GetZoneTargets(wd.WormholeZoneId);
+                    if (targets.Count == 0 || wd.SelectedTargetListItem >= targets.Count || wd.SelectedTargetListItem < 0)
+                        return;
+                    var target = targets[wd.SelectedTargetListItem];
+                    wd.JumpTarget.Value = target.Position;
+                    Log.Msg($"BtnJump to '{target.Name}'");
+                };
+
+                MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
+            }
+        }
 
 
         static void EditControls()
@@ -61,20 +137,10 @@ namespace ZoneControl.Wormhole
                 {
                     case "OnOff":
                     case "ShowInTerminal":
-                    //                    case "ShowInInventory":
                     case "ShowInToolbarConfig":
                     case "Name":
                     case "ShowOnHUD":
-                        //                    case "CustomData":
-                        {
-                            break;
-                        }
-                    case "Jump":
                     case "Recharge":
-                    case "SelectedTarget":
-                    case "RemoveBtn":
-                    case "SelectBtn":
-                    case "GpsList":
                         {
                             break;
                         }
@@ -106,7 +172,6 @@ namespace ZoneControl.Wormhole
                     case "ShowOnHUD":
                     case "ShowOnHUD_On":
                     case "ShowOnHUD_Off":
-                    case "Jump":
                         {
 
                             break;

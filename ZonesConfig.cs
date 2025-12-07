@@ -50,7 +50,7 @@ namespace ZoneControl
 
         public class ZoneInfo : InfoBase
         {
-            public ushort? Id = null;
+            public long Id = -1;
             public string UniqueName = "";
             public Vector3D Position;
             public bool Wormhole = false;
@@ -61,7 +61,7 @@ namespace ZoneControl
             {
             }
 
-            public ZoneInfo(ushort id, PositionInfo info)
+            public ZoneInfo(long id, PositionInfo info)
             {
                 Set(info);
                 Id = id;
@@ -78,7 +78,7 @@ namespace ZoneControl
                 Log.Msg($"Zone {UniqueName} Targets.Count={Targets.Count}");
             }
 
-            public ZoneInfo(ushort id, PlanetInfo info, Vector3D position)
+            public ZoneInfo(long id, PlanetInfo info, Vector3D position)
             {
                 Set(info);
                 Id = id;
@@ -217,7 +217,7 @@ namespace ZoneControl
                     return;
                 }
 
-                Name = tmp[2];
+                Name = tmp[1];
                 Position = new Vector3D(x, y, z);
             }
         }

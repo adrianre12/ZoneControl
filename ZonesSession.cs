@@ -35,7 +35,7 @@ namespace ZoneControl
         private class ZoneTargets
         {
             [ProtoMember(1)]
-            public Dictionary<ushort, List<GPSposition>> Targets = new Dictionary<ushort, List<GPSposition>>();
+            public Dictionary<long, List<GPSposition>> Targets = new Dictionary<long, List<GPSposition>>();
 
             public ZoneTargets() { }
         }
@@ -88,14 +88,14 @@ namespace ZoneControl
             config = ZonesConfig.Load();
 
             Dictionary<string, Vector3D> planetPositions = GetPlanetPositions();
-            ushort zoneId = 0;
+            long zoneId = 0;
             foreach (var info in config.Positions)
             {
                 var zone = new ZoneInfo(zoneId, info);
                 zoneTargets.Targets.Add(zoneId, zone.Targets);
                 zones.Add(zone);
+                Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
                 ++zoneId;
-                Log.Msg($"Adding Zone {info.UniqueName} to Zones list");
             }
 
             Vector3D planetPosition;
@@ -104,11 +104,11 @@ namespace ZoneControl
                 if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
                 { // Planets cant be wormholes so no targets.
                     zones.Add(new ZoneInfo(zoneId, info, planetPosition));
+                    Log.Msg($"Adding Planet Zone {info.PlanetName} zoneId={zoneId} to Zones list");
                     ++zoneId;
-                    Log.Msg($"Adding Planet Zone {info.PlanetName} to Zones list");
+
                 }
             }
-
 
             zones = zones.OrderBy(x => x.AlertRadius).ToList();
             //foreach (var zone in zones) Log.Msg($"Zone {zone.UniqueName} radius {zone.AlertRadius}");
@@ -287,6 +287,11 @@ namespace ZoneControl
             return null;
         }
 
+        public List<GPSposition> GetZoneTargets(long zoneId)
+        {
+            return zoneTargets.Targets.GetValueOrDefault(zoneId, new List<GPSposition>());
+
+        }
 
         private ZoneInfo CheckPlayerPosition()
         {
