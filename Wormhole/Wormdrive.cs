@@ -2,6 +2,7 @@
 using Sandbox.ModAPI;
 using System.Collections.Generic;
 using VRage.Game.Components;
+using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Network;
 using VRage.ObjectBuilders;
 using VRage.Sync;
@@ -52,6 +53,9 @@ namespace ZoneControl.Wormhole
             }
             Log.Msg($"Start Jump to {JumpTarget.Value}");
 
+            IMyGridJumpDriveSystem jumpSystem = block.CubeGrid.JumpSystem;
+            jumpSystem.RequestJump(JumpTarget.Value, block.OwnerId, 10, block.EntityId);
+            //JumpSystem.Jump(block, JumpTarget.Value);
             JumpTarget.Value = Vector3D.NegativeInfinity;
         }
 
@@ -73,6 +77,7 @@ namespace ZoneControl.Wormhole
                     return;
                 }
             }
+
         }
 
         public override void Block_EnabledChanged(IMyTerminalBlock obj)
@@ -121,6 +126,7 @@ namespace ZoneControl.Wormhole
                 gl.SetOverride(overrideState);
             }
         }
+
 
         internal override bool CheckDuplicate()
         {

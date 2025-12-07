@@ -196,7 +196,7 @@ namespace ZoneControl
 
         public void UpdateAfterSimulationClient()
         {
-            Log.Msg($"Client {zoneTargets.Targets.Count}");
+            //Log.Msg($"Client {zoneTargets.Targets.Count}");
 
         }
 
