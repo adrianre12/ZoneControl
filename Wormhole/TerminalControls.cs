@@ -1,6 +1,9 @@
-﻿using Sandbox.ModAPI;
+﻿using Sandbox.Game;
+using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using System.Collections.Generic;
+using System.Text;
+using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
@@ -21,6 +24,7 @@ namespace ZoneControl.Wormhole
             EditControls();
             EditActions();
             CreateControls();
+            CreateActions(context);
         }
 
         static bool CustomVisibleCondition(IMyTerminalBlock b)
@@ -94,15 +98,42 @@ namespace ZoneControl.Wormhole
                 MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
             }
 
-            {
-                var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyJumpDrive>(IdPrefix + "JumpButton");
-                c.Title = MyStringId.GetOrCompute("Jump");
-                c.Tooltip = MyStringId.GetOrCompute("Start Wormhole Jump");
-                c.SupportsMultipleBlocks = true;
-                c.Visible = CustomVisibleCondition;
-                c.Enabled = CustomHiddenEnabledCondition;
+            /*            {
+                            var c = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyJumpDrive>(IdPrefix + "JumpButton");
+                            c.Title = MyStringId.GetOrCompute("Jump");
+                            c.Tooltip = MyStringId.GetOrCompute("Start Wormhole Jump");
+                            c.SupportsMultipleBlocks = true;
+                            c.Visible = CustomVisibleCondition;
+                            c.Enabled = CustomHiddenEnabledCondition;
 
-                c.Action = (b) =>
+                            c.Action = (b) =>
+                            {
+                                WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
+                                if (wd == null)
+                                    return;
+                                var targets = ZonesSession.Instance.GetZoneTargets(wd.WormholeZoneId);
+                                if (targets.Count == 0 || wd.SelectedTargetListItem >= targets.Count || wd.SelectedTargetListItem < 0)
+                                    return;
+                                var target = targets[wd.SelectedTargetListItem];
+                                wd.JumpTarget.Value = target.Position;
+                                Log.Msg($"BtnJump to '{target.Name}'");
+                            };
+
+                            MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
+                        }*/
+        }
+
+        static void CreateActions(IMyModContext context)
+        {
+            {
+                var a = MyAPIGateway.TerminalControls.CreateAction<IMyJumpDrive>(IdPrefix + "JumpAction");
+
+                a.Name = new StringBuilder("Jump");
+
+                a.ValidForGroups = false;
+                a.Icon = @"Textures\GUI\Icons\Actions\CharacterToggle.dds";
+
+                a.Action = (b) =>
                 {
                     WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
                     if (wd == null)
@@ -111,11 +142,87 @@ namespace ZoneControl.Wormhole
                     if (targets.Count == 0 || wd.SelectedTargetListItem >= targets.Count || wd.SelectedTargetListItem < 0)
                         return;
                     var target = targets[wd.SelectedTargetListItem];
-                    wd.JumpTarget.Value = target.Position;
-                    Log.Msg($"BtnJump to '{target.Name}'");
+                    IMyGridJumpDriveSystem jumpSystem = b.CubeGrid.JumpSystem;
+                    if (!jumpSystem.IsJumpValid(b.OwnerId))
+                    {
+                        //Log.Msg("Jump not valid");
+                        MyVisualScriptLogicProvider.ShowNotification("Jump not valid", 5000, "Red");
+                        return;
+                    }
+                    double distance = (target.Position - b.CubeGrid.WorldMatrix.Translation).Length();
+                    if (distance < jumpSystem.GetMinJumpDistance(b.OwnerId) || distance > jumpSystem.GetMaxJumpDistance(b.OwnerId))
+                    {
+                        //Log.Msg("Jump too short or long");
+                        MyVisualScriptLogicProvider.ShowNotification("Jump distance too short or long", 5000, "Red");
+                        return;
+                    }
+
+                    //Log.Msg($"ActionJump to '{target.Name}' position={target.Position}");
+                    MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 5000, "Green");
+                    jumpSystem.RequestJump(target.Position, b.OwnerId, 10, b.EntityId);
+
                 };
 
-                MyAPIGateway.TerminalControls.AddControl<IMyJumpDrive>(c);
+                a.Writer = (b, sb) => //for some reason this stops working after a jump
+                {
+                    /*var jd = b as IMyJumpDrive;
+                    IMyGridJumpDriveSystem jumpSystem = b.CubeGrid.JumpSystem;
+
+                    if (jumpSystem.IsJumping)
+                    {
+                        sb.AppendLine("Jumping");
+                        sb.Append($"{(int)jumpSystem.GetRemainingJumpTime()}");
+                    }
+                    else
+                    {
+                        sb.AppendLine(jd.Enabled ? "On" : "Off");
+                        sb.Append($"{(int)(100 * jd.CurrentStoredPower / jd.MaxStoredPower)}%");
+                    }
+
+                    Log.Msg($"Status = {jd.Status} '{sb.ToString()}'");*/
+
+                };
+
+                a.InvalidToolbarTypes = new List<MyToolbarType>()
+                {
+                    MyToolbarType.ButtonPanel,
+                    MyToolbarType.Character,
+                    MyToolbarType.Seat
+                };
+
+                a.Enabled = CustomVisibleCondition;
+
+                MyAPIGateway.TerminalControls.AddAction<IMyJumpDrive>(a);
+            }
+
+            {
+                var a = MyAPIGateway.TerminalControls.CreateAction<IMyJumpDrive>(IdPrefix + "AbortAction");
+
+                a.Name = new StringBuilder("Abort");
+
+                a.ValidForGroups = false;
+                a.Icon = @"Textures\GUI\Icons\Actions\CharacterToggle.dds";
+
+                a.Action = (b) =>
+                {
+                    Log.Msg("ActionAbort ");
+                    b.CubeGrid.JumpSystem.AbortJump(6);
+                };
+
+                a.Writer = (b, sb) => //for some reason this stops working after a jump
+                {
+                };
+
+                a.InvalidToolbarTypes = new List<MyToolbarType>()
+                {
+                    MyToolbarType.ButtonPanel,
+                    MyToolbarType.Character,
+                    MyToolbarType.Seat
+                };
+
+                a.Enabled = CustomVisibleCondition;
+
+                MyAPIGateway.TerminalControls.AddAction<IMyJumpDrive>(a);
             }
         }
 
