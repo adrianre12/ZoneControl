@@ -71,6 +71,8 @@ namespace ZoneControl.Wormhole
                         return;
                     var targets = ZonesSession.Instance.GetZoneTargets(wd.WormholeZoneId);
                     //Log.Msg($"targets[{wd.WormholeZoneId}] {targets.Count}");
+                    if (wd.SelectedTargetListItem < 0 && targets.Count > 0)
+                        wd.SelectedTargetListItem = 0;
 
                     for (int i = 0; i < targets.Count; i++)
                     {
@@ -139,8 +141,13 @@ namespace ZoneControl.Wormhole
                     if (wd == null)
                         return;
                     var targets = ZonesSession.Instance.GetZoneTargets(wd.WormholeZoneId);
-                    if (targets.Count == 0 || wd.SelectedTargetListItem >= targets.Count || wd.SelectedTargetListItem < 0)
+                    if (targets.Count == 1)
+                        wd.SelectedTargetListItem = 0;
+                    else if (targets.Count == 0 || wd.SelectedTargetListItem >= targets.Count || wd.SelectedTargetListItem < 0)
+                    {
+                        MyVisualScriptLogicProvider.ShowNotification("No target location selected", 10000, "Red");
                         return;
+                    }
                     var target = targets[wd.SelectedTargetListItem];
                     IMyGridJumpDriveSystem jumpSystem = b.CubeGrid.JumpSystem;
                     if (!jumpSystem.IsJumpValid(b.OwnerId))

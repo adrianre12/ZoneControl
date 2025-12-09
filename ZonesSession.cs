@@ -226,8 +226,6 @@ namespace ZoneControl
             players.Clear();
             MyAPIGateway.Players.GetPlayers(players);
             nextPlayerIndex = 0;
-            Log.Msg($"RefreshPlayers count={players.Count}");
-
         }
 
         private void NextPlayer()

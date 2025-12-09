@@ -66,7 +66,7 @@ namespace ZoneControl.Wormhole
         private void TargetZoneId_ValueChanged(MySync<long, SyncDirection.FromServer> obj) // only on client
         {
             Log.Msg($"TargetZoneId changed {WormholeZoneId.Value}");
-            SelectedTargetListItem = 0;
+            SelectedTargetListItem = -1;
         }
 
         public override void UpdateAfterSimulation100()
