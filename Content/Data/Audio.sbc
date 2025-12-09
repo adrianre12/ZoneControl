@@ -4,14 +4,14 @@
     <Sound>
       <Id>
         <TypeId>MyObjectBuilder_AudioDefinition</TypeId>
-        <SubtypeId>ShipJumpDriveCharging</SubtypeId>
+        <SubtypeId>ShipWormDriveCharging</SubtypeId>
       </Id>
       <Category>SHIP</Category>
       <Volume>3</Volume>
       <MaxDistance>1000</MaxDistance>
       <Waves>
         <Wave Type="D3">
-          <Start>Sounds\ArcShipJumpDriveCharging3d01.xwm</Start>
+          <Start>Sounds\ArcShipWormDriveCharging3d01.xwm</Start>
         </Wave>
       </Waves>
     </Sound>
@@ -25,7 +25,7 @@
       <MaxDistance>6000</MaxDistance>
       <Waves>
         <Wave Type="D3">
-          <Start>Sounds\ArcShipJumpDriveJumpIn3d01.xwm</Start>
+          <Start>Sounds\ArcWormWormDriveJumpIn3d01.xwm</Start>
         </Wave>
       </Waves>
     </Sound>

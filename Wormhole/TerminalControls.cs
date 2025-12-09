@@ -151,17 +151,17 @@ namespace ZoneControl.Wormhole
                     }
                     var target = targets[wd.SelectedTargetListItem];
                     IMyGridJumpDriveSystem jumpSystem = b.CubeGrid.JumpSystem;
-                    if (!jumpSystem.IsJumpValid(b.OwnerId))
-                    {
-                        //Log.Msg("Jump not valid");
-                        MyVisualScriptLogicProvider.ShowNotification("Jump not valid", 10000, "Red");
-                        return;
-                    }
                     double distance = (target.Position - b.CubeGrid.WorldMatrix.Translation).Length();
                     if (distance < jumpSystem.GetMinJumpDistance(b.OwnerId) || distance > jumpSystem.GetMaxJumpDistance(b.OwnerId))
                     {
                         //Log.Msg("Jump too short or long");
-                        MyVisualScriptLogicProvider.ShowNotification("Jump distance too short or long", 10000, "Red");
+                        MyVisualScriptLogicProvider.ShowNotification("Jump distance too short or long", 5000, "Red");
+                        return;
+                    }
+                    if (!jumpSystem.IsJumpValid(b.OwnerId))
+                    {
+                        //Log.Msg("Jump not valid");
+                        MyVisualScriptLogicProvider.ShowNotification("Jump not valid", 5000, "Red");
                         return;
                     }
 
@@ -215,7 +215,7 @@ namespace ZoneControl.Wormhole
                 a.Action = (b) =>
                 {
                     Log.Msg("ActionAbort ");
-                    //b.CubeGrid.JumpSystem.AbortJump(6);
+                    b.CubeGrid.JumpSystem.AbortJump(6);
 
                     WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
                     if (wd == null)

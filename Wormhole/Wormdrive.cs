@@ -118,7 +118,7 @@ namespace ZoneControl.Wormhole
             //look for jumpdrives enable/disable
             SetJumpdriveState(block.Enabled ? OverrideState.Disabled : OverrideState.None);
 
-            JumpTarget.Value = Vector3D.NegativeInfinity;
+            JumpTarget.Value = Vector3D.PositiveInfinity;
         }
 
         private void SetJumpdriveState(OverrideState overrideState)

@@ -57,6 +57,12 @@
 			<EmissiveColorPreset>Extended</EmissiveColorPreset>
 			<DestroyEffect>Explosion_Warhead_30</DestroyEffect>
 			<DestroySound>WepLrgWarheadExpl</DestroySound>
+
+			<ShipJumpDriveChargingSound>ShipWormDriveCharging</ShipJumpDriveChargingSound>
+			<ShipJumpDriveJumpInSound>ShipWormDriveJumpIn</ShipJumpDriveJumpInSound>
+			<!--ShipJumpDriveJumpOutSound>ShipWormDriveJumpOut</ShipJumpDriveJumpOutSound-->
+			<JumpParticleEffect>Warp_WormDrive</JumpParticleEffect>
+			
 			<TargetingGroups>
 				<string>Propulsion</string>
 			</TargetingGroups>

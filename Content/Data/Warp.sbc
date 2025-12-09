@@ -2,7 +2,7 @@
 <Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <ParticleEffects>
 	<ParticleEffect xsi:type="ParticleEffect">
-      <Id Type="MyObjectBuilder_ParticleEffect" Subtype="Warp" />
+      <Id Type="MyObjectBuilder_ParticleEffect" Subtype="Warp_WormDrive" />
       <ParticleId>53</ParticleId>
       <Length>14</Length>
       <Preload>0</Preload>
