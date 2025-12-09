@@ -7,6 +7,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
+using VRageMath;
 
 namespace ZoneControl.Wormhole
 {
@@ -166,7 +167,8 @@ namespace ZoneControl.Wormhole
 
                     //Log.Msg($"ActionJump to '{target.Name}' position={target.Position}");
                     MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 1500, "Green");
-                    jumpSystem.RequestJump(target.Position, b.OwnerId, 10, b.EntityId);
+                    //jumpSystem.RequestJump(target.Position, b.OwnerId, 10, b.EntityId);
+                    wd.JumpTarget.Value = target.Position;
 
                 };
 
@@ -213,7 +215,12 @@ namespace ZoneControl.Wormhole
                 a.Action = (b) =>
                 {
                     Log.Msg("ActionAbort ");
-                    b.CubeGrid.JumpSystem.AbortJump(6);
+                    //b.CubeGrid.JumpSystem.AbortJump(6);
+
+                    WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
+                    if (wd == null)
+                        return;
+                    wd.JumpTarget.Value = Vector3D.NegativeInfinity; //negative to stop                   
                 };
 
                 a.Writer = (b, sb) => //for some reason this stops working after a jump

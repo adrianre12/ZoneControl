@@ -2,6 +2,7 @@
 using Sandbox.ModAPI;
 using System.Collections.Generic;
 using VRage.Game.Components;
+using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Network;
 using VRage.ObjectBuilders;
 using VRage.Sync;
@@ -18,7 +19,7 @@ namespace ZoneControl.Wormhole
         internal static Dictionary<long, IMyFunctionalBlock> driveRegister = new Dictionary<long, IMyFunctionalBlock>();
 
         internal MySync<long, SyncDirection.FromServer> WormholeZoneId;
-        //internal MySync<Vector3D, SyncDirection.BothWays> JumpTarget;
+        internal MySync<Vector3D, SyncDirection.BothWays> JumpTarget; //PositiveInfinity do nothing, position jump, negative infinity abort
         public int SelectedTargetListItem = -1;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -32,7 +33,7 @@ namespace ZoneControl.Wormhole
         public override void UpdateOnceBeforeFrame()
         {
             base.UpdateOnceBeforeFrame();
-            //JumpTarget.SetLocalValue(Vector3D.NegativeInfinity);
+            JumpTarget.SetLocalValue(Vector3D.PositiveInfinity);
 
             if (!MyAPIGateway.Utilities.IsDedicated) //client only
             {
@@ -41,27 +42,32 @@ namespace ZoneControl.Wormhole
             }
             if (!MyAPIGateway.Session.IsServer) // server only
                 return;
-            //JumpTarget.ValueChanged += JumpTarget_ValueChanged;
+            JumpTarget.ValueChanged += JumpTarget_ValueChanged;
         }
 
-        /*        private void JumpTarget_ValueChanged(MySync<Vector3D, SyncDirection.BothWays> obj) //only on server
-                {
-                    if (JumpTarget.Value == Vector3D.NegativeInfinity)
-                    {
-                        return;
-                    }
-                    Log.Msg($"Start Jump to {JumpTarget.Value}");
+        private void JumpTarget_ValueChanged(MySync<Vector3D, SyncDirection.BothWays> obj) //only on server
+        {
+            if (JumpTarget.Value == Vector3D.PositiveInfinity)
+            {
+                return;
+            }
 
+            IMyGridJumpDriveSystem jumpSystem = block.CubeGrid.JumpSystem;
 
-                    IMyGridJumpDriveSystem jumpSystem = block.CubeGrid.JumpSystem;
-
-                    //jumpSystem.RequestJump(JumpTarget.Value, block.OwnerId, 10, block.EntityId);
-                    //jumpSystem.PerformJump(JumpTarget.Value);
-                    jumpSystem.Jump(JumpTarget.Value, block.OwnerId, 10);
-
-                    //JumpSystem.Jump(block, JumpTarget.Value);
-                    JumpTarget.Value = Vector3D.NegativeInfinity;
-                }*/
+            if (JumpTarget.Value == Vector3D.NegativeInfinity)
+            {
+                Log.Msg("Abort jump");
+                jumpSystem.AbortJump(6);
+            }
+            else
+            {
+                Log.Msg($"Start Jump to {JumpTarget.Value}");
+                jumpSystem.RequestJump(JumpTarget.Value, block.OwnerId, 10, block.EntityId);
+                //jumpSystem.PerformJump(JumpTarget.Value);
+                //jumpSystem.Jump(JumpTarget.Value, block.OwnerId, 10);
+            }
+            JumpTarget.Value = Vector3D.PositiveInfinity;
+        }
 
         private void TargetZoneId_ValueChanged(MySync<long, SyncDirection.FromServer> obj) // only on client
         {
@@ -112,7 +118,7 @@ namespace ZoneControl.Wormhole
             //look for jumpdrives enable/disable
             SetJumpdriveState(block.Enabled ? OverrideState.Disabled : OverrideState.None);
 
-            //JumpTarget.Value = Vector3D.NegativeInfinity;
+            JumpTarget.Value = Vector3D.NegativeInfinity;
         }
 
         private void SetJumpdriveState(OverrideState overrideState)
@@ -158,7 +164,7 @@ namespace ZoneControl.Wormhole
                 return;
 
             base.Close();
-            //JumpTarget.ValueChanged -= JumpTarget_ValueChanged;
+            JumpTarget.ValueChanged -= JumpTarget_ValueChanged;
 
             IMyFunctionalBlock fblock;
             if (driveRegister.TryGetValue(gridId, out fblock))
