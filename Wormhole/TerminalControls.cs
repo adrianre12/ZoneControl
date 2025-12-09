@@ -131,7 +131,7 @@ namespace ZoneControl.Wormhole
                 a.Name = new StringBuilder("Jump");
 
                 a.ValidForGroups = false;
-                a.Icon = @"Textures\GUI\Icons\Actions\CharacterToggle.dds";
+                a.Icon = @"Textures\GUI\Icons\Actions\MeteorSwitchOn.dds";
 
                 a.Action = (b) =>
                 {
@@ -146,19 +146,19 @@ namespace ZoneControl.Wormhole
                     if (!jumpSystem.IsJumpValid(b.OwnerId))
                     {
                         //Log.Msg("Jump not valid");
-                        MyVisualScriptLogicProvider.ShowNotification("Jump not valid", 5000, "Red");
+                        MyVisualScriptLogicProvider.ShowNotification("Jump not valid", 10000, "Red");
                         return;
                     }
                     double distance = (target.Position - b.CubeGrid.WorldMatrix.Translation).Length();
                     if (distance < jumpSystem.GetMinJumpDistance(b.OwnerId) || distance > jumpSystem.GetMaxJumpDistance(b.OwnerId))
                     {
                         //Log.Msg("Jump too short or long");
-                        MyVisualScriptLogicProvider.ShowNotification("Jump distance too short or long", 5000, "Red");
+                        MyVisualScriptLogicProvider.ShowNotification("Jump distance too short or long", 10000, "Red");
                         return;
                     }
 
                     //Log.Msg($"ActionJump to '{target.Name}' position={target.Position}");
-                    MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 5000, "Green");
+                    MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 1500, "Green");
                     jumpSystem.RequestJump(target.Position, b.OwnerId, 10, b.EntityId);
 
                 };
@@ -201,7 +201,7 @@ namespace ZoneControl.Wormhole
                 a.Name = new StringBuilder("Abort");
 
                 a.ValidForGroups = false;
-                a.Icon = @"Textures\GUI\Icons\Actions\CharacterToggle.dds";
+                a.Icon = @"Textures\GUI\Icons\Actions\MeteorSwitchOff.dds";
 
                 a.Action = (b) =>
                 {

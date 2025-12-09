@@ -381,9 +381,29 @@ namespace ZoneControl
 
         private void Punish()
         {
+            if (config.IntruderPunishment == PunishmentType.None)
+            {
+                return;
+            }
+
+            // Punish player
+            switch (config.IntruderPunishment)
+            {
+                case PunishmentType.Destroy:
+                    {
+                        ps.Player.Character.GetInventory().Clear();
+
+                        MyVisualScriptLogicProvider.SetPlayersHydrogenLevel(ps.Player.IdentityId, 0);
+                        if (MyVisualScriptLogicProvider.GetPlayersEnergyLevel(ps.Player.IdentityId) > 0.01)
+                            MyVisualScriptLogicProvider.SetPlayersEnergyLevel(ps.Player.IdentityId, 0.01f);
+                        break;
+                    }
+                default:
+                    break;
+            }
+
             if (ps.Player.Character.UsingEntity is MyCockpit)
             {
-                //Log.Msg("Punish -----------------");
                 var cockpit = ps.Player.Character.UsingEntity as IMyCockpit;
                 if (cockpit.CubeGrid == null)
                 {
@@ -406,39 +426,47 @@ namespace ZoneControl
                 MyVisualScriptLogicProvider.ShowNotification(config.IntruderPunishmentMsg, config.IntruderAlertTimeMs, config.IntruderColour, playerId: ps.Player.IdentityId);
                 MyVisualScriptLogicProvider.SendChatMessage($"{config.IntruderChatMessagePt1} '{ps.Player.DisplayName}' {config.IntruderChatMessagePt2}", config.ChatSenderName, 0, config.IntruderColour);
 
-                foreach (var jd in grid.GetFatBlocks<IMyGyro>())
+                switch (config.IntruderPunishment)
                 {
-                    var fb = jd as IMyFunctionalBlock;
-                    ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
-                    if (gl == null)
-                        continue;
 
-                    gl.SetOverride(OverrideState.Disabled);
+                    case PunishmentType.Disable:
+                        {
+
+                            foreach (var jd in grid.GetFatBlocks<IMyGyro>())
+                            {
+                                var fb = jd as IMyFunctionalBlock;
+                                ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
+                                if (gl == null)
+                                    continue;
+
+                                gl.SetOverride(OverrideState.Disabled);
+                            }
+
+                            foreach (var jd in grid.GetFatBlocks<IMyJumpDrive>())
+                            {
+                                var fb = jd as IMyFunctionalBlock;
+                                ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
+                                if (gl == null)
+                                    continue;
+
+                                gl.SetOverride(OverrideState.Disabled);
+                            }
+                            break;
+                        }
+
+                    case PunishmentType.Destroy:
+                        {
+                            cockpit.RemovePilot();
+                            cockpit.CubeGrid.Close();
+                            break;
+                        }
+                    default:
+                        break;
+
                 }
-
-                foreach (var jd in grid.GetFatBlocks<IMyJumpDrive>())
-                {
-                    var fb = jd as IMyFunctionalBlock;
-                    ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
-                    if (gl == null)
-                        continue;
-
-                    gl.SetOverride(OverrideState.Disabled);
-                }
-
             }
 
 
-            //cockpit.RemovePilot();
-            //cockpit.CubeGrid.Close();
-
-
-
-            //MyVisualScriptLogicProvider.ShowNotification(config.IntruderMessage, config.IntruderAlertTimeMs, config.IntruderColour, playerId: player.IdentityId);
-            //player.Character.GetInventory().Clear();
-
-            //MyVisualScriptLogicProvider.SetPlayersHydrogenLevel(player.IdentityId, 0);
-            //if (MyVisualScriptLogicProvider.GetPlayersEnergyLevel(player.IdentityId) > 0.01) MyVisualScriptLogicProvider.SetPlayersEnergyLevel(player.IdentityId, 0.01f);
         }
 
     }

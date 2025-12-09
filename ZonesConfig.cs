@@ -98,7 +98,7 @@ namespace ZoneControl
             public string UniqueName = "";
             public string GPS = "";
             public bool Wormhole = false;
-            public List<string> Locations;
+            public List<string> Locations = new List<string>();
 
             public PositionInfo() { }
         }
@@ -110,6 +110,13 @@ namespace ZoneControl
             public PlanetInfo() { }
         }
 
+        public enum PunishmentType
+        {
+            None,
+            Disable,
+            Destroy
+        }
+
         public string ChatSenderName = "DSM";
         public string IntruderMessage = "You are an Intruder!";
         public string IntruderChatMessagePt1 = "Good news; Intruder";
@@ -117,6 +124,7 @@ namespace ZoneControl
         public string IntruderColour = "Red";
         public string IntruderPunishmentMsg = "Your Gyros and JumpDrives are disabled for 20 minutes. Ask an admin for help.";
         public int IntruderAlertTimeMs = 9000;
+        public PunishmentType IntruderPunishment = PunishmentType.Disable;
         public List<PositionInfo> Positions;
         public List<PlanetInfo> Planets;
 
@@ -153,7 +161,7 @@ namespace ZoneControl
             Log.Msg($"{configFilename} Doesn't Exist. Creating Default Configuration. ");
 
             var defaultSettings = new ZonesConfig();
-            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "Example1", GPS = "GPS:Anything:0:0:0:Anything:" });
+            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "Example1", FactionTag = "ABC", GPS = "GPS:Anything:0:0:0:Anything:" });
             defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "ExampleWormhole", GPS = "GPS:Anything:0:0:0:Anything:", Wormhole = true, Locations = new List<string>() { "GPS:TargetName1:0:0:0:Anything:", "GPS:TargetName2:0:0:0:Anything:" } });
             defaultSettings.Planets.Add(new PlanetInfo() { PlanetName = "EarthLike-12345d120000", AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 });
 

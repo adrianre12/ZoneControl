@@ -114,26 +114,6 @@ namespace ZoneControl
 
         internal abstract bool CheckDuplicate();
 
-
-        /*        public override void OnAddedToScene()
-        {
-            base.OnAddedToScene();
-            Log.Msg($"OnAddedToScene {block.CubeGrid.DisplayName}");
-        }
-
-        public override void OnRemovedFromScene()
-        {
-            Log.Msg($"OnRemovedFromScene {block.CubeGrid.DisplayName}");
-
-        }
-
-        public override void MarkForClose()
-        {
-            base.MarkForClose();
-            Log.Msg($"MarkForClose {block.CubeGrid.DisplayName}");
-
-        }*/
-
         public override void Close()
         {
             base.Close();
