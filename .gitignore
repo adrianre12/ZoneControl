@@ -430,3 +430,5 @@ FodyWeavers.xsd
 # SE mod files
 metadata.mod
 modinfo.sbmi
+
+/Blender/*.blend[1-9]
