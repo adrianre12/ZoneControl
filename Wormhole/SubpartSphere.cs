@@ -12,8 +12,9 @@ namespace ZoneControl.Wormhole
     internal class SubpartSphere : MyGameLogicComponent
     {
         private const float MAX_DISTANCE_SQ = 20 * 20;
-        private const float DefaultIncrementPer10Tick = 1 / 7200f; //2mins @ 6 ticks/s
-        private const float FadeChangePer10Tick = 0.005f;
+        internal const float MaxChargeTimeSeconds = 120; //2mins
+        internal const float DefaultIncrementPerTick = 1 / (MaxChargeTimeSeconds * 60); //2mins @ 60 ticks/s
+        private const float FadeChangePerTick = 0.005f;
 
         private static readonly Color EmissiveGreen = new Color(57, 255, 20);
 
@@ -53,6 +54,7 @@ namespace ZoneControl.Wormhole
 
             if (!block.IsFunctional)
             {
+                lastVisibleLerpValue = float.MaxValue;
                 return;
             }
 
@@ -65,7 +67,7 @@ namespace ZoneControl.Wormhole
                 }
                 else
                 {
-                    currentStoredPower += jumpDrive.MaxStoredPower * DefaultIncrementPer10Tick;
+                    currentStoredPower += jumpDrive.MaxStoredPower * DefaultIncrementPerTick;
                 }
                 jumpDrive.CurrentStoredPower = currentStoredPower;
             }
@@ -83,11 +85,11 @@ namespace ZoneControl.Wormhole
 
             if (lerpValue > visibleLerpValue)
             {
-                visibleLerpValue += Math.Min(FadeChangePer10Tick, lerpValue - visibleLerpValue);
+                visibleLerpValue += Math.Min(FadeChangePerTick, lerpValue - visibleLerpValue);
             }
             else if (lerpValue < visibleLerpValue)
             {
-                visibleLerpValue -= Math.Min(FadeChangePer10Tick, visibleLerpValue - lerpValue);
+                visibleLerpValue -= Math.Min(FadeChangePerTick, visibleLerpValue - lerpValue);
             }
             else
             {

@@ -45,5 +45,49 @@
 			<SpecularColorFactor>0.0</SpecularColorFactor>
 			<IsFlareOccluder>false</IsFlareOccluder>
 		</TransparentMaterial>
+		<TransparentMaterial>
+			<Id>
+				<TypeId>TransparentMaterialDefinition</TypeId>
+				<SubtypeId>WarpDriveShield.001</SubtypeId>
+			</Id>
+			<AlphaMistingEnable>false</AlphaMistingEnable>
+			<AlphaMistingStart>0.0</AlphaMistingStart>
+			<AlphaMistingEnd>0.0</AlphaMistingEnd>
+			<CanBeAffectedByOtherLights>false</CanBeAffectedByOtherLights>
+			<SoftParticleDistanceScale>20.0</SoftParticleDistanceScale>
+			<Texture>Textures\Models\Environment\SafeZone\SafeZoneShield_Voronoi_alphamask.dds</Texture>
+			<Color>
+				<X>0.0</X>
+				<Y>0.0</Y>
+				<Z>10.0</Z>
+				<W>0.1</W>
+			</Color>
+			<ColorAdd>
+				<X>0.0</X>
+				<Y>0.0</Y>
+				<Z>0.0</Z>
+				<W>0.0</W>
+			</ColorAdd>
+			<ShadowMultiplier>
+				<X>0.0</X>
+				<Y>0.0</Y>
+				<Z>0.0</Z>
+				<W>0.0</W>
+			</ShadowMultiplier>
+			<LightMultiplier>
+				<X>0.0</X>
+				<Y>0.0</Y>
+				<Z>0.0</Z>
+				<W>0.0</W>
+			</LightMultiplier>
+			<Reflectivity>0.0</Reflectivity>
+			<Fresnel>0.0</Fresnel>
+			<ReflectionShadow>0.0</ReflectionShadow>
+			<Gloss>0.0</Gloss>
+			<GlossTextureAdd>0.55</GlossTextureAdd>
+			<GlossTexture>Textures\Models\Environment\SafeZone\SafeZoneShield_Voronoi_ng.dds</GlossTexture>
+			<SpecularColorFactor>0.0</SpecularColorFactor>
+			<IsFlareOccluder>false</IsFlareOccluder>
+		</TransparentMaterial>
 	</TransparentMaterials>
 </Definitions>

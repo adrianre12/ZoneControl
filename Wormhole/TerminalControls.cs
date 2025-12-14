@@ -138,24 +138,38 @@ namespace ZoneControl.Wormhole
 
                 a.Action = (b) =>
                 {
+                    IMyGridJumpDriveSystem jumpSystem = b.CubeGrid.JumpSystem;
+                    IMyJumpDrive jumpDrive = (IMyJumpDrive)b;
                     WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
                     if (wd == null)
                         return;
+
+                    if (!jumpDrive.Enabled)
+                    {
+                        MyVisualScriptLogicProvider.ShowNotification("Drive not enabled", 5000, "Red");
+                        return;
+                    }
+
+                    if (jumpDrive.MaxStoredPower - jumpDrive.CurrentStoredPower > 0.0001f)
+                    {
+                        MyVisualScriptLogicProvider.ShowNotification("Drive not charged", 5000, "Red");
+                        return;
+                    }
+
                     var targets = ZonesSession.Instance.GetZoneTargets(wd.WormholeZoneId);
                     if (targets.Count == 1)
                         wd.SelectedTargetListItem = 0;
                     else if (targets.Count == 0 || wd.SelectedTargetListItem >= targets.Count || wd.SelectedTargetListItem < 0)
                     {
-                        MyVisualScriptLogicProvider.ShowNotification("No target location selected", 10000, "Red");
+                        MyVisualScriptLogicProvider.ShowNotification("No target location selected", 5000, "Red");
                         return;
                     }
                     var target = targets[wd.SelectedTargetListItem];
-                    IMyGridJumpDriveSystem jumpSystem = b.CubeGrid.JumpSystem;
                     double distance = (target.Position - b.CubeGrid.WorldMatrix.Translation).Length();
                     if (distance < jumpSystem.GetMinJumpDistance(b.OwnerId) || distance > jumpSystem.GetMaxJumpDistance(b.OwnerId))
                     {
                         //Log.Msg("Jump too short or long");
-                        MyVisualScriptLogicProvider.ShowNotification("Jump distance too short or long", 5000, "Red");
+                        MyVisualScriptLogicProvider.ShowNotification("Distance too short or long", 5000, "Red");
                         return;
                     }
                     if (!jumpSystem.IsJumpValid(b.OwnerId))
@@ -261,7 +275,6 @@ namespace ZoneControl.Wormhole
                     case "ShowInToolbarConfig":
                     case "Name":
                     case "ShowOnHUD":
-                    case "Recharge":
                         {
                             break;
                         }

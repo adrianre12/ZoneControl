@@ -1,11 +1,14 @@
 ﻿using Sandbox.Common.ObjectBuilders;
 using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Network;
 using VRage.ObjectBuilders;
 using VRage.Sync;
+using VRage.Utils;
 using VRageMath;
 using static ZoneControl.ZonesConfig;
 
@@ -39,6 +42,7 @@ namespace ZoneControl.Wormhole
             {
                 TerminalControls.DoOnce(ModContext);
                 WormholeZoneId.ValueChanged += TargetZoneId_ValueChanged;
+                block.AppendingCustomInfo += AppendingCustomInfo;
             }
             if (!MyAPIGateway.Session.IsServer) // server only
                 return;
@@ -78,6 +82,28 @@ namespace ZoneControl.Wormhole
         public override void UpdateAfterSimulation100()
         {
             base.UpdateAfterSimulation100();
+
+            if (!MyAPIGateway.Utilities.IsDedicated) //client only
+            {
+                try
+                {
+                    if (MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
+                    {
+                        block.GetDetailedInfo().Clear();
+                        block.RefreshCustomInfo();
+                        block.SetDetailedInfoDirty();
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.Msg(e.ToString());
+                }
+
+            }
+
+            if (!MyAPIGateway.Session.IsServer)
+                return;
+
             if (block.Enabled)
             {
                 double movedSqrd = Vector3D.DistanceSquared(activationPosition, block.CubeGrid.GetPosition());
@@ -137,7 +163,6 @@ namespace ZoneControl.Wormhole
             }
         }
 
-
         internal override bool CheckDuplicate()
         {
             IMyFunctionalBlock fblock;
@@ -152,6 +177,45 @@ namespace ZoneControl.Wormhole
             }
 
             return true;
+        }
+
+        private void AppendingCustomInfo(IMyTerminalBlock block, StringBuilder sb)
+        {
+
+            var jumpDrive = (IMyJumpDrive)block;
+            //sb.Append("Type: ");
+            //sb.Append(block.CustomName);
+            sb.Append("\n");
+
+            //sb.Append("Max Stored Power:");
+            //MyValueFormatter.AppendWorkHoursInBestUnit(jumpDrive.MaxStoredPower, sb);
+            //sb.Append("\n");
+
+            //sb.Append("Stored Power: ");
+            // MyValueFormatter.AppendWorkHoursInBestUnit(jumpDrive.CurrentStoredPower, sb);
+            //sb.Append("\n");
+            sb.Append("Wormhole charged In: ");
+            MyValueFormatter.AppendTimeInBestUnit((1 - jumpDrive.CurrentStoredPower / jumpDrive.MaxStoredPower) * SubpartSphere.MaxChargeTimeSeconds, sb);
+            sb.Append("\n");
+
+            /*                        int num = (int)(base.CubeGrid.GridSystems.JumpSystem.GetMaxJumpDistance(base.OwnerId) / 1000.0);
+                                    detailedInfo.AppendStringBuilder(MyTexts.Get(MySpaceTexts.BlockPropertiesText_MaxJump));
+                                    detailedInfo.Append(num).Append(" km");
+                                    double num2 = 0.0;
+                                    if (this.m_targetSync.Value != 0 && this.m_jumpTarget != null)
+                                    {
+                                        num2 = (this.m_jumpTarget.Coords - base.CubeGrid.WorldMatrix.Translation).Length();
+                                    }
+                                    else if (this.m_selectedBeaconCoords.Value != Vector3D.Zero)
+                                    {
+                                        num2 = (this.m_selectedBeaconCoords.Value - base.CubeGrid.WorldMatrix.Translation).Length();
+                                    }
+                                    if (num2 > 0.0)
+                                    {
+                                        detailedInfo.Append("\n");
+                                        float num3 = Math.Min(1f, (float)((double)num / num2));
+                                        detailedInfo.Append(MyTexts.Get(MySpaceTexts.BlockPropertiesText_CurrentJump).ToString() + (num3 * 100f).ToString("F2") + "%");
+                                    }*/
         }
 
         public override void Close()

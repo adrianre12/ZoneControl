@@ -37,8 +37,12 @@ namespace ZoneControl
         public override void UpdateOnceBeforeFrame()
         {
             base.UpdateOnceBeforeFrame();
+            if (block?.CubeGrid?.Physics == null)
+                return;
 
-            if (!MyAPIGateway.Session.IsServer || block?.CubeGrid?.Physics == null)
+            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
+
+            if (!MyAPIGateway.Session.IsServer)
                 return;
 
             originalEnabledState = block.Enabled;
@@ -50,13 +54,13 @@ namespace ZoneControl
                 overrideSetting = OverrideState.Disabled;
             }
 
-            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
             block.EnabledChanged += Block_EnabledChanged;
         }
 
         public override void UpdateAfterSimulation100()
         {
-            //Log.Msg($"Tick {block.CustomName} {overrideCounter}");
+            if (!MyAPIGateway.Session.IsServer)
+                return;
             if (overrideCounter > 0 && --overrideCounter <= 0)
                 SetDefaultOverride();
         }
