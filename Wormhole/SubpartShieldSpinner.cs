@@ -40,23 +40,21 @@ namespace ZoneControl.Wormhole
 
             if (block.CubeGrid?.Physics == null)
                 return;
-            Log.Msg("spiner update");
             NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
         }
 
         public override void UpdateBeforeSimulation()
         {
+            if (!block.IsFunctional)
+                return;
+
+            var camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation; // local machine camera position
+
+            if (Vector3D.DistanceSquared(camPos, block.GetPosition()) > MAX_DISTANCE_SQ)
+                return;
+
             try
             {
-
-                if (!block.IsFunctional)
-                    return;
-
-                var camPos = MyAPIGateway.Session.Camera.WorldMatrix.Translation; // local machine camera position
-
-                if (Vector3D.DistanceSquared(camPos, block.GetPosition()) > MAX_DISTANCE_SQ)
-                    return;
-
                 MyEntitySubpart subpart;
                 if (Entity.TryGetSubpart(SUBPART_NAME, out subpart))
                 {
