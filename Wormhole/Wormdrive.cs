@@ -61,12 +61,12 @@ namespace ZoneControl.Wormhole
 
             if (JumpTarget.Value == Vector3D.NegativeInfinity)
             {
-                Log.Msg("Abort jump");
+                //Log.Msg("Abort jump");
                 jumpSystem.AbortJump(6);
             }
             else
             {
-                Log.Msg($"Start Jump to {JumpTarget.Value}");
+                //Log.Msg($"Start Jump to {JumpTarget.Value}");
                 jumpSystem.RequestJump(JumpTarget.Value, block.OwnerId, 10, block.EntityId);
                 //jumpSystem.PerformJump(JumpTarget.Value);
                 //jumpSystem.Jump(JumpTarget.Value, block.OwnerId, 10);
