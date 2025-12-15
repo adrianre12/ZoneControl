@@ -181,8 +181,7 @@ namespace ZoneControl.Wormhole
 
                     //Log.Msg($"ActionJump to '{target.Name}' position={target.Position}");
                     MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 1500, "Green");
-                    //jumpSystem.RequestJump(target.Position, b.OwnerId, 10, b.EntityId);
-                    wd.JumpTarget.Value = target.Position;
+                    wd.JumpTarget.Value = target.Position; // trigger jump on server
 
                 };
 

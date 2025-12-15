@@ -44,6 +44,7 @@ namespace ZoneControl.Wormhole
                 WormholeZoneId.ValueChanged += TargetZoneId_ValueChanged;
                 block.AppendingCustomInfo += AppendingCustomInfo;
             }
+
             if (!MyAPIGateway.Session.IsServer) // server only
                 return;
             JumpTarget.ValueChanged += JumpTarget_ValueChanged;
@@ -89,7 +90,6 @@ namespace ZoneControl.Wormhole
                 {
                     if (MyAPIGateway.Gui.GetCurrentScreen == MyTerminalPageEnum.ControlPanel)
                     {
-                        block.GetDetailedInfo().Clear();
                         block.RefreshCustomInfo();
                         block.SetDetailedInfoDirty();
                     }
@@ -181,41 +181,11 @@ namespace ZoneControl.Wormhole
 
         private void AppendingCustomInfo(IMyTerminalBlock block, StringBuilder sb)
         {
-
             var jumpDrive = (IMyJumpDrive)block;
-            //sb.Append("Type: ");
-            //sb.Append(block.CustomName);
-            sb.Append("\n");
 
-            //sb.Append("Max Stored Power:");
-            //MyValueFormatter.AppendWorkHoursInBestUnit(jumpDrive.MaxStoredPower, sb);
-            //sb.Append("\n");
-
-            //sb.Append("Stored Power: ");
-            // MyValueFormatter.AppendWorkHoursInBestUnit(jumpDrive.CurrentStoredPower, sb);
-            //sb.Append("\n");
-            sb.Append("Wormhole charged In: ");
+            sb.Append("\nWormhole charged In: ");
             MyValueFormatter.AppendTimeInBestUnit((1 - jumpDrive.CurrentStoredPower / jumpDrive.MaxStoredPower) * SubpartSphere.MaxChargeTimeSeconds, sb);
             sb.Append("\n");
-
-            /*                        int num = (int)(base.CubeGrid.GridSystems.JumpSystem.GetMaxJumpDistance(base.OwnerId) / 1000.0);
-                                    detailedInfo.AppendStringBuilder(MyTexts.Get(MySpaceTexts.BlockPropertiesText_MaxJump));
-                                    detailedInfo.Append(num).Append(" km");
-                                    double num2 = 0.0;
-                                    if (this.m_targetSync.Value != 0 && this.m_jumpTarget != null)
-                                    {
-                                        num2 = (this.m_jumpTarget.Coords - base.CubeGrid.WorldMatrix.Translation).Length();
-                                    }
-                                    else if (this.m_selectedBeaconCoords.Value != Vector3D.Zero)
-                                    {
-                                        num2 = (this.m_selectedBeaconCoords.Value - base.CubeGrid.WorldMatrix.Translation).Length();
-                                    }
-                                    if (num2 > 0.0)
-                                    {
-                                        detailedInfo.Append("\n");
-                                        float num3 = Math.Min(1f, (float)((double)num / num2));
-                                        detailedInfo.Append(MyTexts.Get(MySpaceTexts.BlockPropertiesText_CurrentJump).ToString() + (num3 * 100f).ToString("F2") + "%");
-                                    }*/
         }
 
         public override void Close()

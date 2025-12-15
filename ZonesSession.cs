@@ -271,17 +271,46 @@ namespace ZoneControl
 
         private ZoneInfo FindClosestZone(long Id, Vector3D position)
         {
+            ZoneInfo tmpZone = null;
             ZoneInfo zone = null;
+            bool foundZone = false;
+            double distance;
+            double foundDistance = 0;
+            double foundRadius = 0;
+
             //Log.Msg($"zones.count={zones.Count}");
             for (int i = 0; i < zones.Count; i++)
             {
-                zone = zones[i];
-                if (zone.AlertRadius == 0)
+                tmpZone = zones[i];
+                if (tmpZone.AlertRadius == 0)
                     continue;
                 //Log.Msg($"zone {zone.UniqueName} position={zone.Position}");
-                if (zone.InZone(position))
-                    return zone;
+                distance = Vector3D.DistanceSquared(position, tmpZone.Position);
+                if (foundZone) //already found a zone, look for more
+                {
+                    if (foundRadius != tmpZone.AlertRadiusSqrd) //not same size as zone, return zone
+                        return zone;
+
+                    if (distance > tmpZone.AlertRadiusSqrd || distance >= foundDistance) //It is not closer, look for another
+                        continue;
+
+                    foundDistance = distance;
+                    zone = tmpZone;
+                }
+                else
+                {
+                    if (distance < tmpZone.AlertRadiusSqrd) // in the first zone
+                    {
+                        foundZone = true;
+                        zone = tmpZone;
+                        foundDistance = distance;
+                        foundRadius = tmpZone.AlertRadiusSqrd;
+                    }
+                }
             }
+            if (foundZone) // catch the last found zone
+                return zone;
+
             return null;
         }
 
