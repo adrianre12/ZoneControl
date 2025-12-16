@@ -13,7 +13,7 @@ namespace ZoneControl.Wormhole
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_JumpDrive), false, new string[] { "LargeWormholeDrive" })]
     internal class SubpartSphereCharger : MyGameLogicComponent
     {
-        private const float MAX_DISTANCE_SQ = 20 * 20;
+        private const float MAX_DISTANCE_SQ = 1000 * 1000;
         internal const float MaxChargeTimeSeconds = 120; //2mins
         internal const float DefaultIncrementPerTick = 1 / (MaxChargeTimeSeconds * 60); //2mins @ 60 ticks/s
         private const float FadeChangePerTick = 0.0025f;

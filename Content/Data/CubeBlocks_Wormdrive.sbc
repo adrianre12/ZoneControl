@@ -47,7 +47,7 @@
 			<PowerNeededForJump>1</PowerNeededForJump>
 			<PowerEfficiency>0.97</PowerEfficiency>
 
-			<MaxJumpDistance>100000000</MaxJumpDistance>
+			<MaxJumpDistance>200000000</MaxJumpDistance>
 			<MaxJumpMass>100000000</MaxJumpMass>
 			<EmissiveColorPreset>Extended</EmissiveColorPreset>
 			<DestroyEffect>Explosion_Warhead_30</DestroyEffect>
