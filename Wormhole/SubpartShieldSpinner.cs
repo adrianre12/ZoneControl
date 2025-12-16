@@ -9,6 +9,7 @@ using VRageMath;
 
 namespace ZoneControl.Wormhole
 { // from https://github.com/THDigi/SE-ModScript-Examples/blob/master/Data/Scripts/Examples/Example_SpinningSubpart.cs
+    // not using spinner component as it only does one fixed axis
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_JumpDrive), false, new string[] { "LargeWormholeDrive" })]
 
     internal class SubpartShieldSpinner : MyGameLogicComponent
