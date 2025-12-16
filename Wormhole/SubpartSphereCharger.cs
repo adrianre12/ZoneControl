@@ -26,6 +26,7 @@ namespace ZoneControl.Wormhole
         private float lastVisibleLerpValue = float.MaxValue;
         private float currentStoredPower;
         private MySync<float, SyncDirection.BothWays> newChargeValue;
+        internal bool JumpButtonPressed = false;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
@@ -65,6 +66,8 @@ namespace ZoneControl.Wormhole
             if (block.Enabled)
             {
                 currentStoredPower = block.CurrentStoredPower;
+                newChargeValue.Value = currentStoredPower;
+                JumpButtonPressed = false;
             }
         }
 
@@ -90,16 +93,16 @@ namespace ZoneControl.Wormhole
                 {
                     currentStoredPower += block.MaxStoredPower * DefaultIncrementPerTick;
                 }
-                block.CurrentStoredPower = currentStoredPower;
             }
-            //Log.Msg($"currentStoredPower={currentStoredPower} CurrentStoredPower={block.CurrentStoredPower}");
+            //Log.Msg($" JumpButtonPressed={JumpButtonPressed} newChargeValue={newChargeValue.Value} currentStoredPower={currentStoredPower} Block.CurrentStoredPower={block.CurrentStoredPower}");
             SetEmissiveWhite(currentStoredPower * oneOverMaxStoredPower);
         }
 
         public override void UpdateBeforeSimulation100() // only on client
         {
             base.UpdateBeforeSimulation100();
-            if (block.Enabled)
+
+            if (block.Enabled && JumpButtonPressed == false)
                 newChargeValue.Value = currentStoredPower;
         }
 

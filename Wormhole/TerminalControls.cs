@@ -142,7 +142,10 @@ namespace ZoneControl.Wormhole
                     IMyJumpDrive jumpDrive = (IMyJumpDrive)b;
                     WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
                     if (wd == null)
+                    {
+                        Log.Msg("Error Wormdrive gamelogic is null");
                         return;
+                    }
 
                     if (!jumpDrive.Enabled)
                     {
@@ -179,6 +182,13 @@ namespace ZoneControl.Wormhole
                         return;
                     }
 
+                    SubpartSphereCharger charger = b?.GameLogic?.GetAs<SubpartSphereCharger>();
+                    if (charger == null)
+                    {
+                        Log.Msg("Error SubpartSphereCharger gamelogic is null");
+                        return;
+                    }
+                    charger.JumpButtonPressed = true;
                     //Log.Msg($"ActionJump to '{target.Name}' position={target.Position}");
                     MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 1500, "Green");
                     wd.JumpTarget.Value = target.Position; // trigger jump on server
@@ -233,7 +243,8 @@ namespace ZoneControl.Wormhole
                     WormDrive wd = b?.GameLogic?.GetAs<WormDrive>();
                     if (wd == null)
                         return;
-                    wd.JumpTarget.Value = Vector3D.NegativeInfinity; //negative to stop                   
+                    wd.JumpTarget.Value = Vector3D.NegativeInfinity; //negative to stop
+                    ((IMyFunctionalBlock)b).Enabled = false;
                 };
 
                 a.Writer = (b, sb) => //for some reason this stops working after a jump
