@@ -1,11 +1,14 @@
 ﻿using Sandbox.Common.ObjectBuilders;
+using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
+using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI.Network;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRage.Sync;
+using VRage.Utils;
 using VRageMath;
 
 namespace ZoneControl.Wormhole
@@ -25,6 +28,7 @@ namespace ZoneControl.Wormhole
         private float visibleLerpValue;
         private float lastVisibleLerpValue = float.MaxValue;
         private float currentStoredPower;
+        private bool charging = false;
         private MySync<float, SyncDirection.BothWays> newChargeValue;
         internal bool JumpButtonPressed = false;
 
@@ -68,6 +72,7 @@ namespace ZoneControl.Wormhole
                 currentStoredPower = block.CurrentStoredPower;
                 newChargeValue.Value = currentStoredPower;
                 JumpButtonPressed = false;
+                charging = true;
             }
         }
 
@@ -88,6 +93,7 @@ namespace ZoneControl.Wormhole
                 if (currentStoredPower >= block.MaxStoredPower)
                 {
                     currentStoredPower = block.MaxStoredPower;
+                    charging = false;
                 }
                 else
                 {
@@ -104,8 +110,15 @@ namespace ZoneControl.Wormhole
 
             if (block.Enabled && JumpButtonPressed == false)
                 newChargeValue.Value = currentStoredPower;
-        }
 
+            if (block.Enabled && charging)
+            {
+                var sb = new StringBuilder();
+                sb.Append("Wormhole charged In: ");
+                MyValueFormatter.AppendTimeInBestUnit((1 - currentStoredPower / block.MaxStoredPower) * MaxChargeTimeSeconds, sb);
+                MyVisualScriptLogicProvider.ShowNotification(sb.ToString(), 1000, "Green");
+            }
+        }
         private void SetEmissiveWhite(float lerpValue)
         {
             if (!block.Enabled)
