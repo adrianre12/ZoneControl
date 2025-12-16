@@ -25,7 +25,7 @@
       <MaxDistance>6000</MaxDistance>
       <Waves>
         <Wave Type="D3">
-          <Start>Sounds\ArcWormWormDriveJumpIn3d01.xwm</Start>
+          <Start>Sounds\ArcShipWormDriveJumpIn3d01.xwm</Start>
         </Wave>
       </Waves>
     </Sound>

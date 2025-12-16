@@ -17,10 +17,10 @@
 			<Components>
 				<Component Subtype="SteelPlate" Count="40" />
 				<Component Subtype="MetalGrid" Count="50" />
-				<Component Subtype="GravityGenerator" Count="20" />
+				<!--Component Subtype="GravityGenerator" Count="20" /-->
 				<Component Subtype="Detector" Count="20" />
 				<Component Subtype="PowerCell" Count="120" />
-				<Component Subtype="Superconductor" Count="100" />
+				<!--Component Subtype="Superconductor" Count="100" /-->
 				<Component Subtype="Computer" Count="300" />
 				<Component Subtype="Construction" Count="40" />
 				<Component Subtype="SteelPlate" Count="20" />
