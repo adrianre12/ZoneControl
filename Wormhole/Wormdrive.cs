@@ -184,8 +184,7 @@ namespace ZoneControl.Wormhole
             var jumpDrive = (IMyJumpDrive)block;
 
             sb.Append("\nWormhole charged In: ");
-            MyValueFormatter.AppendTimeInBestUnit((1 - jumpDrive.CurrentStoredPower / jumpDrive.MaxStoredPower) * SubpartSphere.MaxChargeTimeSeconds, sb);
-            sb.Append("\n");
+            MyValueFormatter.AppendTimeInBestUnit((1 - jumpDrive.CurrentStoredPower / jumpDrive.MaxStoredPower) * SubpartSphereCharger.MaxChargeTimeSeconds, sb);
         }
 
         public override void Close()
