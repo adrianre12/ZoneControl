@@ -1,7 +1,7 @@
-﻿using ProtoBuf;
+﻿using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Serialization;
 using VRageMath;
 
@@ -12,43 +12,9 @@ using VRageMath;
 
 namespace ZoneControl
 {
-    public class ZonesConfig
+    public class ZonesConfig : ZoneConfigBase
     {
-        const string configFilename = "Config-ZoneControl.xml";
-
-        [XmlIgnore]
-        public bool ConfigLoaded;
-        [XmlIgnore]
-        private static HashSet<string> fonts = new HashSet<string>() {"Debug","Red","Green","Blue", "White","DarkBlue","UrlNormal","UrlHighlight","ErrorMessageBoxCaption","ErrorMessageBoxText",
-            "InfoMessageBoxCaption","InfoMessageBoxText","ScreenCaption","GameCredits","LoadingScreen","BuildInfo","BuildInfoHighlight"};
-
-
-        public class InfoBase
-        {
-            public double AlertRadius = 0;
-            public string AlertMessageEnter = "Enter";
-            public string ColourEnter = "Red";
-            public string AlertMessageLeave = "Leave";
-            public string ColourLeave = "Green";
-            public int AlertTimeMs = 9000;
-            public string FactionTag = "";
-            public bool NoIntruders = false;
-
-            public InfoBase() { }
-            protected void Set(InfoBase info)
-            {
-                AlertRadius = info.AlertRadius;
-                AlertMessageEnter = info.AlertMessageEnter;
-                ColourEnter = CheckFontColour(info.ColourEnter);
-                AlertMessageLeave = info.AlertMessageLeave;
-                ColourLeave = CheckFontColour(info.ColourLeave);
-                AlertTimeMs = info.AlertTimeMs;
-                FactionTag = info.FactionTag;
-                NoIntruders = info.NoIntruders;
-            }
-        }
-
-        public class ZoneInfo : InfoBase
+        public class ZoneInfoInternal : InfoCommon
         {
             public long Id = -1;
             public string UniqueName = "";
@@ -57,19 +23,29 @@ namespace ZoneControl
             public double AlertRadiusSqrd;
             public List<GPSposition> Targets = new List<GPSposition>();
 
-            public ZoneInfo()
+            public ZoneInfoInternal()
             {
             }
 
-            public ZoneInfo(long id, PositionInfo info)
+            public ZoneInfoInternal(long id, PositionInfo info)
             {
-                Set(info);
+                Set(info.Info);
                 Id = id;
                 UniqueName = info.UniqueName;
                 GPSposition gp = new GPSposition(info.GPS);
                 Position = gp.Position;
-                Wormhole = info.Wormhole;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
+            }
+
+            public ZoneInfoInternal(long id, WormholeInfo info)
+            {
+                Set(info.Info);
+                Id = id;
+                UniqueName = info.UniqueName;
+                GPSposition gp = new GPSposition(info.GPS);
+                Position = gp.Position;
+                AlertRadiusSqrd = AlertRadius * AlertRadius;
+                Wormhole = true;
                 foreach (string location in info.Locations)
                 {
                     Targets.Add(new GPSposition(location));
@@ -78,9 +54,9 @@ namespace ZoneControl
                 Log.Msg($"Zone {UniqueName} Targets.Count={Targets.Count}");
             }
 
-            public ZoneInfo(long id, PlanetInfo info, Vector3D position)
+            public ZoneInfoInternal(long id, PlanetInfo info, Vector3D position)
             {
-                Set(info);
+                Set(info.Info);
                 Id = id;
                 UniqueName = info.PlanetName;
                 Position = position;
@@ -93,19 +69,29 @@ namespace ZoneControl
             }
         }
 
-        public class PositionInfo : InfoBase
+        public class PositionInfo
         {
             public string UniqueName = "";
             public string GPS = "";
-            public bool Wormhole = false;
-            public List<string> Locations = new List<string>();
+            public InfoCommon Info = new InfoCommon();
+
 
             public PositionInfo() { }
         }
 
-        public class PlanetInfo : InfoBase
+        public class WormholeInfo : PositionInfo
+        {
+            [XmlArray]
+            [XmlArrayItem(ElementName = "GPS")]
+            public List<string> Locations = new List<string>();
+
+            public WormholeInfo() { }
+        }
+
+        public class PlanetInfo
         {
             public string PlanetName = "";
+            public InfoCommon Info = new InfoCommon();
 
             public PlanetInfo() { }
         }
@@ -127,109 +113,72 @@ namespace ZoneControl
         public PunishmentType IntruderPunishment = PunishmentType.Disable;
         public List<PositionInfo> Positions;
         public List<PlanetInfo> Planets;
-
+        public List<WormholeInfo> Wormholes;
 
         public ZonesConfig()
         {
             Positions = new List<PositionInfo>();
+            Wormholes = new List<WormholeInfo>();
             Planets = new List<PlanetInfo>();
         }
 
-        public static ZonesConfig Load()
+        internal static List<ZoneInfoInternal> NewZoneList(ZonesConfig config)
         {
-            if (MyAPIGateway.Utilities.FileExistsInWorldStorage(configFilename, typeof(ZonesConfig)) == true)
+            List<ZoneInfoInternal> zones = new List<ZoneInfoInternal>();
+            Dictionary<string, Vector3D> planetPositions = GetPlanetPositions();
+            long zoneId = 0;
+            foreach (var info in config.Positions)
             {
-                try
-                {
-                    ZonesConfig config = null;
-                    var reader = MyAPIGateway.Utilities.ReadFileInWorldStorage(configFilename, typeof(ZonesConfig));
-                    string configcontents = reader.ReadToEnd();
-                    config = MyAPIGateway.Utilities.SerializeFromXML<ZonesConfig>(configcontents);
-                    config.ConfigLoaded = true;
-                    Log.Msg($"Loaded Existing Settings From {configFilename}");
-                    return config;
-                }
-                catch (Exception exc)
-                {
-                    Log.Msg(exc.ToString());
-                    Log.Msg($"ERROR: Could Not Load Settings From {configFilename}. Using Empty Configuration.");
-                    return new ZonesConfig();
-                }
-
+                var zone = new ZoneInfoInternal(zoneId, info);
+                zones.Add(zone);
+                Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
+                ++zoneId;
             }
 
-            Log.Msg($"{configFilename} Doesn't Exist. Creating Default Configuration. ");
-
-            var defaultSettings = new ZonesConfig();
-            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "Example1", FactionTag = "ABC", GPS = "GPS:Anything:0:0:0:Anything:" });
-            defaultSettings.Positions.Add(new PositionInfo() { UniqueName = "ExampleWormhole", GPS = "GPS:Anything:0:0:0:Anything:", Wormhole = true, Locations = new List<string>() { "GPS:TargetName1:0:0:0:Anything:", "GPS:TargetName2:0:0:0:Anything:" } });
-            defaultSettings.Planets.Add(new PlanetInfo() { PlanetName = "EarthLike-12345d120000", AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 });
-
-            try
+            Vector3D planetPosition;
+            foreach (var info in config.Planets)
             {
-                using (var writer = MyAPIGateway.Utilities.WriteFileInWorldStorage(configFilename, typeof(ZonesConfig)))
-                {
-                    writer.Write(MyAPIGateway.Utilities.SerializeToXML<ZonesConfig>(defaultSettings));
+                if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
+                { // Planets cant be wormholes so no targets.
+                    zones.Add(new ZoneInfoInternal(zoneId, info, planetPosition));
+                    Log.Msg($"Adding Planet Zone {info.PlanetName} zoneId={zoneId} to Zones list");
+                    ++zoneId;
                 }
-
             }
-            catch (Exception exc)
+
+            foreach (var info in config.Wormholes)
             {
-                Log.Msg(exc.ToString());
-                Log.Msg($"ERROR: Could Not Create {configFilename}. Default Settings Will Be Used.");
+                var zone = new ZoneInfoInternal(zoneId, info);
+                zones.Add(zone);
+                Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
+                ++zoneId;
             }
 
-            return defaultSettings;
-        }
-
-        private static string CheckFontColour(string font)
-        {
-            if (fonts.Contains(font))
-                return font;
-
-            Log.Msg($"Invalid colour in config: {font}");
-            return "White";
-        }
-
-        [ProtoContract]
-        public class GPSposition
-        {
-            [ProtoMember(1)]
-            public string Name = "Error";
-            [ProtoMember(2)]
-            public Vector3D Position = Vector3D.Zero;
-
-            public GPSposition() { }
-
-            public GPSposition(string name, Vector3D position)
-            {
-                Name = name;
-                Position = position;
-            }
-
-            public GPSposition(string gps)
-            {
-                string[] tmp = gps.ToLower().Split(':');
-                if (tmp[0] != "gps" || tmp.Length < 5)
-                {
-                    Log.Msg($"Invalid GPS, does not start with GPS or is too short '{gps}'");
-                    return;
-                }
-
-                double x;
-                double y;
-                double z;
-                if (!double.TryParse(tmp[2], out x) || !double.TryParse(tmp[3], out y) || !double.TryParse(tmp[4], out z))
-                {
-                    Log.Msg($"Invalid GPS, failed to parse X,Y,Z '{gps}'");
-                    return;
-                }
-
-                Name = tmp[1];
-                Position = new Vector3D(x, y, z);
-            }
+            zones = zones.OrderBy(x => x.AlertRadius).ToList();
+            //foreach (var zone in zones) Log.Msg($"Zone {zone.UniqueName} radius {zone.AlertRadius}");
+            return zones;
         }
 
 
+        private static Dictionary<string, Vector3D> GetPlanetPositions()
+        {
+            Dictionary<string, Vector3D> planetPositions = new Dictionary<string, Vector3D>();
+            MyAPIGateway.Entities.GetEntities(null, e =>
+            {
+                if (e is MyPlanet)
+                {
+                    var planet = e as MyPlanet;
+                    if (planetPositions.ContainsKey(planet.StorageName))
+                    {
+                        Log.Msg($"Error duplicate planet name found: {planet.StorageName}");
+                        return false;
+                    }
+                    Log.Msg($"Planet Found {planet.StorageName}");
+                    planetPositions.Add(planet.StorageName, planet.WorldMatrix.Translation);
+                }
+                return false;
+            });
+            return planetPositions;
+        }
     }
 }

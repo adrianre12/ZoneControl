@@ -4,10 +4,10 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static ZoneControl.ZoneConfigBase;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfig;
 
@@ -25,11 +25,11 @@ namespace ZoneControl
 
         private IMyModContext Mod;
         private ZonesConfig config;
-        private List<ZoneInfo> zones = new List<ZoneInfo>();
+        private List<ZoneInfoInternal> zones = new List<ZoneInfoInternal>();
         private List<IMyPlayer> players = new List<IMyPlayer>();
         private int nextRefreshFrame = 0;
         private int nextPlayerIndex = 0;
-        private ZoneInfo currentZone = null;
+        private ZoneInfoInternal currentZone = null;
 
         [ProtoContract]
         private class ZoneTargets
@@ -44,7 +44,7 @@ namespace ZoneControl
         private struct ZoneCacheItem
         {
             public Vector3D Position;
-            public ZoneInfo Zone;
+            public ZoneInfoInternal Zone;
         }
         private Dictionary<long, ZoneCacheItem> zoneCache = new Dictionary<long, ZoneCacheItem>();
 
@@ -85,33 +85,14 @@ namespace ZoneControl
         public void LoadDataOnHost()
         {
             Log.Msg("ZoneNotification Host Start");
-            config = ZonesConfig.Load();
+            config = ZonesConfig.LoadConfig();
+            zones = ZonesConfig.NewZoneList(config);
 
-            Dictionary<string, Vector3D> planetPositions = GetPlanetPositions();
-            long zoneId = 0;
-            foreach (var info in config.Positions)
+            foreach (var zone in zones)
             {
-                var zone = new ZoneInfo(zoneId, info);
-                zoneTargets.Targets.Add(zoneId, zone.Targets);
-                zones.Add(zone);
-                Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
-                ++zoneId;
+                if (zone.Wormhole)
+                    zoneTargets.Targets.Add(zone.Id, zone.Targets);
             }
-
-            Vector3D planetPosition;
-            foreach (var info in config.Planets)
-            {
-                if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
-                { // Planets cant be wormholes so no targets.
-                    zones.Add(new ZoneInfo(zoneId, info, planetPosition));
-                    Log.Msg($"Adding Planet Zone {info.PlanetName} zoneId={zoneId} to Zones list");
-                    ++zoneId;
-
-                }
-            }
-
-            zones = zones.OrderBy(x => x.AlertRadius).ToList();
-            //foreach (var zone in zones) Log.Msg($"Zone {zone.UniqueName} radius {zone.AlertRadius}");
 
             try
             {
@@ -200,27 +181,6 @@ namespace ZoneControl
 
         }
 
-        private Dictionary<string, Vector3D> GetPlanetPositions()
-        {
-            Dictionary<string, Vector3D> planetPositions = new Dictionary<string, Vector3D>();
-            MyAPIGateway.Entities.GetEntities(null, e =>
-            {
-                if (e is MyPlanet)
-                {
-                    var planet = e as MyPlanet;
-                    if (planetPositions.ContainsKey(planet.StorageName))
-                    {
-                        Log.Msg($"Error duplicate planet name found: {planet.StorageName}");
-                        return false;
-                    }
-                    Log.Msg($"Planet Found {planet.StorageName}");
-                    planetPositions.Add(planet.StorageName, planet.WorldMatrix.Translation);
-                }
-                return false;
-            });
-            return planetPositions;
-        }
-
         private void RefreshPlayers()
         {
             players.Clear();
@@ -241,7 +201,7 @@ namespace ZoneControl
             ++nextPlayerIndex;
         }
 
-        public ZoneInfo FindClosestZoneCached(long Id, Vector3D position)
+        public ZoneInfoInternal FindClosestZoneCached(long Id, Vector3D position)
         {
             // check cached
             ZoneCacheItem cacheItem;
@@ -260,7 +220,7 @@ namespace ZoneControl
             // cache miss find closest
             //Log.Msg("Cache Miss");
 
-            ZoneInfo zone = FindClosestZone(Id, position);
+            ZoneInfoInternal zone = FindClosestZone(Id, position);
             if (zone != null)
             {
                 zoneCache[Id] = new ZoneCacheItem() { Position = position, Zone = zone };
@@ -269,10 +229,10 @@ namespace ZoneControl
             return null;
         }
 
-        private ZoneInfo FindClosestZone(long Id, Vector3D position)
+        private ZoneInfoInternal FindClosestZone(long Id, Vector3D position)
         {
-            ZoneInfo tmpZone = null;
-            ZoneInfo zone = null;
+            ZoneInfoInternal tmpZone = null;
+            ZoneInfoInternal zone = null;
             bool foundZone = false;
             double distance;
             double foundDistance = 0;
@@ -320,7 +280,7 @@ namespace ZoneControl
 
         }
 
-        private ZoneInfo CheckPlayerPosition()
+        private ZoneInfoInternal CheckPlayerPosition()
         {
             if (ps.Player == null)
                 return null;
