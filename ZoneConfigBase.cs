@@ -18,6 +18,25 @@ namespace ZoneControl
         private static HashSet<string> fonts = new HashSet<string>() {"Debug","Red","Green","Blue", "White","DarkBlue","UrlNormal","UrlHighlight","ErrorMessageBoxCaption","ErrorMessageBoxText",
             "InfoMessageBoxCaption","InfoMessageBoxText","ScreenCaption","GameCredits","LoadingScreen","BuildInfo","BuildInfoHighlight"};
 
+        public class IntruderInfo
+        {
+            public enum PunishmentType
+            {
+                None,
+                Disable,
+                Destroy
+            }
+
+            public string ChatSenderName = "DSM";
+            public string Message = "You are an Intruder!";
+            public string ChatMessagePt1 = "Good news; Intruder";
+            public string ChatMessagePt2 = "did not read the rules and is now being punished.";
+            public string Colour = "Red";
+            public string PunishmentMsg = "Your Gyros and JumpDrives are disabled for 20 minutes. Ask an admin for help.";
+            public int AlertTimeMs = 9000;
+            public PunishmentType Punishment = PunishmentType.Disable;
+            public string AdminTestFactionTag = "DSM";
+        }
 
         public class InfoCommon
         {
@@ -34,12 +53,12 @@ namespace ZoneControl
             protected void Set(InfoCommon info)
             {
                 AlertRadius = info.AlertRadius;
-                AlertMessageEnter = info.AlertMessageEnter;
+                AlertMessageEnter = info.AlertMessageEnter ?? "";
                 ColourEnter = CheckFontColour(info.ColourEnter);
-                AlertMessageLeave = info.AlertMessageLeave;
+                AlertMessageLeave = info.AlertMessageLeave ?? "";
                 ColourLeave = CheckFontColour(info.ColourLeave);
                 AlertTimeMs = info.AlertTimeMs;
-                FactionTag = info.FactionTag;
+                FactionTag = info.FactionTag != null ? info.FactionTag.Trim() : "";
                 NoIntruders = info.NoIntruders;
             }
         }

@@ -8,6 +8,7 @@ using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
 using static ZoneControl.ZoneConfigBase;
+using static ZoneControl.ZoneConfigBase.IntruderInfo;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfig;
 
@@ -90,7 +91,7 @@ namespace ZoneControl
 
             foreach (var zone in zones)
             {
-                if (zone.Wormhole)
+                if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole)
                     zoneTargets.Targets.Add(zone.Id, zone.Targets);
             }
 
@@ -342,7 +343,7 @@ namespace ZoneControl
 
         private bool CheckIfIntruding()
         {
-            if (currentZone == null || ps.Player == null)//|| ps.Player.PromoteLevel != MyPromoteLevel.None)
+            if (currentZone == null || ps.Player == null)
             {
                 return false;
             }
@@ -352,29 +353,32 @@ namespace ZoneControl
 
             //Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {currentZone.UniqueName} {currentZone.FactionTag}");
 
-            if (!currentZone.NoIntruders || currentZone.FactionTag == null || currentZone.FactionTag.Trim().Length == 0)
+            if (!currentZone.NoIntruders || currentZone.FactionTag == null || currentZone.FactionTag.Length == 0)
                 return false;
 
-            if (playerFactionTag != null && playerFactionTag == currentZone.FactionTag.Trim())
+            if (playerFactionTag == currentZone.FactionTag.Trim())
                 return false;
 
             Vector3D position = ps.Player.GetPosition();
 
-            Log.Msg($"Intruder: GPS:{ps.Player.DisplayName}:{position.X}:{position.Y}:{position.Z}:#FFF17575:");
+            MyVisualScriptLogicProvider.ShowNotification(config.Intruder.Message, config.Intruder.AlertTimeMs, config.Intruder.Colour, playerId: ps.Player.IdentityId);
 
-            MyVisualScriptLogicProvider.ShowNotification(config.IntruderMessage, config.IntruderAlertTimeMs, config.IntruderColour, playerId: ps.Player.IdentityId);
+            if (ps.Player.PromoteLevel != MyPromoteLevel.None && playerFactionTag != config.Intruder.AdminTestFactionTag.Trim())
+                return false; //admins dont get punished unless in AdminTestFactionTag
+
+            Log.Msg($"Intruder: GPS:{ps.Player.DisplayName}:{position.X}:{position.Y}:{position.Z}:#FFF17575:");
             return true;
         }
 
         private void Punish()
         {
-            if (config.IntruderPunishment == PunishmentType.None)
+            if (config.Intruder.Punishment == PunishmentType.None)
             {
                 return;
             }
 
             // Punish player
-            switch (config.IntruderPunishment)
+            switch (config.Intruder.Punishment)
             {
                 case PunishmentType.Destroy:
                     {
@@ -410,10 +414,10 @@ namespace ZoneControl
                 }
 
                 punishmentCache.Add(grid.EntityId, MyAPIGateway.Session.GameplayFrameCounter + DefaultPunishmentPeriod);
-                MyVisualScriptLogicProvider.ShowNotification(config.IntruderPunishmentMsg, config.IntruderAlertTimeMs, config.IntruderColour, playerId: ps.Player.IdentityId);
-                MyVisualScriptLogicProvider.SendChatMessage($"{config.IntruderChatMessagePt1} '{ps.Player.DisplayName}' {config.IntruderChatMessagePt2}", config.ChatSenderName, 0, config.IntruderColour);
+                MyVisualScriptLogicProvider.ShowNotification(config.Intruder.PunishmentMsg, config.Intruder.AlertTimeMs, config.Intruder.Colour, playerId: ps.Player.IdentityId);
+                MyVisualScriptLogicProvider.SendChatMessage($"{config.Intruder.ChatMessagePt1} '{ps.Player.DisplayName}' {config.Intruder.ChatMessagePt2}", config.Intruder.ChatSenderName, 0, config.Intruder.Colour);
 
-                switch (config.IntruderPunishment)
+                switch (config.Intruder.Punishment)
                 {
 
                     case PunishmentType.Disable:

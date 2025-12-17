@@ -107,7 +107,7 @@ namespace ZoneControl
 
         public void SetOverride(OverrideState state)
         {
-            Log.Msg($"{block.CustomName} overrideState={state}");
+            //Log.Msg($"{block.CustomName} overrideState={state}");
             overrideSetting = state;
             SetOverrideCounter();
             if (overrideSetting == OverrideState.None)

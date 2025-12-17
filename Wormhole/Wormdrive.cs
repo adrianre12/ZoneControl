@@ -76,7 +76,7 @@ namespace ZoneControl.Wormhole
 
         private void TargetZoneId_ValueChanged(MySync<long, SyncDirection.FromServer> obj) // only on client
         {
-            Log.Msg($"TargetZoneId changed {WormholeZoneId.Value}");
+            //Log.Msg($"TargetZoneId changed {WormholeZoneId.Value}");
             SelectedTargetListItem = -1;
         }
 
@@ -120,12 +120,12 @@ namespace ZoneControl.Wormhole
         {
             base.Block_EnabledChanged(obj);
 
-            Log.Msg($"Wormhole Enable changed {block.Enabled}");
+            //Log.Msg($"Wormhole Enable changed {block.Enabled}");
             if (block.Enabled)
             {
                 //check for wormhole zone
                 ZoneInfoInternal closetZone = ZonesSession.Instance.FindClosestZoneCached(gridId, block.CubeGrid.GetPosition());
-                if (closetZone == null || !closetZone.Wormhole ||
+                if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole ||
                     (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag()))
                 { // its not a accessable wormhole
                     SetDefaultOverride();

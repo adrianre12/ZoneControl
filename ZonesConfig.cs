@@ -19,10 +19,15 @@ namespace ZoneControl
             public long Id = -1;
             public string UniqueName = "";
             public Vector3D Position;
-            public bool Wormhole = false;
+            public ZoneType Type = ZoneType.Zone;
             public double AlertRadiusSqrd;
             public List<GPSposition> Targets = new List<GPSposition>();
 
+            public enum ZoneType
+            {
+                Zone,
+                Wormhole
+            }
             public ZoneInfoInternal()
             {
             }
@@ -45,7 +50,7 @@ namespace ZoneControl
                 GPSposition gp = new GPSposition(info.GPS);
                 Position = gp.Position;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
-                Wormhole = true;
+                Type = ZoneType.Wormhole;
                 foreach (string location in info.Locations)
                 {
                     Targets.Add(new GPSposition(location));
@@ -96,21 +101,7 @@ namespace ZoneControl
             public PlanetInfo() { }
         }
 
-        public enum PunishmentType
-        {
-            None,
-            Disable,
-            Destroy
-        }
-
-        public string ChatSenderName = "DSM";
-        public string IntruderMessage = "You are an Intruder!";
-        public string IntruderChatMessagePt1 = "Good news; Intruder";
-        public string IntruderChatMessagePt2 = "did not read the rules and is now being punished.";
-        public string IntruderColour = "Red";
-        public string IntruderPunishmentMsg = "Your Gyros and JumpDrives are disabled for 20 minutes. Ask an admin for help.";
-        public int IntruderAlertTimeMs = 9000;
-        public PunishmentType IntruderPunishment = PunishmentType.Disable;
+        public IntruderInfo Intruder = new IntruderInfo();
         public List<PositionInfo> Positions;
         public List<PlanetInfo> Planets;
         public List<WormholeInfo> Wormholes;
