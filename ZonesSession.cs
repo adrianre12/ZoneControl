@@ -10,8 +10,6 @@ using VRageMath;
 using static ZoneControl.ZoneConfigBase;
 using static ZoneControl.ZoneConfigBase.IntruderInfo;
 using static ZoneControl.ZoneControlBase;
-using static ZoneControl.ZonesConfig;
-using static ZoneControl.ZonesConfig.ZoneInfoInternal;
 
 namespace ZoneControl
 {
@@ -20,14 +18,13 @@ namespace ZoneControl
     {
         const int DefaultRefreshPeriod = 600; // 10s
         const int DefaultPunishmentPeriod = 18000; // 5 mins
-        const double CacheMovementLimitSqrd = 100; //10m
         const string VariableId = nameof(ZonesSession);
 
         public static ZonesSession Instance;
 
-        private IMyModContext Mod;
         private ZonesConfig config;
-        private List<ZoneInfoInternal> zones = new List<ZoneInfoInternal>();
+        private ZoneDictionary zoneDict;
+        private ZoneDictionary subZoneDict;
         private List<IMyPlayer> players = new List<IMyPlayer>();
         private int nextRefreshFrame = 0;
         private int nextPlayerIndex = 0;
@@ -43,15 +40,6 @@ namespace ZoneControl
         }
         private ZoneTargets zoneTargets = new ZoneTargets();
 
-        private struct ZoneCacheItem
-        {
-            public Vector3D Position;
-            public ZoneInfoInternal Zone;
-        }
-        private Dictionary<long, ZoneCacheItem> zoneCache = new Dictionary<long, ZoneCacheItem>();
-        private Dictionary<long, ZoneCacheItem> subZoneCache = new Dictionary<long, ZoneCacheItem>();
-
-
         private class PlayerState
         {
             public IMyPlayer Player = null;
@@ -61,14 +49,13 @@ namespace ZoneControl
             {
             }
         }
-
         private PlayerState ps = new PlayerState();
+
         private Dictionary<long, int> punishmentCache = new Dictionary<long, int>();
 
         public override void LoadData()
         {
             Instance = this;
-            Mod = ModContext;
             Log.Msg("LoadData...........");
             if (MyAPIGateway.Session.IsServer)
                 LoadDataOnHost();
@@ -85,9 +72,9 @@ namespace ZoneControl
         {
             Log.Msg("ZoneNotification Host Start");
             config = ZonesConfig.LoadConfig();
-            zones = ZonesConfig.NewZoneList(config);
-
-            foreach (var zone in zones)
+            zoneDict = ZoneDictionary.NewZoneDictionary(config);
+            subZoneDict = ZoneDictionary.NewSubZoneDictionary(config);
+            foreach (var zone in subZoneDict.Zones)
             {
                 if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole)
                     zoneTargets.Targets.Add(zone.Id, zone.Targets);
@@ -144,13 +131,13 @@ namespace ZoneControl
                     return;
                 }
 
-
-                CheckPlayerPosition(subZoneCache, ZoneType.Wormhole | ZoneType.Anomaly);
+                //Look for subZones
+                CheckPlayerPosition(subZoneDict);
 
                 //isIntruder not set, check position
-                //CheckPlayerPosition(zoneCache, ZoneType.Zone);
+                currentZone = CheckPlayerPosition(zoneDict);
                 // check if intruding
-                if (CheckIfIntruding())
+                if (CheckIfIntruding(currentZone))
                 {
                     ps.IsIntruder = true;
 
@@ -203,87 +190,14 @@ namespace ZoneControl
             ++nextPlayerIndex;
         }
 
-        public ZoneInfoInternal FindClosestWormholeCached(long Id, Vector3D position)
-        {
-            // check cached
-            ZoneCacheItem cacheItem;
-            if (zoneCache.TryGetValue(Id, out cacheItem))
-            {
-                if (Vector3D.DistanceSquared(cacheItem.Position, position) < CacheMovementLimitSqrd)
-                {
-                    if (cacheItem.Zone.InZone(position))
-                    {
-                        //Log.Msg("Cache Hit");
-                        return cacheItem.Zone;
-                    }
-                }
-                zoneCache.Remove(Id);
-            }
-            // cache miss find closest
-            //Log.Msg("Cache Miss");
 
-            ZoneInfoInternal zone = FindClosestZone(ZoneType.Wormhole, Id, position);
-            if (zone != null)
-            {
-                zoneCache[Id] = new ZoneCacheItem() { Position = position, Zone = zone };
-                return zone;
-            }
-            return null;
-        }
-
-        private ZoneInfoInternal FindClosestZone(ZoneType zoneType, long Id, Vector3D position)
-        {
-            ZoneInfoInternal tmpZone = null;
-            ZoneInfoInternal zone = null;
-            bool foundZone = false;
-            double distance;
-            double foundDistance = 0;
-            double foundRadius = 0;
-
-            Log.Msg($"zoneType={zoneType}");
-            for (int i = 0; i < zones.Count; i++)
-            {
-                tmpZone = zones[i];
-                if (!zoneType.HasFlag(tmpZone.Type))
-                    continue;
-                if (tmpZone.AlertRadius == 0)
-                    continue;
-                Log.Msg($"zone {zone.UniqueName} position={zone.Position} Type={zone.Type}");
-                distance = Vector3D.DistanceSquared(position, tmpZone.Position);
-                if (foundZone) //already found a zone, look for more
-                {
-                    if (foundRadius != tmpZone.AlertRadiusSqrd) //not same size as zone, return zone
-                        return zone;
-
-                    if (distance > tmpZone.AlertRadiusSqrd || distance >= foundDistance) //It is not closer, look for another
-                        continue;
-
-                    foundDistance = distance;
-                    zone = tmpZone;
-                }
-                else
-                {
-                    if (distance < tmpZone.AlertRadiusSqrd) // in the first zone
-                    {
-                        foundZone = true;
-                        zone = tmpZone;
-                        foundDistance = distance;
-                        foundRadius = tmpZone.AlertRadiusSqrd;
-                    }
-                }
-            }
-            if (foundZone) // catch the last found zone
-                return zone;
-
-            return null;
-        }
 
         public List<GPSposition> GetZoneTargets(long zoneId)
         {
             return zoneTargets.Targets.GetValueOrDefault(zoneId, new List<GPSposition>());
         }
 
-        private ZoneInfoInternal CheckPlayerPosition(Dictionary<long, ZoneCacheItem> cache, ZoneType zoneType)
+        private ZoneInfoInternal CheckPlayerPosition(ZoneDictionary dict)
         {
             if (ps.Player == null)
                 return null;
@@ -292,60 +206,30 @@ namespace ZoneControl
 
             Vector3D playerPosition = ps.Player.GetPosition();
 
-            currentZone = FindClosestZone(zoneType, ps.Player.IdentityId, playerPosition);
-            ZoneCacheItem cached;
-            bool cacheHit = cache.TryGetValue(ps.Player.IdentityId, out cached);
-
-
-            if (currentZone == null) //not in a zone
-            {
-                if (cacheHit) //we were in a zone
-                {
-                    //Log.Msg($"Left zone {cached.Zone.UniqueName} to void");
-                    cache.Remove(ps.Player.IdentityId); // become zoneless, find it on the next pass
-                    if (cached.Zone.AlertMessageLeave.Length > 0)
-                        MyVisualScriptLogicProvider.ShowNotification(cached.Zone.AlertMessageLeave,
-                        disappearTimeMs: cached.Zone.AlertTimeMs, font: cached.Zone.ColourLeave,
-                        playerId: ps.Player.IdentityId);
-                }
-                return null;
+            ZoneInfoInternal foundZone;
+            ZoneInfoInternal lastZone;
+            bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone);
+            //Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName}");
+            if (!moved)
+            { //Has not moved
+                //Log.Msg("Not moved");
+                return foundZone; //can be null
             }
 
-            //currentZone != null
-            if (cacheHit)
-            {
-                if (currentZone == cached.Zone) // In the same zone
-                {
-                    //Log.Msg($"Already in zone {currentZone.UniqueName}");
-                    return currentZone;
-                }
+            if (lastZone != null && lastZone.AlertMessageLeave.Length > 0)
+                MyVisualScriptLogicProvider.ShowNotification(lastZone.AlertMessageLeave,
+                    disappearTimeMs: lastZone.AlertTimeMs, font: lastZone.ColourLeave, playerId: ps.Player.IdentityId);
 
-                //Log.Msg($"Change zone from {cached.Zone.UniqueName} to {currentZone.UniqueName}");
-                if (cached.Zone.AlertMessageLeave.Length > 0)
-                    MyVisualScriptLogicProvider.ShowNotification(cached.Zone.AlertMessageLeave,
-                    disappearTimeMs: cached.Zone.AlertTimeMs, font: cached.Zone.ColourLeave,
-                    playerId: ps.Player.IdentityId);
-                cache[ps.Player.IdentityId] = new ZoneCacheItem() { Position = playerPosition, Zone = currentZone };
-                if (currentZone.AlertMessageEnter.Length > 0)
-                    MyVisualScriptLogicProvider.ShowNotification(currentZone.AlertMessageEnter, disappearTimeMs: currentZone.AlertTimeMs,
-                    font: currentZone.ColourEnter, playerId: ps.Player.IdentityId);
-                return currentZone;
-            }
+            if (foundZone != null && foundZone.AlertMessageEnter.Length > 0)
+                MyVisualScriptLogicProvider.ShowNotification(foundZone.AlertMessageEnter,
+                    disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
 
-            // cache miss 
-
-            //Log.Msg($"Entered zone {currentZone.UniqueName} from void");
-            if (currentZone.AlertMessageEnter.Length > 0)
-                MyVisualScriptLogicProvider.ShowNotification(currentZone.AlertMessageEnter,
-                disappearTimeMs: currentZone.AlertTimeMs, font: currentZone.ColourEnter, playerId: ps.Player.IdentityId);
-            cache.Add(ps.Player.IdentityId, new ZoneCacheItem() { Position = playerPosition, Zone = currentZone });
-
-            return currentZone;
+            return foundZone;
         }
 
-        private bool CheckIfIntruding()
+        private bool CheckIfIntruding(ZoneInfoInternal zone)
         {
-            if (currentZone == null || ps.Player == null)
+            if (zone == null || ps.Player == null)
             {
                 return false;
             }
@@ -353,12 +237,12 @@ namespace ZoneControl
             string playerFactionTag = MyVisualScriptLogicProvider.GetPlayersFactionTag(ps.Player.IdentityId).Trim();
 
 
-            //Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {currentZone.UniqueName} {currentZone.FactionTag}");
+            //Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {zone.UniqueName} {zone.FactionTag}");
 
-            if (!currentZone.NoIntruders || currentZone.FactionTag == null || currentZone.FactionTag.Length == 0)
+            if (!zone.NoIntruders || zone.FactionTag == null || zone.FactionTag.Length == 0)
                 return false;
 
-            if (playerFactionTag == currentZone.FactionTag.Trim())
+            if (playerFactionTag == zone.FactionTag.Trim())
                 return false;
 
             Vector3D position = ps.Player.GetPosition();
@@ -462,5 +346,12 @@ namespace ZoneControl
 
         }
 
+        internal ZoneInfoInternal FindClosestWormholeCached(long gridId, Vector3D vector3D)
+        {
+            ZoneInfoInternal currentZone;
+            ZoneInfoInternal lastZone;
+            subZoneDict.GetZone(gridId, vector3D, out currentZone, out lastZone);
+            return currentZone;
+        }
     }
 }
