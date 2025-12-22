@@ -47,7 +47,6 @@ namespace ZoneControl
             public string ColourLeave = "Green";
             public int AlertTimeMs = 9000;
             public string FactionTag = "";
-            public bool NoIntruders = false;
 
             public InfoCommon() { }
             protected void Set(InfoCommon info)
@@ -59,7 +58,6 @@ namespace ZoneControl
                 ColourLeave = CheckFontColour(info.ColourLeave);
                 AlertTimeMs = info.AlertTimeMs;
                 FactionTag = info.FactionTag != null ? info.FactionTag.Trim() : "";
-                NoIntruders = info.NoIntruders;
             }
         }
 
@@ -98,7 +96,7 @@ namespace ZoneControl
             Log.Msg($"{configFilename} Doesn't Exist. Creating Default Configuration. ");
 
             var defaultSettings = new ZonesConfig();
-            defaultSettings.Positions.Add(new PositionInfo()
+            defaultSettings.Zones.Add(new ZoneInfo()
             {
                 UniqueName = "Example1",
                 GPS = "GPS:Anything:0:0:0:Anything:",

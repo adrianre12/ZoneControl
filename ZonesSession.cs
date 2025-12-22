@@ -11,6 +11,7 @@ using static ZoneControl.ZoneConfigBase;
 using static ZoneControl.ZoneConfigBase.IntruderInfo;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfig;
+using static ZoneControl.ZonesConfig.ZoneInfoInternal;
 
 namespace ZoneControl
 {
@@ -48,6 +49,8 @@ namespace ZoneControl
             public ZoneInfoInternal Zone;
         }
         private Dictionary<long, ZoneCacheItem> zoneCache = new Dictionary<long, ZoneCacheItem>();
+        private Dictionary<long, ZoneCacheItem> subZoneCache = new Dictionary<long, ZoneCacheItem>();
+
 
         private class PlayerState
         {
@@ -56,12 +59,6 @@ namespace ZoneControl
 
             public PlayerState()
             {
-            }
-
-            public PlayerState(IMyPlayer player, bool isIntruder = false)
-            {
-                Player = player;
-                IsIntruder = isIntruder;
             }
         }
 
@@ -78,6 +75,7 @@ namespace ZoneControl
             else
                 LoadDataOnClient();
         }
+
         protected override void UnloadData()
         {
             Instance = null;
@@ -122,7 +120,6 @@ namespace ZoneControl
                 Log.Msg($"Error deserializing zoneTargets\n {e}");
                 zoneTargets = new ZoneTargets();
             }
-
         }
 
         public override void UpdateAfterSimulation()
@@ -146,8 +143,12 @@ namespace ZoneControl
                     NextPlayer();
                     return;
                 }
+
+
+                CheckPlayerPosition(subZoneCache, ZoneType.Wormhole | ZoneType.Anomaly);
+
                 //isIntruder not set, check position
-                CheckPlayerPosition();
+                //CheckPlayerPosition(zoneCache, ZoneType.Zone);
                 // check if intruding
                 if (CheckIfIntruding())
                 {
@@ -202,7 +203,7 @@ namespace ZoneControl
             ++nextPlayerIndex;
         }
 
-        public ZoneInfoInternal FindClosestZoneCached(long Id, Vector3D position)
+        public ZoneInfoInternal FindClosestWormholeCached(long Id, Vector3D position)
         {
             // check cached
             ZoneCacheItem cacheItem;
@@ -221,7 +222,7 @@ namespace ZoneControl
             // cache miss find closest
             //Log.Msg("Cache Miss");
 
-            ZoneInfoInternal zone = FindClosestZone(Id, position);
+            ZoneInfoInternal zone = FindClosestZone(ZoneType.Wormhole, Id, position);
             if (zone != null)
             {
                 zoneCache[Id] = new ZoneCacheItem() { Position = position, Zone = zone };
@@ -230,7 +231,7 @@ namespace ZoneControl
             return null;
         }
 
-        private ZoneInfoInternal FindClosestZone(long Id, Vector3D position)
+        private ZoneInfoInternal FindClosestZone(ZoneType zoneType, long Id, Vector3D position)
         {
             ZoneInfoInternal tmpZone = null;
             ZoneInfoInternal zone = null;
@@ -239,13 +240,15 @@ namespace ZoneControl
             double foundDistance = 0;
             double foundRadius = 0;
 
-            //Log.Msg($"zones.count={zones.Count}");
+            Log.Msg($"zoneType={zoneType}");
             for (int i = 0; i < zones.Count; i++)
             {
                 tmpZone = zones[i];
+                if (!zoneType.HasFlag(tmpZone.Type))
+                    continue;
                 if (tmpZone.AlertRadius == 0)
                     continue;
-                //Log.Msg($"zone {zone.UniqueName} position={zone.Position}");
+                Log.Msg($"zone {zone.UniqueName} position={zone.Position} Type={zone.Type}");
                 distance = Vector3D.DistanceSquared(position, tmpZone.Position);
                 if (foundZone) //already found a zone, look for more
                 {
@@ -278,10 +281,9 @@ namespace ZoneControl
         public List<GPSposition> GetZoneTargets(long zoneId)
         {
             return zoneTargets.Targets.GetValueOrDefault(zoneId, new List<GPSposition>());
-
         }
 
-        private ZoneInfoInternal CheckPlayerPosition()
+        private ZoneInfoInternal CheckPlayerPosition(Dictionary<long, ZoneCacheItem> cache, ZoneType zoneType)
         {
             if (ps.Player == null)
                 return null;
@@ -290,9 +292,9 @@ namespace ZoneControl
 
             Vector3D playerPosition = ps.Player.GetPosition();
 
-            currentZone = FindClosestZone(ps.Player.IdentityId, playerPosition);
+            currentZone = FindClosestZone(zoneType, ps.Player.IdentityId, playerPosition);
             ZoneCacheItem cached;
-            bool cacheHit = zoneCache.TryGetValue(ps.Player.IdentityId, out cached);
+            bool cacheHit = cache.TryGetValue(ps.Player.IdentityId, out cached);
 
 
             if (currentZone == null) //not in a zone
@@ -300,7 +302,7 @@ namespace ZoneControl
                 if (cacheHit) //we were in a zone
                 {
                     //Log.Msg($"Left zone {cached.Zone.UniqueName} to void");
-                    zoneCache.Remove(ps.Player.IdentityId); // become zoneless, find it on the next pass
+                    cache.Remove(ps.Player.IdentityId); // become zoneless, find it on the next pass
                     if (cached.Zone.AlertMessageLeave.Length > 0)
                         MyVisualScriptLogicProvider.ShowNotification(cached.Zone.AlertMessageLeave,
                         disappearTimeMs: cached.Zone.AlertTimeMs, font: cached.Zone.ColourLeave,
@@ -323,7 +325,7 @@ namespace ZoneControl
                     MyVisualScriptLogicProvider.ShowNotification(cached.Zone.AlertMessageLeave,
                     disappearTimeMs: cached.Zone.AlertTimeMs, font: cached.Zone.ColourLeave,
                     playerId: ps.Player.IdentityId);
-                zoneCache[ps.Player.IdentityId] = new ZoneCacheItem() { Position = playerPosition, Zone = currentZone };
+                cache[ps.Player.IdentityId] = new ZoneCacheItem() { Position = playerPosition, Zone = currentZone };
                 if (currentZone.AlertMessageEnter.Length > 0)
                     MyVisualScriptLogicProvider.ShowNotification(currentZone.AlertMessageEnter, disappearTimeMs: currentZone.AlertTimeMs,
                     font: currentZone.ColourEnter, playerId: ps.Player.IdentityId);
@@ -336,7 +338,7 @@ namespace ZoneControl
             if (currentZone.AlertMessageEnter.Length > 0)
                 MyVisualScriptLogicProvider.ShowNotification(currentZone.AlertMessageEnter,
                 disappearTimeMs: currentZone.AlertTimeMs, font: currentZone.ColourEnter, playerId: ps.Player.IdentityId);
-            zoneCache.Add(ps.Player.IdentityId, new ZoneCacheItem() { Position = playerPosition, Zone = currentZone });
+            cache.Add(ps.Player.IdentityId, new ZoneCacheItem() { Position = playerPosition, Zone = currentZone });
 
             return currentZone;
         }

@@ -1,5 +1,6 @@
 ﻿using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
@@ -16,6 +17,7 @@ namespace ZoneControl
     {
         public class ZoneInfoInternal : InfoCommon
         {
+            public bool NoIntruders = false;
             public long Id = -1;
             public string UniqueName = "";
             public Vector3D Position;
@@ -23,16 +25,29 @@ namespace ZoneControl
             public double AlertRadiusSqrd;
             public List<GPSposition> Targets = new List<GPSposition>();
 
+            [Flags]
             public enum ZoneType
             {
                 Zone,
-                Wormhole
+                Wormhole,
+                Anomaly
             }
             public ZoneInfoInternal()
             {
             }
 
-            public ZoneInfoInternal(long id, PositionInfo info)
+            public ZoneInfoInternal(long id, ZoneInfo info)
+            {
+                Set(info.Info);
+                NoIntruders = info.NoIntruders;
+                Id = id;
+                UniqueName = info.UniqueName;
+                GPSposition gp = new GPSposition(info.GPS);
+                Position = gp.Position;
+                AlertRadiusSqrd = AlertRadius * AlertRadius;
+            }
+
+            public ZoneInfoInternal(long id, ZoneType type, SubZoneInfo info)
             {
                 Set(info.Info);
                 Id = id;
@@ -40,6 +55,7 @@ namespace ZoneControl
                 GPSposition gp = new GPSposition(info.GPS);
                 Position = gp.Position;
                 AlertRadiusSqrd = AlertRadius * AlertRadius;
+                Type = type;
             }
 
             public ZoneInfoInternal(long id, WormholeInfo info)
@@ -55,13 +71,12 @@ namespace ZoneControl
                 {
                     Targets.Add(new GPSposition(location));
                 }
-
-                Log.Msg($"Zone {UniqueName} Targets.Count={Targets.Count}");
             }
 
             public ZoneInfoInternal(long id, PlanetInfo info, Vector3D position)
             {
                 Set(info.Info);
+                NoIntruders = info.NoIntruders;
                 Id = id;
                 UniqueName = info.PlanetName;
                 Position = position;
@@ -74,17 +89,26 @@ namespace ZoneControl
             }
         }
 
-        public class PositionInfo
+        public class ZoneInfo
+        {
+            public string UniqueName = "";
+            public string GPS = "";
+            public bool NoIntruders = false;
+            public InfoCommon Info = new InfoCommon();
+
+            public ZoneInfo() { }
+        }
+
+        public class SubZoneInfo
         {
             public string UniqueName = "";
             public string GPS = "";
             public InfoCommon Info = new InfoCommon();
 
-
-            public PositionInfo() { }
+            public SubZoneInfo() { }
         }
 
-        public class WormholeInfo : PositionInfo
+        public class WormholeInfo : SubZoneInfo
         {
             [XmlArray]
             [XmlArrayItem(ElementName = "GPS")]
@@ -96,21 +120,24 @@ namespace ZoneControl
         public class PlanetInfo
         {
             public string PlanetName = "";
+            public bool NoIntruders = false;
             public InfoCommon Info = new InfoCommon();
 
             public PlanetInfo() { }
         }
 
         public IntruderInfo Intruder = new IntruderInfo();
-        public List<PositionInfo> Positions;
+        public List<ZoneInfo> Zones;
         public List<PlanetInfo> Planets;
         public List<WormholeInfo> Wormholes;
+        public List<SubZoneInfo> Anomalies;
 
         public ZonesConfig()
         {
-            Positions = new List<PositionInfo>();
+            Zones = new List<ZoneInfo>();
             Wormholes = new List<WormholeInfo>();
             Planets = new List<PlanetInfo>();
+            Anomalies = new List<SubZoneInfo>();
         }
 
         internal static List<ZoneInfoInternal> NewZoneList(ZonesConfig config)
@@ -118,11 +145,11 @@ namespace ZoneControl
             List<ZoneInfoInternal> zones = new List<ZoneInfoInternal>();
             Dictionary<string, Vector3D> planetPositions = GetPlanetPositions();
             long zoneId = 0;
-            foreach (var info in config.Positions)
+            foreach (var info in config.Zones)
             {
                 var zone = new ZoneInfoInternal(zoneId, info);
                 zones.Add(zone);
-                Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
+                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zoneId} to Zones list");
                 ++zoneId;
             }
 
@@ -131,8 +158,9 @@ namespace ZoneControl
             {
                 if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
                 { // Planets cant be wormholes so no targets.
-                    zones.Add(new ZoneInfoInternal(zoneId, info, planetPosition));
-                    Log.Msg($"Adding Planet Zone {info.PlanetName} zoneId={zoneId} to Zones list");
+                    var zone = new ZoneInfoInternal(zoneId, info, planetPosition);
+                    zones.Add(zone);
+                    Log.Msg($"Adding Planet {zone.Type} {info.PlanetName} zoneId={zoneId} to Zones list");
                     ++zoneId;
                 }
             }
@@ -140,6 +168,14 @@ namespace ZoneControl
             foreach (var info in config.Wormholes)
             {
                 var zone = new ZoneInfoInternal(zoneId, info);
+                zones.Add(zone);
+                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zoneId}  targets.Count={zone.Targets.Count} to Zones list");
+                ++zoneId;
+            }
+
+            foreach (var info in config.Anomalies)
+            {
+                var zone = new ZoneInfoInternal(zoneId, ZoneInfoInternal.ZoneType.Anomaly, info);
                 zones.Add(zone);
                 Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
                 ++zoneId;

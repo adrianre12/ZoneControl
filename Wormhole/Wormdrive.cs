@@ -124,7 +124,7 @@ namespace ZoneControl.Wormhole
             if (block.Enabled)
             {
                 //check for wormhole zone
-                ZoneInfoInternal closetZone = ZonesSession.Instance.FindClosestZoneCached(gridId, block.CubeGrid.GetPosition());
+                ZoneInfoInternal closetZone = ZonesSession.Instance.FindClosestWormholeCached(gridId, block.CubeGrid.GetPosition());
                 if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole ||
                     (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag()))
                 { // its not a accessable wormhole
