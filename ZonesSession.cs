@@ -154,14 +154,6 @@ namespace ZoneControl
             nextRefreshFrame = currentFrame + DefaultRefreshPeriod;
             RefreshPlayers();
             NextPlayer();
-
-            /* cache tests
-            Log.Msg($"{FindClosestZone(1, Vector3D.Zero).UniqueName}");
-            Log.Msg($"{FindClosestZone(1, new Vector3D(100, 0, 0)).UniqueName}");
-            Log.Msg($"{FindClosestZoneCached(1, Vector3D.Zero).UniqueName}");
-            Log.Msg($"{FindClosestZoneCached(1, Vector3D.Zero).UniqueName}");
-            Log.Msg($"{FindClosestZoneCached(1, new Vector3D(100, 0, 0)).UniqueName}");
-            */
         }
 
         public void UpdateAfterSimulationClient()

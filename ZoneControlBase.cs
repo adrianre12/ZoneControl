@@ -16,8 +16,8 @@ namespace ZoneControl
             Enabled,
             Disabled
         }
-
         private OverrideState overrideSetting;
+
         private bool originalEnabledState;
         private long overrideCounter = 0;
         internal OverrideState OverrideDefault = OverrideState.None;
@@ -26,11 +26,7 @@ namespace ZoneControl
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            //if (!MyAPIGateway.Session.IsServer)
-            //    return;
-
             block = Entity as IMyFunctionalBlock;
-            //gridId = block.CubeGrid.EntityId;
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
         }
 

@@ -11,7 +11,6 @@ namespace ZoneControl
     public class ZonesConfig : ZoneConfigBase
     {
 
-
         public class ZoneInfo
         {
             public string UniqueName = "";

@@ -273,11 +273,6 @@ namespace ZoneControl.Wormhole
 
             foreach (IMyTerminalControl c in controls)
             {
-                // a quick way to dump all IDs to SE's log
-                /*string name = MyTexts.GetString((c as IMyTerminalControlTitleTooltip)?.Title.String ?? "N/A");
-                string valueType = (c as ITerminalProperty)?.TypeName ?? "N/A";
-                Log.Msg($"[DEV] terminal property: id='{c.Id}'; type='{c.GetType().Name}'; valueType='{valueType}'; displayName='{name}'");*/
-
                 switch (c.Id)
                 {
                     case "OnOff":
@@ -290,7 +285,6 @@ namespace ZoneControl.Wormhole
                         }
                     default:
                         {
-                            //c.Enabled = TerminalChainedDelegate.Create(c.Enabled, CustomHiddenCondition); // grays out
                             c.Visible = TerminalChainedDelegate.Create(c.Visible, CustomHiddenCondition); // hides
                             break;
                         }
@@ -305,9 +299,6 @@ namespace ZoneControl.Wormhole
 
             foreach (IMyTerminalAction a in actions)
             {
-                // a quick way to dump all IDs to SE's log 
-                //MyLog.Default.WriteLine($"[DEV] toolbar action: id='{a.Id}'; displayName='{a.Name}'");
-
                 switch (a.Id)
                 {
                     case "OnOff":
@@ -317,7 +308,6 @@ namespace ZoneControl.Wormhole
                     case "ShowOnHUD_On":
                     case "ShowOnHUD_Off":
                         {
-
                             break;
                         }
 

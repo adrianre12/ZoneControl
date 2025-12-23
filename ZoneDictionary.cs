@@ -100,33 +100,6 @@ namespace ZoneControl
             return dict;
         }
 
-        /*        public ZoneInfoInternal FindClosestZoneCached(long Id, Vector3D position, out bool cacheHit)
-                {
-                    cacheHit = false;
-                    // check cached
-                    ZoneCacheItem cacheItem;
-                    if (cache.TryGetValue(Id, out cacheItem))
-                    {
-                        if (Vector3D.DistanceSquared(cacheItem.Position, position) < CacheMovementLimitSqrd)
-                        {
-                            if (cacheItem.Zone.InZone(position))
-                            {
-                                //Log.Msg("Cache Hit");
-                                cacheHit = true;
-                                return cacheItem.Zone;
-                            }
-                        }
-                        cache.Remove(Id);
-                    }
-                    // cache miss find closest
-                    //Log.Msg("Cache Miss");
-
-                    ZoneInfoInternal zone = FindClosestZone(position);
-
-                    cache[Id] = new ZoneCacheItem() { Position = position, Zone = zone };
-                    return zone;
-                }*/
-
         public bool GetZone(long Id, Vector3D position, out ZoneInfoInternal foundZone, out ZoneInfoInternal lastZone)
         {
             // check cached

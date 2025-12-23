@@ -100,19 +100,19 @@ namespace ZoneControl
             {
                 UniqueName = "Example1",
                 GPS = "GPS:Anything:0:0:0:Anything:",
-                Info = (new InfoCommon() { FactionTag = "ABC", AlertRadius = 100 })
+                Info = new InfoCommon() { FactionTag = "ABC", AlertRadius = 100 }
             });
             defaultSettings.Wormholes.Add(new WormholeInfo()
             {
                 UniqueName = "ExampleWormhole",
                 GPS = "GPS:Anything:0:0:0:Anything:",
-                Info = (new InfoCommon() { AlertRadius = 100 }),
+                Info = new InfoCommon() { AlertRadius = 100 },
                 Locations = new List<string>() { "GPS:TargetName1:0:0:0:Anything:", "GPS:TargetName2:0:0:0:Anything:" }
             });
             defaultSettings.Planets.Add(new PlanetInfo()
             {
                 PlanetName = "EarthLike-12345d120000",
-                Info = (new InfoCommon() { AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 })
+                Info = new InfoCommon() { AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 }
             });
 
             try
@@ -121,7 +121,6 @@ namespace ZoneControl
                 {
                     writer.Write(MyAPIGateway.Utilities.SerializeToXML<ZonesConfig>(defaultSettings));
                 }
-
             }
             catch (Exception exc)
             {

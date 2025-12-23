@@ -10,7 +10,6 @@ using VRage.ObjectBuilders;
 using VRage.Sync;
 using VRage.Utils;
 using VRageMath;
-using static ZoneControl.ZonesConfig;
 
 namespace ZoneControl.Wormhole
 {
@@ -68,8 +67,6 @@ namespace ZoneControl.Wormhole
             {
                 //Log.Msg($"Start Jump to {JumpTarget.Value}");
                 jumpSystem.RequestJump(JumpTarget.Value, block.OwnerId, 10, block.EntityId);
-                //jumpSystem.PerformJump(JumpTarget.Value);
-                //jumpSystem.Jump(JumpTarget.Value, block.OwnerId, 10);
             }
             JumpTarget.Value = Vector3D.PositiveInfinity;
         }
