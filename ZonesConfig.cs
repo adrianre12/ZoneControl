@@ -8,9 +8,8 @@ using System.Xml.Serialization;
 
 namespace ZoneControl
 {
-    public class ZonesConfig : ZoneConfigBase
+    public partial class ZonesConfig : ZonesConfigBase
     {
-
         public class ZoneInfo
         {
             public string UniqueName = "";
@@ -19,6 +18,15 @@ namespace ZoneControl
             public InfoCommon Info = new InfoCommon();
 
             public ZoneInfo() { }
+        }
+
+        public class PlanetInfo
+        {
+            public string PlanetName = "";
+            public bool NoIntruders = false;
+            public InfoCommon Info = new InfoCommon();
+
+            public PlanetInfo() { }
         }
 
         public class SubZoneInfo
@@ -39,27 +47,17 @@ namespace ZoneControl
             public WormholeInfo() { }
         }
 
-        public class PlanetInfo
-        {
-            public string PlanetName = "";
-            public bool NoIntruders = false;
-            public InfoCommon Info = new InfoCommon();
-
-            public PlanetInfo() { }
-        }
-
         public IntruderInfo Intruder = new IntruderInfo();
         public List<ZoneInfo> Zones;
         public List<PlanetInfo> Planets;
         public List<WormholeInfo> Wormholes;
-        public List<SubZoneInfo> Anomalies;
+        public SpawnerInfo Spawner = new SpawnerInfo();
 
         public ZonesConfig()
         {
             Zones = new List<ZoneInfo>();
-            Wormholes = new List<WormholeInfo>();
             Planets = new List<PlanetInfo>();
-            Anomalies = new List<SubZoneInfo>();
+            Wormholes = new List<WormholeInfo>();
         }
 
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using VRageMath;
-using static ZoneControl.ZoneConfigBase;
+using static ZoneControl.ZonesConfigBase;
 using static ZoneControl.ZonesConfig;
 
 namespace ZoneControl

@@ -12,11 +12,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mal.Mdk2.ModPackager" Version="2.1.8">
+    <PackageReference Include="Mal.Mdk2.ModPackager" Version="2.1.10">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Mal.Mdk2.References" Version="2.2.5" />
+    <PackageReference Include="Mal.Mdk2.References" Version="2.2.6" />
   </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="Content\*\**\*">

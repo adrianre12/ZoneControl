@@ -7,28 +7,29 @@ using System.Collections.Generic;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
-using static ZoneControl.ZoneConfigBase;
-using static ZoneControl.ZoneConfigBase.IntruderInfo;
 using static ZoneControl.ZoneControlBase;
+using static ZoneControl.ZonesConfigBase;
+using static ZoneControl.ZonesConfigBase.IntruderInfo;
 
 namespace ZoneControl
 {
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     internal class ZonesSession : MySessionComponentBase
     {
-        const int DefaultRefreshPeriod = 600; // 10s
+        const int DefaultPlayerRefreshPeriod = 600; // 10s
         const int DefaultPunishmentPeriod = 18000; // 5 mins
         const string VariableId = nameof(ZonesSession);
 
         public static ZonesSession Instance;
 
         private ZonesConfig config;
-        private ZoneDictionary zoneDict;
-        private ZoneDictionary subZoneDict;
+        private ZoneTable zoneTable;
+        private ZoneTable subZoneTable;
         private List<IMyPlayer> players = new List<IMyPlayer>();
-        private int nextRefreshFrame = 0;
+        private int nextPlayerRefreshFrame = 0;
         private int nextPlayerIndex = 0;
         private ZoneInfoInternal currentZone = null;
+        private ZoneSpawner zoneSpawner = null;
 
         [ProtoContract]
         private class ZoneTargets
@@ -72,9 +73,9 @@ namespace ZoneControl
         {
             Log.Msg("ZoneNotification Host Start");
             config = ZonesConfig.LoadConfig();
-            zoneDict = ZoneDictionary.NewZoneDictionary(config);
-            subZoneDict = ZoneDictionary.NewSubZoneDictionary(config);
-            foreach (var zone in subZoneDict.Zones)
+            zoneTable = ZoneTable.NewZoneDictionary(config);
+            subZoneTable = ZoneTable.NewSubZoneDictionary(config);
+            foreach (var zone in subZoneTable.Zones)
             {
                 if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole)
                     zoneTargets.Targets.Add(zone.Id, zone.Targets);
@@ -89,6 +90,8 @@ namespace ZoneControl
             {
                 Log.Msg($"Error serializing zoneTargets\n {e}");
             }
+
+            zoneSpawner = new ZoneSpawner(config, subZoneTable);
         }
 
         public void LoadDataOnClient()
@@ -132,10 +135,10 @@ namespace ZoneControl
                 }
 
                 //Look for subZones
-                CheckPlayerPosition(subZoneDict);
+                CheckPlayerPosition(subZoneTable);
 
                 //isIntruder not set, check position
-                currentZone = CheckPlayerPosition(zoneDict);
+                currentZone = CheckPlayerPosition(zoneTable);
                 // check if intruding
                 if (CheckIfIntruding(currentZone))
                 {
@@ -148,12 +151,14 @@ namespace ZoneControl
                 return;
             }
 
-            if (currentFrame < nextRefreshFrame)
-                return;
+            if (currentFrame > nextPlayerRefreshFrame)
+            {
+                nextPlayerRefreshFrame = currentFrame + DefaultPlayerRefreshPeriod;
+                RefreshPlayers();
+                NextPlayer();
+            }
 
-            nextRefreshFrame = currentFrame + DefaultRefreshPeriod;
-            RefreshPlayers();
-            NextPlayer();
+            zoneSpawner.Update();
         }
 
         public void UpdateAfterSimulationClient()
@@ -182,14 +187,12 @@ namespace ZoneControl
             ++nextPlayerIndex;
         }
 
-
-
         public List<GPSposition> GetZoneTargets(long zoneId)
         {
             return zoneTargets.Targets.GetValueOrDefault(zoneId, new List<GPSposition>());
         }
 
-        private ZoneInfoInternal CheckPlayerPosition(ZoneDictionary dict)
+        private ZoneInfoInternal CheckPlayerPosition(ZoneTable dict)
         {
             if (ps.Player == null)
                 return null;
@@ -342,7 +345,7 @@ namespace ZoneControl
         {
             ZoneInfoInternal currentZone;
             ZoneInfoInternal lastZone;
-            subZoneDict.GetZone(gridId, vector3D, out currentZone, out lastZone);
+            subZoneTable.GetZone(gridId, vector3D, out currentZone, out lastZone);
             return currentZone;
         }
     }

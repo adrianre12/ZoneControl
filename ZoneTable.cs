@@ -7,7 +7,7 @@ using VRageMath;
 namespace ZoneControl
 {
 
-    internal class ZoneDictionary
+    internal class ZoneTable
     {
         const double CacheMovementLimitSqrd = 100; //10m
 
@@ -20,15 +20,15 @@ namespace ZoneControl
         }
         private Dictionary<long, ZoneCacheItem> cache = new Dictionary<long, ZoneCacheItem>();
 
-        public ZoneDictionary()
+        public ZoneTable()
         {
             Zones = new List<ZoneInfoInternal>();
         }
 
-        internal static ZoneDictionary NewZoneDictionary(ZonesConfig config)
+        internal static ZoneTable NewZoneDictionary(ZonesConfig config)
         {
             Log.Msg("NewZoneDictionary()");
-            ZoneDictionary dict = new ZoneDictionary();
+            ZoneTable dict = new ZoneTable();
 
             Dictionary<string, Vector3D> planetPositions = new Dictionary<string, Vector3D>();
             MyAPIGateway.Entities.GetEntities(null, e =>
@@ -73,31 +73,27 @@ namespace ZoneControl
             return dict;
         }
 
-        internal static ZoneDictionary NewSubZoneDictionary(ZonesConfig config)
+        internal static ZoneTable NewSubZoneDictionary(ZonesConfig config)
         {
             Log.Msg("NewSubZoneDictionary()");
-            ZoneDictionary dict = new ZoneDictionary();
-            long zoneId = 0;
+            ZoneTable dict = new ZoneTable();
 
             foreach (var info in config.Wormholes)
             {
-                var zone = new ZoneInfoInternal(zoneId, info);
+                var zone = new ZoneInfoInternal(dict.Zones.Count, info);
                 dict.Zones.Add(zone);
-                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zoneId}  targets.Count={zone.Targets.Count} to Zones list");
-                ++zoneId;
-            }
-
-            foreach (var info in config.Anomalies)
-            {
-                var zone = new ZoneInfoInternal(zoneId, ZoneInfoInternal.ZoneType.Anomaly, info);
-                dict.Zones.Add(zone);
-                Log.Msg($"Adding Zone {info.UniqueName} zoneId={zoneId} to Zones list");
-                ++zoneId;
+                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id}  targets.Count={zone.Targets.Count} to Zones list");
             }
 
             dict.Zones = dict.Zones.OrderBy(x => x.AlertRadius).ToList();
             //foreach (var zone in dict.Zones) Log.Msg($"Zone {zone.UniqueName} radius {zone.AlertRadius}");
             return dict;
+        }
+
+        public void AddZone(ZoneInfoInternal zone)
+        {
+            zone.Id = Zones.Count;
+            Zones.Add(zone);
         }
 
         public bool GetZone(long Id, Vector3D position, out ZoneInfoInternal foundZone, out ZoneInfoInternal lastZone)

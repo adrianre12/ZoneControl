@@ -8,7 +8,7 @@ using static ZoneControl.ZonesConfig;
 
 namespace ZoneControl
 {
-    public class ZoneConfigBase
+    public class ZonesConfigBase
     {
         internal const string configFilename = "Config-ZoneControl.xml";
 
@@ -115,6 +115,12 @@ namespace ZoneControl
                 Info = new InfoCommon() { AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 }
             });
 
+            defaultSettings.Spawner.Sectors.Add(new SpawningSector()
+            {
+                UniqueName = "TestSector",
+                GPS = "GPS:Anything:0:0:0:Anything:",
+                Prefabs = new List<PrefabInfo>() { new PrefabInfo() { Subtype = "SubtypeName" } }
+            });
             try
             {
                 using (var writer = MyAPIGateway.Utilities.WriteFileInWorldStorage(configFilename, typeof(ZonesConfig)))
@@ -148,25 +154,33 @@ namespace ZoneControl
             }
             public GPSposition(string gps)
             {
-                string[] tmp = gps.ToLower().Split(':');
-                if (tmp[0] != "gps" || tmp.Length < 5)
-                {
-                    Log.Msg($"Invalid GPS, does not start with GPS or is too short '{gps}'");
-                    return;
-                }
-
-                double x;
-                double y;
-                double z;
-                if (!double.TryParse(tmp[2], out x) || !double.TryParse(tmp[3], out y) || !double.TryParse(tmp[4], out z))
-                {
-                    Log.Msg($"Invalid GPS, failed to parse X,Y,Z '{gps}'");
-                    return;
-                }
-
-                Name = tmp[1];
-                Position = new Vector3D(x, y, z);
+                TryParseGPSstring(gps, out Name, out Position);
             }
+        }
+
+        public static bool TryParseGPSstring(string gps, out string name, out Vector3D position)
+        {
+            name = "Error";
+            position = Vector3D.MinValue;
+            string[] tmp = gps.ToLower().Split(':');
+            if (tmp[0] != "gps" || tmp.Length < 5)
+            {
+                Log.Msg($"Invalid GPS, does not start with GPS or is too short '{gps}'");
+                return false;
+            }
+
+            double x;
+            double y;
+            double z;
+            if (!double.TryParse(tmp[2], out x) || !double.TryParse(tmp[3], out y) || !double.TryParse(tmp[4], out z))
+            {
+                Log.Msg($"Invalid GPS, failed to parse X,Y,Z '{gps}'");
+                return false;
+            }
+
+            name = tmp[1];
+            position = new Vector3D(x, y, z);
+            return true;
         }
     }
 }
