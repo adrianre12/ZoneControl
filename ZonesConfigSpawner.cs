@@ -14,8 +14,10 @@ namespace ZoneControl
         {
             public bool Enabled = false;
             public int MaxSpawns = 10;
-            public float SpawnProbabilityPerHour = 1.0f;
-            public double SubZoneRadius = 2000;
+            public float SpawnRateMultiplier = 1.0f;
+            public float SubZoneRadius = 2000;
+            public int AlertTimeMs = 9000;
+            public string FactionTag = "UNKN";
             public List<SpawningSector> Sectors = new List<SpawningSector>();
         }
 

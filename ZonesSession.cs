@@ -24,7 +24,7 @@ namespace ZoneControl
 
         private ZonesConfig config;
         private ZoneTable zoneTable;
-        private ZoneTable subZoneTable;
+        internal ZoneTable SubZoneTable;
         private List<IMyPlayer> players = new List<IMyPlayer>();
         private int nextPlayerRefreshFrame = 0;
         private int nextPlayerIndex = 0;
@@ -66,6 +66,7 @@ namespace ZoneControl
 
         protected override void UnloadData()
         {
+            zoneSpawner.Close();
             Instance = null;
         }
 
@@ -74,8 +75,8 @@ namespace ZoneControl
             Log.Msg("ZoneNotification Host Start");
             config = ZonesConfig.LoadConfig();
             zoneTable = ZoneTable.NewZoneDictionary(config);
-            subZoneTable = ZoneTable.NewSubZoneDictionary(config);
-            foreach (var zone in subZoneTable.Zones)
+            SubZoneTable = ZoneTable.NewSubZoneDictionary(config);
+            foreach (var zone in SubZoneTable.Zones)
             {
                 if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole)
                     zoneTargets.Targets.Add(zone.Id, zone.Targets);
@@ -91,7 +92,7 @@ namespace ZoneControl
                 Log.Msg($"Error serializing zoneTargets\n {e}");
             }
 
-            zoneSpawner = new ZoneSpawner(config, subZoneTable);
+            zoneSpawner = new ZoneSpawner(config, SubZoneTable);
         }
 
         public void LoadDataOnClient()
@@ -135,7 +136,7 @@ namespace ZoneControl
                 }
 
                 //Look for subZones
-                CheckPlayerPosition(subZoneTable);
+                CheckPlayerPosition(SubZoneTable);
 
                 //isIntruder not set, check position
                 currentZone = CheckPlayerPosition(zoneTable);
@@ -158,7 +159,7 @@ namespace ZoneControl
                 NextPlayer();
             }
 
-            zoneSpawner.Update();
+            zoneSpawner.Update(currentFrame);
         }
 
         public void UpdateAfterSimulationClient()
@@ -345,7 +346,7 @@ namespace ZoneControl
         {
             ZoneInfoInternal currentZone;
             ZoneInfoInternal lastZone;
-            subZoneTable.GetZone(gridId, vector3D, out currentZone, out lastZone);
+            SubZoneTable.GetZone(gridId, vector3D, out currentZone, out lastZone);
             return currentZone;
         }
     }
