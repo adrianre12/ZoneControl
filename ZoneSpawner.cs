@@ -25,6 +25,8 @@ namespace ZoneControl
             public Vector3D SubZonePosition = Vector3D.MaxValue;
             [ProtoMember(5)]
             public long EntityId = 0;
+            [ProtoMember(6)]
+            public int ZoneId = -1;
         }
 
         [ProtoContract]
@@ -36,13 +38,14 @@ namespace ZoneControl
             public CurrentSpawns() { }
         }
 
+        const string VariableId = nameof(ZoneSpawner);
         const int UpdatePeriodMins = 6;
         const int UpdateRndMultiplier = 60 / UpdatePeriodMins;
         const int DefaultRefreshPeriodTicks = 60 * 60 * UpdatePeriodMins; //15 mins
 
         private int nextRefreshFrame = DefaultRefreshPeriodTicks; // frame counter should be 0 at startup
         private ZoneTable subZoneTable;
-        private List<PrefabInfoInternal> prefabs;
+        private List<PrefabInfoInternal> prefabs; //all prefabs with weighting.
         private ZonesConfig.SpawnerInfo configSpawner;
         private bool updateSpawns;
         private CurrentSpawns currentSpawns = new CurrentSpawns();
@@ -77,32 +80,31 @@ namespace ZoneControl
                 Log.Msg($"Prefab loaded {pi.Subtype} Sector={pi.SectorInfo.UniqueName} WeightNorm={pi.WeightNorm}");
             }
 
+            //TODO load saved spawns
+            string variableStr;
+            if (MyAPIGateway.Utilities.GetVariable<string>(VariableId, out variableStr))
+            {
+                try
+                {
+                    currentSpawns = MyAPIGateway.Utilities.SerializeFromBinary<CurrentSpawns>(Convert.FromBase64String(variableStr));
+                }
+                catch (Exception ex)
+                {
+                    Log.Msg($"Error: Failed to deseralize currentSpawns\n{ex.ToString()}");
+                    currentSpawns = new CurrentSpawns();
+                }
+                foreach (var spawn in currentSpawns.Spawns)
+                {
+                    spawn.ZoneId = -1;
+                }
+            }
+
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed += PrefabSpawnedDetailed;
         }
 
         internal void Close()
         {
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed -= PrefabSpawnedDetailed;
-        }
-
-        private long FindFactionId(string tag)
-        {
-            IMyFaction faction = null;
-            if (tag != null)
-                faction = MyAPIGateway.Session.Factions.TryGetFactionByTag(tag.Trim());
-            if (faction != null)
-            {
-                Log.Msg($"Spawnwer using faction {tag}");
-                return faction.FounderId;
-            }
-            faction = MyAPIGateway.Session.Factions.TryGetFactionByTag("UNKN");
-            if (faction != null)
-            {
-                Log.Msg($"Spawnwer using default faction UNKN");
-                return faction.FounderId;
-            }
-            Log.Msg($"Spawnwer UNKN not found using NOBODY");
-            return 0;
         }
 
         internal void Update(int currentFrame)
@@ -114,25 +116,23 @@ namespace ZoneControl
                 if (nextSpawnIndex >= 0)
                 {// update spawns
                     SpawnInfo spawn = currentSpawns.Spawns[nextSpawnIndex];
-                    if (!configSpawner.Enabled)
+                    //remove if disabled or if too old
+                    if (!configSpawner.Enabled || spawn.RemoveAt < DateTime.Now.Ticks)
                     {
                         RemoveSpawn(spawn);
+                        --nextSpawnIndex;
                         return;
                     }
 
-                    //remove if too old
-                    long now = DateTime.Now.Ticks;
-                    if (spawn.RemoveAt < now)
-                        RemoveSpawn(spawn);
-
+                    CheckSubZone(spawn);
                     --nextSpawnIndex;
                     return;
                 }
 
+                //All done
                 if (configSpawner.Enabled)
                     AddSpawn();
 
-                //All done
                 updateSpawns = false;
             }
 
@@ -203,6 +203,9 @@ namespace ZoneControl
             currentSpawns.Spawns.Add(newSpawn);
         }
 
+        /// <summary>
+        /// Called after the prefab has been spawned, only way to find the entityId
+        /// </summary>
         public void PrefabSpawnedDetailed(long entityId, string prefabName)
         {
             Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
@@ -220,20 +223,9 @@ namespace ZoneControl
                 if (Vector3D.DistanceSquared(entity.GetPosition(), spawn.Position) < 0.0001)
                 {
                     spawn.EntityId = entityId;
-
-                    //add anomaly
-                    ZoneInfoInternal anomaly = new ZoneInfoInternal();
-                    anomaly.Type = ZoneInfoInternal.ZoneType.Anomaly;
-                    anomaly.UniqueName = spawn.Name;
-                    anomaly.Position = spawn.SubZonePosition;
-                    anomaly.AlertRadius = configSpawner.SubZoneRadius;
-                    anomaly.AlertRadiusSqrd = configSpawner.SubZoneRadius * configSpawner.SubZoneRadius;
-                    anomaly.AlertMessageEnter = "";
-                    anomaly.ColourEnter = "";
-                    anomaly.AlertMessageLeave = "";
-                    anomaly.ColourLeave = "";
-                    anomaly.AlertTimeMs = configSpawner.AlertTimeMs;
-                    ZonesSession.Instance.SubZoneTable.AddZone(anomaly);
+                    CheckSubZone(spawn);
+                    SaveCurrentSpawns();
+                    return;
                 }
             }
             Log.Msg("Spawnwer could not find Entity in currentSpawns");
@@ -243,6 +235,7 @@ namespace ZoneControl
         {
             Log.Msg("TODO REMOVE SPAWN");
             //remove anomally
+            RemoveSubZone(spawn);
 
             //close grid
             var grid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId);
@@ -252,6 +245,72 @@ namespace ZoneControl
                 grid.Close();
             }
             currentSpawns.Spawns.Remove(spawn);
+            SaveCurrentSpawns();
+        }
+
+        private void SaveCurrentSpawns()
+        {
+            try
+            {
+                MyAPIGateway.Utilities.SetVariable<string>(VariableId, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(currentSpawns)));
+            }
+            catch (Exception e)
+            {
+                Log.Msg($"Error serializing currentSpawns\n {e}");
+            }
+        }
+
+        private void CheckSubZone(SpawnInfo spawn)
+        {
+            if (spawn.ZoneId >= 0)
+                return;
+            //ZoneId has not been set, add a zone
+            {
+                //add anomaly
+                ZoneInfoInternal anomaly = new ZoneInfoInternal();
+                anomaly.Type = ZoneInfoInternal.ZoneType.Anomaly;
+                anomaly.UniqueName = spawn.Name;
+                anomaly.Position = spawn.SubZonePosition;
+                anomaly.AlertRadius = configSpawner.SubZoneRadius;
+                anomaly.AlertRadiusSqrd = configSpawner.SubZoneRadius * configSpawner.SubZoneRadius;
+                anomaly.AlertMessageEnter = "";
+                anomaly.ColourEnter = "";
+                anomaly.AlertMessageLeave = "";
+                anomaly.ColourLeave = "";
+                anomaly.AlertTimeMs = configSpawner.AlertTimeMs;
+                spawn.ZoneId = ZonesSession.Instance.SubZoneTable.AddZone(anomaly);
+                Log.Msg($"Added SubZone {spawn.ZoneId}");
+                return;
+            }
+        }
+
+        private void RemoveSubZone(SpawnInfo spawn)
+        {
+            if (spawn.ZoneId < 0)
+                return;
+
+            ZonesSession.Instance.SubZoneTable.RemoveZone(spawn.ZoneId);
+            Log.Msg($"Removed SubZone {spawn.ZoneId}");
+        }
+
+        private long FindFactionId(string tag)
+        {
+            IMyFaction faction = null;
+            if (tag != null)
+                faction = MyAPIGateway.Session.Factions.TryGetFactionByTag(tag.Trim());
+            if (faction != null)
+            {
+                Log.Msg($"Spawnwer using faction {tag}");
+                return faction.FounderId;
+            }
+            faction = MyAPIGateway.Session.Factions.TryGetFactionByTag("UNKN");
+            if (faction != null)
+            {
+                Log.Msg($"Spawnwer using default faction UNKN");
+                return faction.FounderId;
+            }
+            Log.Msg($"Spawnwer UNKN not found using NOBODY");
+            return 0;
         }
     }
 }

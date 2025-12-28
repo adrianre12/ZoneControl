@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using VRageMath;
-using static ZoneControl.ZonesConfigBase;
 using static ZoneControl.ZonesConfig;
+using static ZoneControl.ZonesConfigBase;
 
 namespace ZoneControl
 {
     public class ZoneInfoInternal : InfoCommon
     {
         public bool NoIntruders = false;
-        public long Id = -1;
+        public int Id = -1;
         public string UniqueName = "";
         public Vector3D Position;
         public ZoneType Type = ZoneType.Zone;
@@ -27,7 +27,7 @@ namespace ZoneControl
         {
         }
 
-        public ZoneInfoInternal(long id, ZoneInfo info)
+        public ZoneInfoInternal(int id, ZoneInfo info)
         {
             Set(info.Info);
             NoIntruders = info.NoIntruders;
@@ -38,7 +38,7 @@ namespace ZoneControl
             AlertRadiusSqrd = AlertRadius * AlertRadius;
         }
 
-        public ZoneInfoInternal(long id, ZoneType type, SubZoneInfo info)
+        public ZoneInfoInternal(int id, ZoneType type, SubZoneInfo info)
         {
             Set(info.Info);
             Id = id;
@@ -49,7 +49,7 @@ namespace ZoneControl
             Type = type;
         }
 
-        public ZoneInfoInternal(long id, WormholeInfo info)
+        public ZoneInfoInternal(int id, WormholeInfo info)
         {
             Set(info.Info);
             Id = id;
@@ -64,7 +64,7 @@ namespace ZoneControl
             }
         }
 
-        public ZoneInfoInternal(long id, PlanetInfo info, Vector3D position)
+        public ZoneInfoInternal(int id, PlanetInfo info, Vector3D position)
         {
             Set(info.Info);
             NoIntruders = info.NoIntruders;

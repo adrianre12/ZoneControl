@@ -47,13 +47,11 @@ namespace ZoneControl
                 return false;
             });
 
-            long zoneId = 0;
             foreach (var info in config.Zones)
             {
-                var zone = new ZoneInfoInternal(zoneId, info);
+                var zone = new ZoneInfoInternal(dict.Zones.Count, info);
                 dict.Zones.Add(zone);
-                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zoneId} to Zones list");
-                ++zoneId;
+                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id} to Zones list");
             }
 
             Vector3D planetPosition;
@@ -61,10 +59,9 @@ namespace ZoneControl
             {
                 if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
                 { // Planets cant be wormholes so no targets.
-                    var zone = new ZoneInfoInternal(zoneId, info, planetPosition);
+                    var zone = new ZoneInfoInternal(dict.Zones.Count, info, planetPosition);
                     dict.Zones.Add(zone);
-                    Log.Msg($"Adding Planet {zone.Type} {info.PlanetName} zoneId={zoneId} to Zones list");
-                    ++zoneId;
+                    Log.Msg($"Adding Planet {zone.Type} {info.PlanetName} zoneId={zone.Id} to Zones list");
                 }
             }
 
@@ -90,10 +87,24 @@ namespace ZoneControl
             return dict;
         }
 
-        public void AddZone(ZoneInfoInternal zone)
+        public int AddZone(ZoneInfoInternal zone)
         {
             zone.Id = Zones.Count;
             Zones.Add(zone);
+            return zone.Id;
+        }
+
+        public bool RemoveZone(int Id)
+        {
+            foreach (var zone in Zones)
+            {
+                if (zone.Id == Id)
+                {
+                    Zones.Remove(zone);
+                    return true;
+                }
+            }
+            return false;
         }
 
         public bool GetZone(long Id, Vector3D position, out ZoneInfoInternal foundZone, out ZoneInfoInternal lastZone)
