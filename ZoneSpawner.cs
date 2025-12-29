@@ -34,6 +34,8 @@ namespace ZoneControl
         {
             [ProtoMember(1)]
             public List<SpawnInfo> Spawns = new List<SpawnInfo>();
+            [ProtoMember(2)]
+            public int SpawnCounter = 0;
 
             public CurrentSpawns() { }
         }
@@ -80,7 +82,6 @@ namespace ZoneControl
                 Log.Msg($"Prefab loaded {pi.Subtype} Sector={pi.SectorInfo.UniqueName} WeightNorm={pi.WeightNorm}");
             }
 
-            //TODO load saved spawns
             string variableStr;
             if (MyAPIGateway.Utilities.GetVariable<string>(VariableId, out variableStr))
             {
@@ -93,9 +94,18 @@ namespace ZoneControl
                     Log.Msg($"Error: Failed to deseralize currentSpawns\n{ex.ToString()}");
                     currentSpawns = new CurrentSpawns();
                 }
-                foreach (var spawn in currentSpawns.Spawns)
+                for (int i = currentSpawns.Spawns.Count - 1; i > 0; --i)
+
                 {
+                    var spawn = currentSpawns.Spawns[i];
+                    if (spawn.EntityId < 0)
+                    {
+                        Log.Msg($"currentSpawn EntityId not set, removing '{spawn.Name}'");
+                        currentSpawns.Spawns.Remove(spawn);
+                        continue;
+                    }
                     spawn.ZoneId = -1;
+                    Log.Msg($"currentSpawn loaded '{spawn.Name}'");
                 }
             }
 
@@ -111,10 +121,11 @@ namespace ZoneControl
         {
             if (updateSpawns)
             {
-                Log.Msg("Updating spawns.");
                 //do the loop
                 if (nextSpawnIndex >= 0)
                 {// update spawns
+                    Log.Msg($"Updating spawn[{nextSpawnIndex}]");
+
                     SpawnInfo spawn = currentSpawns.Spawns[nextSpawnIndex];
                     //remove if disabled or if too old
                     if (!configSpawner.Enabled || spawn.RemoveAt < DateTime.Now.Ticks)
@@ -149,8 +160,10 @@ namespace ZoneControl
             double rnd = UpdateRndMultiplier * random.NextDouble(); //make >1 to get no spawn probability
 
             SpawnInfo newSpawn = new SpawnInfo();
-            var gameTime = MyAPIGateway.Session.GameDateTime;
-            newSpawn.Name = $"Anomaly {gameTime.ToString("yyMMdd HH:mm")}";
+            //var gameTime = MyAPIGateway.Session.GameDateTime;
+            //newSpawn.Name = $"Anomaly {gameTime.ToString("yyMMdd HH:mm")}";
+
+            newSpawn.Name = $"Anomaly {DateTime.Now.ToString("yyMMdd HH:mm")}";
 
             //find prefab
             double totalWeightNorm = 0;
@@ -223,6 +236,8 @@ namespace ZoneControl
                 if (Vector3D.DistanceSquared(entity.GetPosition(), spawn.Position) < 0.0001)
                 {
                     spawn.EntityId = entityId;
+                    ++currentSpawns.SpawnCounter;
+                    spawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
                     CheckSubZone(spawn);
                     SaveCurrentSpawns();
                     return;
@@ -233,13 +248,12 @@ namespace ZoneControl
 
         private void RemoveSpawn(SpawnInfo spawn)
         {
-            Log.Msg("TODO REMOVE SPAWN");
             //remove anomally
             RemoveSubZone(spawn);
 
             //close grid
             var grid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId);
-            if (grid != null)
+            if (grid != null && Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < configSpawner.SubZoneRadius)
             {
                 Log.Msg($"Closing '{grid.DisplayName}' ");
                 grid.Close();
@@ -257,6 +271,10 @@ namespace ZoneControl
             catch (Exception e)
             {
                 Log.Msg($"Error serializing currentSpawns\n {e}");
+            }
+            foreach (var spawn in currentSpawns.Spawns)
+            {
+                Log.Msg($"currentSpawn saved '{spawn.Name}'");
             }
         }
 
