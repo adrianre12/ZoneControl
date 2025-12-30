@@ -10,6 +10,7 @@ using VRageMath;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfigBase;
 using static ZoneControl.ZonesConfigBase.IntruderInfo;
+using static ZoneControl.ZoneTable;
 
 namespace ZoneControl
 {
@@ -19,6 +20,8 @@ namespace ZoneControl
         const int DefaultPlayerRefreshPeriod = 600; // 10s
         const int DefaultPunishmentPeriod = 18000; // 5 mins
         const string VariableId = nameof(ZonesSession);
+        const int DefaultWarnMsgCounter = 6; //RefreshPeriods 60s
+        const int DefaultUrgentMsgCounter = 2; //RefreshPeriods 20s
 
         public static ZonesSession Instance;
 
@@ -28,6 +31,8 @@ namespace ZoneControl
         private List<IMyPlayer> players = new List<IMyPlayer>();
         private int nextPlayerRefreshFrame = 0;
         private int nextPlayerIndex = 0;
+        private int warnMsgCounter = DefaultWarnMsgCounter;
+        private int urgentMsgCounter = DefaultUrgentMsgCounter;
         private ZoneInfoInternal currentZone = null;
         private ZoneSpawner zoneSpawner = null;
 
@@ -53,6 +58,7 @@ namespace ZoneControl
         private PlayerState ps = new PlayerState();
 
         private Dictionary<long, int> punishmentCache = new Dictionary<long, int>();
+
 
         public override void LoadData()
         {
@@ -170,6 +176,10 @@ namespace ZoneControl
             if (currentFrame > nextPlayerRefreshFrame)
             {
                 nextPlayerRefreshFrame = currentFrame + DefaultPlayerRefreshPeriod;
+                if (warnMsgCounter-- < 1)
+                    warnMsgCounter = DefaultWarnMsgCounter;
+                if (urgentMsgCounter-- < 1)
+                    urgentMsgCounter = DefaultUrgentMsgCounter;
                 RefreshPlayers();
                 NextPlayer();
             }
@@ -219,11 +229,16 @@ namespace ZoneControl
 
             ZoneInfoInternal foundZone;
             ZoneInfoInternal lastZone;
-            bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone);
-            Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName}");
+            MsgItem extraMsg = null;
+            bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone, out extraMsg);
+            Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg={extraMsg.Msg}");
             if (!moved)
             { //Has not moved
-                //Log.Msg("Not moved");
+              //Log.Msg("Not moved");
+
+                if (foundZone != null && urgentMsgCounter == 0 && extraMsg.Urgent && extraMsg.Msg != null)
+                    MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
+                        disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
                 return foundZone; //can be null
             }
 
@@ -233,6 +248,10 @@ namespace ZoneControl
 
             if (foundZone != null && foundZone.AlertMessageEnter.Length > 0)
                 MyVisualScriptLogicProvider.ShowNotification(foundZone.AlertMessageEnter,
+                    disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
+
+            if (foundZone != null && warnMsgCounter == 0 && extraMsg.Msg != null)
+                MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
                     disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
 
             return foundZone;
@@ -361,7 +380,8 @@ namespace ZoneControl
         {
             ZoneInfoInternal currentZone;
             ZoneInfoInternal lastZone;
-            SubZoneTable.GetZone(gridId, vector3D, out currentZone, out lastZone);
+            MsgItem extraMsg = null;
+            SubZoneTable.GetZone(gridId, vector3D, out currentZone, out lastZone, out extraMsg);
             return currentZone;
         }
     }

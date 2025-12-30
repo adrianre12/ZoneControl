@@ -54,7 +54,9 @@ namespace ZoneControl
         }
 
         const string VariableId = nameof(ZoneSpawner);
-        const int UpdatePeriodMins = 1;//6;
+        const int UpdatePeriodMins = 1;//5;
+        const int WarnMsgPeriodTicks = 15 * 3600;
+        const int UrgentMsgPeriodTicks = UpdatePeriodMins * 3600;
         const int UpdateRndMultiplier = 2 / UpdatePeriodMins; //60 / UpdatePeriodMins;
         const int DefaultRefreshPeriodTicks = 60 * 60 * UpdatePeriodMins;
         const long DateTimeTicksPerHour = 36000000000L;
@@ -161,6 +163,13 @@ namespace ZoneControl
                         return;
                     }
 
+                    if (spawn.ZoneId > 0 && spawn.RemoveAt < DateTime.Now.Ticks - WarnMsgPeriodTicks)
+                    {
+                        if (spawn.RemoveAt < DateTime.Now.Ticks - UrgentMsgPeriodTicks)
+                            ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageUrgent, true);
+                        else
+                            ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageSoon, false);
+                    }
                     CheckSubZone(spawn);
                     --nextSpawnIndex;
                     return;

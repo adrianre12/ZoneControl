@@ -21,6 +21,21 @@ namespace ZoneControl
         private Dictionary<long, ZoneCacheItem> cache = new Dictionary<long, ZoneCacheItem>();
         private bool cacheReturnNullZone = true;
 
+        internal class MsgItem
+        {
+            public string Msg = null;
+            public bool Urgent = false;
+
+            public MsgItem()
+            { }
+            public MsgItem(string msg, bool urgent)
+            {
+                Msg = msg;
+                Urgent = urgent;
+            }
+        }
+        private Dictionary<int, MsgItem> msgCache = new Dictionary<int, MsgItem>();
+
         public ZoneTable()
         {
             Zones = new List<ZoneInfoInternal>();
@@ -93,6 +108,7 @@ namespace ZoneControl
             cacheReturnNullZone = false; //stop returning null zones to force refresh.
             zone.Id = Zones.Count;
             Zones.Add(zone);
+            msgCache.Remove(zone.Id);
             return zone.Id;
         }
 
@@ -103,6 +119,7 @@ namespace ZoneControl
                 if (zone.Id == Id)
                 {
                     zone.Type = ZoneInfoInternal.ZoneType.Expired; // so it can be ignored in the cache
+                    msgCache.Remove(zone.Id);
                     Zones.Remove(zone);
                     return true;
                 }
@@ -116,10 +133,17 @@ namespace ZoneControl
             cacheReturnNullZone = true;
         }
 
+        public void AddExtraMessage(int zoneId, string message, bool urgent = false)
+        {
+            msgCache[zoneId] = new MsgItem(message, urgent);
+        }
+
+
         // returns Moved
-        public bool GetZone(long Id, Vector3D position, out ZoneInfoInternal foundZone, out ZoneInfoInternal lastZone)
+        public bool GetZone(long Id, Vector3D position, out ZoneInfoInternal foundZone, out ZoneInfoInternal lastZone, out MsgItem msgItem)
         {
             // check cached
+            msgItem = new MsgItem();
             ZoneCacheItem cacheItem;
             bool cacheHit = cache.TryGetValue(Id, out cacheItem);
             if (cacheHit)
@@ -140,6 +164,7 @@ namespace ZoneControl
                     {
                         foundZone = cacheItem.Zone;
                         lastZone = cacheItem.Zone;
+                        msgItem = msgCache.GetValueOrDefault(cacheItem.Zone.Id, msgItem);
                         if (cacheItem.Zone.Type != ZoneInfoInternal.ZoneType.Expired)
                             return false;
                         //Log.Msg("Ignoring Expired Zone");
@@ -152,6 +177,7 @@ namespace ZoneControl
 
             foundZone = FindClosestZone(position);
             lastZone = cacheItem.Zone;
+            msgItem = msgCache.GetValueOrDefault(foundZone.Id, msgItem);
             cache[Id] = new ZoneCacheItem() { Position = position, Zone = foundZone };
             if (foundZone == lastZone)
                 return false;

@@ -21,6 +21,9 @@ namespace ZoneControl
             public string AlertMessageLeave = "Leaving [NAME]";
             public string ColourLeave = "Green";
             public int AlertTimeMs = 9000;
+            public string MessageSoon = "Anomaly is unstable";
+            public string MessageUrgent = "Anomaly colapse started";
+            public string MessageColour = "Red";
             public string FactionTag = "UNKN";
             public List<SpawningSector> Sectors = new List<SpawningSector>();
         }
