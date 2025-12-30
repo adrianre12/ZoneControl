@@ -19,6 +19,7 @@ namespace ZoneControl
             public ZoneInfoInternal Zone;
         }
         private Dictionary<long, ZoneCacheItem> cache = new Dictionary<long, ZoneCacheItem>();
+        private bool cacheReturnNullZone = true;
 
         public ZoneTable()
         {
@@ -89,6 +90,7 @@ namespace ZoneControl
 
         public int AddZone(ZoneInfoInternal zone)
         {
+            cacheReturnNullZone = false; //stop returning null zones to force refresh.
             zone.Id = Zones.Count;
             Zones.Add(zone);
             return zone.Id;
@@ -100,6 +102,7 @@ namespace ZoneControl
             {
                 if (zone.Id == Id)
                 {
+                    zone.Type = ZoneInfoInternal.ZoneType.Expired; // so it can be ignored in the cache
                     Zones.Remove(zone);
                     return true;
                 }
@@ -107,6 +110,13 @@ namespace ZoneControl
             return false;
         }
 
+        public void EnableCacheNullZone()
+        {
+            //Log.Msg("EnableCacheNullZone");
+            cacheReturnNullZone = true;
+        }
+
+        // returns Moved
         public bool GetZone(long Id, Vector3D position, out ZoneInfoInternal foundZone, out ZoneInfoInternal lastZone)
         {
             // check cached
@@ -121,13 +131,18 @@ namespace ZoneControl
                     {
                         foundZone = null;
                         lastZone = null;
-                        return false;
+                        if (cacheReturnNullZone)
+                            return false;
+                        //Log.Msg("Ignoring NullZone");
                     }
+                    else
                     if (cacheItem.Zone.InZone(position)) //double check we have not moved out.
                     {
                         foundZone = cacheItem.Zone;
                         lastZone = cacheItem.Zone;
-                        return false;
+                        if (cacheItem.Zone.Type != ZoneInfoInternal.ZoneType.Expired)
+                            return false;
+                        //Log.Msg("Ignoring Expired Zone");
                     }
                 }
                 cache.Remove(Id);

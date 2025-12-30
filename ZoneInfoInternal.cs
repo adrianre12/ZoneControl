@@ -19,6 +19,7 @@ namespace ZoneControl
         [Flags]
         public enum ZoneType
         {
+            Expired,
             Zone,
             Wormhole,
             Anomaly

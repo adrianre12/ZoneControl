@@ -66,8 +66,15 @@ namespace ZoneControl
 
         protected override void UnloadData()
         {
-            zoneSpawner.Close();
-            Instance = null;
+            try
+            {
+                zoneSpawner?.Close();
+                Instance = null;
+            }
+            catch (Exception e)
+            {
+                Log.Msg($"Error in UnloadData\n{e.ToString()}");
+            }
         }
 
         public void LoadDataOnHost()
@@ -91,8 +98,6 @@ namespace ZoneControl
             {
                 Log.Msg($"Error serializing zoneTargets\n {e}");
             }
-
-            zoneSpawner = new ZoneSpawner(config, SubZoneTable);
         }
 
         public void LoadDataOnClient()
@@ -111,6 +116,13 @@ namespace ZoneControl
                 Log.Msg($"Error deserializing zoneTargets\n {e}");
                 zoneTargets = new ZoneTargets();
             }
+        }
+
+        public override void BeforeStart()
+        {
+            base.BeforeStart();
+            if (MyAPIGateway.Session.IsServer)
+                zoneSpawner = new ZoneSpawner(config);
         }
 
         public override void UpdateAfterSimulation()
@@ -149,6 +161,9 @@ namespace ZoneControl
                 }
 
                 NextPlayer();
+                if (ps.Player == null)
+                    SubZoneTable.EnableCacheNullZone();
+
                 return;
             }
 
@@ -205,7 +220,7 @@ namespace ZoneControl
             ZoneInfoInternal foundZone;
             ZoneInfoInternal lastZone;
             bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone);
-            //Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName}");
+            Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName}");
             if (!moved)
             { //Has not moved
                 //Log.Msg("Not moved");

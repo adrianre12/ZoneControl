@@ -3,6 +3,7 @@ using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
@@ -27,6 +28,18 @@ namespace ZoneControl
             public long EntityId = 0;
             [ProtoMember(6)]
             public int ZoneId = -1;
+
+            public SpawnInfo() { }
+
+            public SpawnInfo(SpawnInfo spawnInfo)
+            {
+                Name = spawnInfo.Name;
+                Position = new Vector3D(spawnInfo.Position);
+                RemoveAt = spawnInfo.RemoveAt;
+                SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
+                EntityId = spawnInfo.EntityId;
+                ZoneId = spawnInfo.ZoneId;
+            }
         }
 
         [ProtoContract]
@@ -41,28 +54,27 @@ namespace ZoneControl
         }
 
         const string VariableId = nameof(ZoneSpawner);
-        const int UpdatePeriodMins = 6;
-        const int UpdateRndMultiplier = 60 / UpdatePeriodMins;
-        const int DefaultRefreshPeriodTicks = 60 * 60 * UpdatePeriodMins; //15 mins
+        const int UpdatePeriodMins = 1;//6;
+        const int UpdateRndMultiplier = 2 / UpdatePeriodMins; //60 / UpdatePeriodMins;
+        const int DefaultRefreshPeriodTicks = 60 * 60 * UpdatePeriodMins;
+        const long DateTimeTicksPerHour = 36000000000L;
 
-        private int nextRefreshFrame = DefaultRefreshPeriodTicks; // frame counter should be 0 at startup
-        private ZoneTable subZoneTable;
+        private int nextRefreshFrame = 1800; // 30s, frame counter should be 0 at startup
         private List<PrefabInfoInternal> prefabs; //all prefabs with weighting.
         private ZonesConfig.SpawnerInfo configSpawner;
         private bool updateSpawns;
         private CurrentSpawns currentSpawns = new CurrentSpawns();
-        private int nextSpawnIndex = 0;
+        private int nextSpawnIndex = -1;
         private Random random = new Random();
         private long factionOwnerId;
 
-        public ZoneSpawner(ZonesConfig config, ZoneTable subZoneTable)
+        public ZoneSpawner(ZonesConfig config)
         {
-            this.subZoneTable = subZoneTable;
             prefabs = new List<PrefabInfoInternal>();
             configSpawner = config.Spawner;
             double totalWeighting = 0;
 
-            //Read Config
+            Log.Msg($"Spawner Enabled={configSpawner.Enabled}");
             factionOwnerId = FindFactionId(configSpawner.FactionTag);
 
             foreach (var sector in configSpawner.Sectors)
@@ -94,7 +106,7 @@ namespace ZoneControl
                     Log.Msg($"Error: Failed to deseralize currentSpawns\n{ex.ToString()}");
                     currentSpawns = new CurrentSpawns();
                 }
-                for (int i = currentSpawns.Spawns.Count - 1; i > 0; --i)
+                for (int i = currentSpawns.Spawns.Count - 1; i >= 0; --i)
 
                 {
                     var spawn = currentSpawns.Spawns[i];
@@ -105,11 +117,23 @@ namespace ZoneControl
                         continue;
                     }
                     spawn.ZoneId = -1;
-                    Log.Msg($"currentSpawn loaded '{spawn.Name}'");
+                    Log.Msg($"currentSpawn loaded '{spawn.Name}' position={spawn.Position} zonePos={spawn.SubZonePosition}");
                 }
             }
 
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed += PrefabSpawnedDetailed;
+        }
+
+        public List<SpawnInfo> GetActiveSpawns()
+        {
+            List<SpawnInfo> activeSpawns = new List<SpawnInfo>();
+            foreach (SpawnInfo spawn in currentSpawns.Spawns)
+            {
+                if (spawn.EntityId < 0)
+                    continue;
+                activeSpawns.Add(new SpawnInfo(spawn));
+            }
+            return activeSpawns;
         }
 
         internal void Close()
@@ -121,6 +145,8 @@ namespace ZoneControl
         {
             if (updateSpawns)
             {
+                Log.Msg($"updateSpawns={updateSpawns} nextSpawnIndex={nextSpawnIndex}");
+
                 //do the loop
                 if (nextSpawnIndex >= 0)
                 {// update spawns
@@ -146,24 +172,23 @@ namespace ZoneControl
 
                 updateSpawns = false;
             }
-
             if (currentFrame < nextRefreshFrame)
                 return;
             nextRefreshFrame = currentFrame + DefaultRefreshPeriodTicks;
             updateSpawns = true;
-            nextSpawnIndex = currentSpawns.Spawns.Count;
-
+            nextSpawnIndex = currentSpawns.Spawns.Count - 1;
         }
 
         private void AddSpawn()
         {
             double rnd = UpdateRndMultiplier * random.NextDouble(); //make >1 to get no spawn probability
+            Log.Msg($"AddSpawn rnd={rnd}");
 
             SpawnInfo newSpawn = new SpawnInfo();
             //var gameTime = MyAPIGateway.Session.GameDateTime;
             //newSpawn.Name = $"Anomaly {gameTime.ToString("yyMMdd HH:mm")}";
 
-            newSpawn.Name = $"Anomaly {DateTime.Now.ToString("yyMMdd HH:mm")}";
+            newSpawn.Name = $"Anomaly {DateTime.Now.ToString("yyMMdd HH:mm")}"; //tmp name
 
             //find prefab
             double totalWeightNorm = 0;
@@ -205,11 +230,12 @@ namespace ZoneControl
             newSpawn.Position = spawnPosition.Value;
 
             //calculate anomaly position
-            newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * configSpawner.SubZoneRadius * (float)random.NextDouble() * MyUtils.GetRandomVector3Normalized();
+            newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * configSpawner.AlertRadius * (float)random.NextDouble() * MyUtils.GetRandomVector3Normalized();
 
             // removeAt
-            newSpawn.RemoveAt = DateTime.Now.Ticks + selectedPrefab.LifetimeMin + (long)((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * random.NextDouble());
+            newSpawn.RemoveAt = DateTime.Now.Ticks + DateTimeTicksPerHour * (long)(selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * random.NextDouble()));
             //spawn grid
+            Log.Msg("Spawn Prefab");
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
 
             //save
@@ -235,6 +261,7 @@ namespace ZoneControl
                     continue;
                 if (Vector3D.DistanceSquared(entity.GetPosition(), spawn.Position) < 0.0001)
                 {
+                    ((IMyCubeGrid)entity).IsStatic = true;
                     spawn.EntityId = entityId;
                     ++currentSpawns.SpawnCounter;
                     spawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
@@ -252,11 +279,20 @@ namespace ZoneControl
             RemoveSubZone(spawn);
 
             //close grid
-            var grid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId);
-            if (grid != null && Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < configSpawner.SubZoneRadius)
+            var grid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId) as IMyCubeGrid;
+            if (grid != null && Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < configSpawner.AlertRadius)
             {
                 Log.Msg($"Closing '{grid.DisplayName}' ");
-                grid.Close();
+                List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
+                grid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
+                foreach (var subGrid in cubeGrids)
+                {
+                    foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())
+                    {
+                        cockpit.RemovePilot();
+                    }
+                    subGrid.Close();
+                }
             }
             currentSpawns.Spawns.Remove(spawn);
             SaveCurrentSpawns();
@@ -274,7 +310,7 @@ namespace ZoneControl
             }
             foreach (var spawn in currentSpawns.Spawns)
             {
-                Log.Msg($"currentSpawn saved '{spawn.Name}'");
+                Log.Msg($"currentSpawn saved '{spawn.Name}' position={spawn.Position} zonePos={spawn.SubZonePosition}");
             }
         }
 
@@ -289,17 +325,24 @@ namespace ZoneControl
                 anomaly.Type = ZoneInfoInternal.ZoneType.Anomaly;
                 anomaly.UniqueName = spawn.Name;
                 anomaly.Position = spawn.SubZonePosition;
-                anomaly.AlertRadius = configSpawner.SubZoneRadius;
-                anomaly.AlertRadiusSqrd = configSpawner.SubZoneRadius * configSpawner.SubZoneRadius;
-                anomaly.AlertMessageEnter = "";
-                anomaly.ColourEnter = "";
-                anomaly.AlertMessageLeave = "";
-                anomaly.ColourLeave = "";
+                anomaly.AlertRadius = configSpawner.AlertRadius;
+                anomaly.AlertRadiusSqrd = configSpawner.AlertRadius * configSpawner.AlertRadius;
+                anomaly.AlertMessageEnter = MessageEdit(configSpawner.AlertMessageEnter, spawn.Name);
+                anomaly.ColourEnter = configSpawner.ColourEnter;
+                anomaly.AlertMessageLeave = MessageEdit(configSpawner.AlertMessageLeave, spawn.Name);
+                anomaly.ColourLeave = configSpawner.ColourLeave;
                 anomaly.AlertTimeMs = configSpawner.AlertTimeMs;
                 spawn.ZoneId = ZonesSession.Instance.SubZoneTable.AddZone(anomaly);
-                Log.Msg($"Added SubZone {spawn.ZoneId}");
+                Log.Msg($"Added SubZone {spawn.ZoneId} {spawn.Name}");
                 return;
             }
+        }
+
+        private string MessageEdit(string message, string name)
+        {
+            var sb = new StringBuilder(message);
+            sb.Replace("[NAME]", name);
+            return sb.ToString();
         }
 
         private void RemoveSubZone(SpawnInfo spawn)
