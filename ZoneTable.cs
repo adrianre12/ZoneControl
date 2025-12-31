@@ -137,7 +137,7 @@ namespace ZoneControl
 
         public void AddExtraMessage(int zoneId, string message, string colour, bool urgent)
         {
-            Log.Msg($"AddExtraMessage zineId={zoneId} message='{message}', colour={colour}, urgent={urgent}");
+            //Log.Msg($"AddExtraMessage zoneId={zoneId} message='{message}', colour={colour}, urgent={urgent}");
             msgCache[zoneId] = new MsgItem(message, colour, urgent);
         }
 

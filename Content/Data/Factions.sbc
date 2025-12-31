@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <Factions>
+        <Faction Tag="ANOM" Founder="Anomaly">
+            <Id>
+                <TypeId>MyObjectBuilder_FactionDefinition</TypeId>
+                <SubtypeId>Anomaly</SubtypeId>
+            </Id>
+            <DisplayName>Anomaly</DisplayName>
+            <IsDefault>true</IsDefault>
+            <AcceptHumans>false</AcceptHumans>
+            <Type>None</Type>
+            <AutoAcceptMember>false</AutoAcceptMember>
+            <EnableFriendlyFire>true</EnableFriendlyFire>
+            <StartingBalance>0</StartingBalance>
+            <DiscoveredByDefault>true</DiscoveredByDefault>
+            <FactionIcon>Textures\FactionLogo\Builders\BuilderIcon_10.dds</FactionIcon>
+            <StaticReputation>true</StaticReputation>
+            <StartingReputation>0</StartingReputation>
+        </Faction>
+    </Factions>
+</Definitions>

@@ -24,7 +24,7 @@ namespace ZoneControl
             public string MessageWarn = "Caution: Anomaly is unstable";
             public string MessageUrgent = "Alert: Anomaly collapse started";
             public string MessageColour = "Red";
-            public string FactionTag = "UNKN";
+            public string FactionTag = "ANOM";
             public List<SpawningSector> Sectors = new List<SpawningSector>();
         }
 

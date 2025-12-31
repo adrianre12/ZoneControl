@@ -168,17 +168,17 @@ namespace ZoneControl
                         --nextSpawnIndex;
                         return;
                     }
-                    Log.Msg($"WarnAt={new DateTime(spawn.RemoveAt - DateTimeTicksWarnMsgPeriod).ToString()}");
+                    //Log.Msg($"WarnAt={new DateTime(spawn.RemoveAt - DateTimeTicksWarnMsgPeriod).ToString()}");
                     if (spawn.ZoneId > 0 && spawn.RemoveAt - DateTimeTicksWarnMsgPeriod < DateTime.Now.Ticks)
                     {
                         if (spawn.RemoveAt - DateTimeTicksUrgentMsgPeriod < DateTime.Now.Ticks)
                         {
-                            Log.Msg($"Adding Urgent Msg '{configSpawner.MessageUrgent}'");
+                            //Log.Msg($"Adding Urgent Msg '{configSpawner.MessageUrgent}'");
                             ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageUrgent, configSpawner.MessageColour, true);
                         }
                         else
                         {
-                            Log.Msg($"Adding Warn Msg '{configSpawner.MessageWarn}'");
+                            //Log.Msg($"Adding Warn Msg '{configSpawner.MessageWarn}'");
                             ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageWarn, configSpawner.MessageColour, false);
                         }
                     }
@@ -256,7 +256,7 @@ namespace ZoneControl
             // removeAt
             newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(DateTimeTicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * random.NextDouble())));
             //spawn grid
-            Log.Msg("Spawn Prefab");
+            //Log.Msg("Spawn Prefab");
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
 
             //save
@@ -303,18 +303,25 @@ namespace ZoneControl
 
             //close grid
             var grid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId) as IMyCubeGrid;
-            if (grid != null && Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < configSpawner.AlertRadius)
+            if (grid != null)
             {
-                Log.Msg($"Closing '{grid.DisplayName}' ");
-                List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
-                grid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
-                foreach (var subGrid in cubeGrids)
+                if (Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < configSpawner.AlertRadius)
                 {
-                    foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())
+                    Log.Msg($"Closing '{grid.DisplayName}' ");
+                    List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
+                    grid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
+                    foreach (var subGrid in cubeGrids)
                     {
-                        cockpit.RemovePilot();
+                        foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())
+                        {
+                            cockpit.RemovePilot();
+                        }
+                        subGrid.Close();
                     }
-                    subGrid.Close();
+                }
+                else
+                {
+                    Log.Msg($"Spawn moved, not being removed: '{spawn.Name}'");
                 }
             }
             currentSpawns.Spawns.Remove(spawn);

@@ -180,7 +180,7 @@ namespace ZoneControl
                     warnMsgCounter = DefaultWarnMsgCounter;
                 if (urgentMsgCounter-- < 1)
                     urgentMsgCounter = DefaultUrgentMsgCounter;
-                Log.Msg($"warnMsgCounter={warnMsgCounter} urgentMsgCounter={urgentMsgCounter}");
+                //Log.Msg($"warnMsgCounter={warnMsgCounter} urgentMsgCounter={urgentMsgCounter}");
                 RefreshPlayers();
                 NextPlayer();
             }
@@ -231,12 +231,12 @@ namespace ZoneControl
             ZoneInfoInternal lastZone;
             MsgItem extraMsg = null;
             bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone, out extraMsg);
-            Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg='{extraMsg.Msg}'");
+            //Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg='{extraMsg.Msg}'");
             if (foundZone != null)
             {
                 if (extraMsg.Urgent && urgentMsgCounter == 0 || !extraMsg.Urgent && warnMsgCounter == 0)
                     MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
-                                        disappearTimeMs: foundZone.AlertTimeMs, font: extraMsg.Colour, playerId: ps.Player.IdentityId);
+                        disappearTimeMs: foundZone.AlertTimeMs, font: extraMsg.Colour, playerId: ps.Player.IdentityId);
             }
             if (!moved)
             { //Has not moved
