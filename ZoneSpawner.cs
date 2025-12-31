@@ -55,11 +55,17 @@ namespace ZoneControl
 
         const string VariableId = nameof(ZoneSpawner);
         const int UpdatePeriodMins = 1;//5;
-        const int WarnMsgPeriodTicks = 15 * 3600;
-        const int UrgentMsgPeriodTicks = UpdatePeriodMins * 3600;
+
+        const int UrgentMsgPeriodMins = 2 * UpdatePeriodMins;
+        const int WarnMsgPeriodMins = 30;
+
         const int UpdateRndMultiplier = 2 / UpdatePeriodMins; //60 / UpdatePeriodMins;
+
         const int DefaultRefreshPeriodTicks = 60 * 60 * UpdatePeriodMins;
         const long DateTimeTicksPerHour = 36000000000L;
+        const long DateTimeTicksPerMin = 600000000L;
+        const long DateTimeTicksUrgentMsgPeriod = UrgentMsgPeriodMins * DateTimeTicksPerMin;
+        const long DateTimeTicksWarnMsgPeriod = WarnMsgPeriodMins * DateTimeTicksPerMin;
 
         private int nextRefreshFrame = 1800; // 30s, frame counter should be 0 at startup
         private List<PrefabInfoInternal> prefabs; //all prefabs with weighting.
@@ -147,14 +153,14 @@ namespace ZoneControl
         {
             if (updateSpawns)
             {
-                Log.Msg($"updateSpawns={updateSpawns} nextSpawnIndex={nextSpawnIndex}");
+                //Log.Msg($"updateSpawns={updateSpawns} nextSpawnIndex={nextSpawnIndex}");
 
                 //do the loop
                 if (nextSpawnIndex >= 0)
                 {// update spawns
-                    Log.Msg($"Updating spawn[{nextSpawnIndex}]");
-
                     SpawnInfo spawn = currentSpawns.Spawns[nextSpawnIndex];
+                    Log.Msg($"Updating spawn[{nextSpawnIndex}] '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={(new DateTime(spawn.RemoveAt)).ToString()}");
+
                     //remove if disabled or if too old
                     if (!configSpawner.Enabled || spawn.RemoveAt < DateTime.Now.Ticks)
                     {
@@ -162,13 +168,19 @@ namespace ZoneControl
                         --nextSpawnIndex;
                         return;
                     }
-
-                    if (spawn.ZoneId > 0 && spawn.RemoveAt < DateTime.Now.Ticks - WarnMsgPeriodTicks)
+                    Log.Msg($"WarnAt={new DateTime(spawn.RemoveAt - DateTimeTicksWarnMsgPeriod).ToString()}");
+                    if (spawn.ZoneId > 0 && spawn.RemoveAt - DateTimeTicksWarnMsgPeriod < DateTime.Now.Ticks)
                     {
-                        if (spawn.RemoveAt < DateTime.Now.Ticks - UrgentMsgPeriodTicks)
-                            ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageUrgent, true);
+                        if (spawn.RemoveAt - DateTimeTicksUrgentMsgPeriod < DateTime.Now.Ticks)
+                        {
+                            Log.Msg($"Adding Urgent Msg '{configSpawner.MessageUrgent}'");
+                            ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageUrgent, configSpawner.MessageColour, true);
+                        }
                         else
-                            ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageSoon, false);
+                        {
+                            Log.Msg($"Adding Warn Msg '{configSpawner.MessageWarn}'");
+                            ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageWarn, configSpawner.MessageColour, false);
+                        }
                     }
                     CheckSubZone(spawn);
                     --nextSpawnIndex;
@@ -176,7 +188,7 @@ namespace ZoneControl
                 }
 
                 //All done
-                if (configSpawner.Enabled)
+                if (configSpawner.Enabled && currentSpawns.Spawns.Count < configSpawner.MaxSpawns)
                     AddSpawn();
 
                 updateSpawns = false;
@@ -242,7 +254,7 @@ namespace ZoneControl
             newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * configSpawner.AlertRadius * (float)random.NextDouble() * MyUtils.GetRandomVector3Normalized();
 
             // removeAt
-            newSpawn.RemoveAt = DateTime.Now.Ticks + DateTimeTicksPerHour * (long)(selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * random.NextDouble()));
+            newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(DateTimeTicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * random.NextDouble())));
             //spawn grid
             Log.Msg("Spawn Prefab");
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
@@ -275,6 +287,8 @@ namespace ZoneControl
                     ++currentSpawns.SpawnCounter;
                     spawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
                     CheckSubZone(spawn);
+                    Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={(new DateTime(spawn.RemoveAt)).ToString()}");
+
                     SaveCurrentSpawns();
                     return;
                 }
@@ -337,9 +351,9 @@ namespace ZoneControl
                 anomaly.AlertRadius = configSpawner.AlertRadius;
                 anomaly.AlertRadiusSqrd = configSpawner.AlertRadius * configSpawner.AlertRadius;
                 anomaly.AlertMessageEnter = MessageEdit(configSpawner.AlertMessageEnter, spawn.Name);
-                anomaly.ColourEnter = configSpawner.ColourEnter;
+                anomaly.ColourEnter = CheckColour(configSpawner.ColourEnter);
                 anomaly.AlertMessageLeave = MessageEdit(configSpawner.AlertMessageLeave, spawn.Name);
-                anomaly.ColourLeave = configSpawner.ColourLeave;
+                anomaly.ColourLeave = CheckColour(configSpawner.ColourLeave);
                 anomaly.AlertTimeMs = configSpawner.AlertTimeMs;
                 spawn.ZoneId = ZonesSession.Instance.SubZoneTable.AddZone(anomaly);
                 Log.Msg($"Added SubZone {spawn.ZoneId} {spawn.Name}");
@@ -347,9 +361,18 @@ namespace ZoneControl
             }
         }
 
+        private string CheckColour(string colour)
+        {
+            if (colour == null || colour.Trim().Length == 0)
+                return "White";
+            return colour.Trim();
+        }
+
         private string MessageEdit(string message, string name)
         {
-            var sb = new StringBuilder(message);
+            if (message == null)
+                return "";
+            var sb = new StringBuilder(message.Trim());
             sb.Replace("[NAME]", name);
             return sb.ToString();
         }

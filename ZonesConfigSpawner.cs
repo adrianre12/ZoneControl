@@ -21,8 +21,8 @@ namespace ZoneControl
             public string AlertMessageLeave = "Leaving [NAME]";
             public string ColourLeave = "Green";
             public int AlertTimeMs = 9000;
-            public string MessageSoon = "Anomaly is unstable";
-            public string MessageUrgent = "Anomaly colapse started";
+            public string MessageWarn = "Caution: Anomaly is unstable";
+            public string MessageUrgent = "Alert: Anomaly collapse started";
             public string MessageColour = "Red";
             public string FactionTag = "UNKN";
             public List<SpawningSector> Sectors = new List<SpawningSector>();
@@ -41,8 +41,8 @@ namespace ZoneControl
         {
             public string Subtype;
             public float Weighting = 1.0f;
-            public int LifetimeMin = 12;
-            public int LifetimeMax = 48;
+            public float LifetimeMin = 12;
+            public float LifetimeMax = 48;
         }
     }
 
@@ -71,8 +71,8 @@ namespace ZoneControl
         public string Subtype;
         public float Weighting = 1.0f;
         public double WeightNorm = 0;
-        public int LifetimeMin = 12;
-        public int LifetimeMax = 48;
+        public float LifetimeMin = 12;
+        public float LifetimeMax = 48;
         public SectorInfoInternal SectorInfo = new SectorInfoInternal();
 
         public PrefabInfoInternal(ZonesConfig.PrefabInfo prefab, SectorInfoInternal sectorInfo)

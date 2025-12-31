@@ -20,8 +20,8 @@ namespace ZoneControl
         const int DefaultPlayerRefreshPeriod = 600; // 10s
         const int DefaultPunishmentPeriod = 18000; // 5 mins
         const string VariableId = nameof(ZonesSession);
-        const int DefaultWarnMsgCounter = 6; //RefreshPeriods 60s
-        const int DefaultUrgentMsgCounter = 2; //RefreshPeriods 20s
+        const int DefaultWarnMsgCounter = 5; //RefreshPeriods 60s
+        const int DefaultUrgentMsgCounter = 1; //RefreshPeriods 20s
 
         public static ZonesSession Instance;
 
@@ -180,6 +180,7 @@ namespace ZoneControl
                     warnMsgCounter = DefaultWarnMsgCounter;
                 if (urgentMsgCounter-- < 1)
                     urgentMsgCounter = DefaultUrgentMsgCounter;
+                Log.Msg($"warnMsgCounter={warnMsgCounter} urgentMsgCounter={urgentMsgCounter}");
                 RefreshPlayers();
                 NextPlayer();
             }
@@ -190,7 +191,6 @@ namespace ZoneControl
         public void UpdateAfterSimulationClient()
         {
             //Log.Msg($"Client {zoneTargets.Targets.Count}");
-
         }
 
         private void RefreshPlayers()
@@ -231,14 +231,16 @@ namespace ZoneControl
             ZoneInfoInternal lastZone;
             MsgItem extraMsg = null;
             bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone, out extraMsg);
-            Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg={extraMsg.Msg}");
+            Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg='{extraMsg.Msg}'");
+            if (foundZone != null)
+            {
+                if (extraMsg.Urgent && urgentMsgCounter == 0 || !extraMsg.Urgent && warnMsgCounter == 0)
+                    MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
+                                        disappearTimeMs: foundZone.AlertTimeMs, font: extraMsg.Colour, playerId: ps.Player.IdentityId);
+            }
             if (!moved)
             { //Has not moved
-              //Log.Msg("Not moved");
-
-                if (foundZone != null && urgentMsgCounter == 0 && extraMsg.Urgent && extraMsg.Msg != null)
-                    MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
-                        disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
+              //Log.Msg("Not changed zone");
                 return foundZone; //can be null
             }
 
@@ -248,10 +250,6 @@ namespace ZoneControl
 
             if (foundZone != null && foundZone.AlertMessageEnter.Length > 0)
                 MyVisualScriptLogicProvider.ShowNotification(foundZone.AlertMessageEnter,
-                    disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
-
-            if (foundZone != null && warnMsgCounter == 0 && extraMsg.Msg != null)
-                MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
                     disappearTimeMs: foundZone.AlertTimeMs, font: foundZone.ColourEnter, playerId: ps.Player.IdentityId);
 
             return foundZone;

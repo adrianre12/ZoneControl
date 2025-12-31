@@ -24,13 +24,15 @@ namespace ZoneControl
         internal class MsgItem
         {
             public string Msg = null;
+            public string Colour = "White";
             public bool Urgent = false;
 
             public MsgItem()
             { }
-            public MsgItem(string msg, bool urgent)
+            public MsgItem(string msg, string colour, bool urgent)
             {
                 Msg = msg;
+                Colour = colour;
                 Urgent = urgent;
             }
         }
@@ -133,9 +135,10 @@ namespace ZoneControl
             cacheReturnNullZone = true;
         }
 
-        public void AddExtraMessage(int zoneId, string message, bool urgent = false)
+        public void AddExtraMessage(int zoneId, string message, string colour, bool urgent)
         {
-            msgCache[zoneId] = new MsgItem(message, urgent);
+            Log.Msg($"AddExtraMessage zineId={zoneId} message='{message}', colour={colour}, urgent={urgent}");
+            msgCache[zoneId] = new MsgItem(message, colour, urgent);
         }
 
 
@@ -177,7 +180,8 @@ namespace ZoneControl
 
             foundZone = FindClosestZone(position);
             lastZone = cacheItem.Zone;
-            msgItem = msgCache.GetValueOrDefault(foundZone.Id, msgItem);
+            if (foundZone != null)
+                msgItem = msgCache.GetValueOrDefault(foundZone.Id, msgItem);
             cache[Id] = new ZoneCacheItem() { Position = position, Zone = foundZone };
             if (foundZone == lastZone)
                 return false;
