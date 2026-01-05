@@ -232,11 +232,13 @@ namespace ZoneControl
             MsgItem extraMsg = null;
             bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone, out extraMsg);
             //Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg='{extraMsg.Msg}'");
-            if (foundZone != null)
+            if (foundZone != null && extraMsg.Msg != null)
             {
                 if (extraMsg.Urgent && urgentMsgCounter == 0 || !extraMsg.Urgent && warnMsgCounter == 0)
+                {
                     MyVisualScriptLogicProvider.ShowNotification(extraMsg.Msg,
                         disappearTimeMs: foundZone.AlertTimeMs, font: extraMsg.Colour, playerId: ps.Player.IdentityId);
+                }
             }
             if (!moved)
             { //Has not moved
