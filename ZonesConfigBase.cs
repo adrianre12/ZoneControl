@@ -182,5 +182,10 @@ namespace ZoneControl
             position = new Vector3D(x, y, z);
             return true;
         }
+
+        public static string VectorToGPS(string name, Vector3D position, string colour = "#FFF17575")
+        {
+            return $"GPS:{name}:{position.X}:{position.Y}:{position.Z}:{colour}:";
+        }
     }
 }

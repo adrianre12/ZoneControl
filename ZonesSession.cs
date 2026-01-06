@@ -282,7 +282,7 @@ namespace ZoneControl
             if (ps.Player.PromoteLevel != MyPromoteLevel.None && playerFactionTag != config.Intruder.AdminTestFactionTag.Trim())
                 return false; //admins dont get punished unless in AdminTestFactionTag
 
-            Log.Msg($"Intruder: GPS:{ps.Player.DisplayName}:{position.X}:{position.Y}:{position.Z}:#FFF17575:");
+            Log.Msg($"Intruder: {ZonesConfigBase.VectorToGPS(ps.Player.DisplayName, position)}");
             return true;
         }
 

@@ -28,6 +28,10 @@ namespace ZoneControl
             public long EntityId = 0;
             [ProtoMember(6)]
             public int ZoneId = -1;
+            [ProtoMember(7)]
+            public string DPtitle = "";
+            [ProtoMember(8)]
+            public string DPmessage = "";
 
             public SpawnInfo() { }
 
@@ -39,7 +43,11 @@ namespace ZoneControl
                 SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
                 EntityId = spawnInfo.EntityId;
                 ZoneId = spawnInfo.ZoneId;
+                DPtitle = spawnInfo.DPtitle;
+                DPmessage = spawnInfo.DPmessage;
             }
+
+
         }
 
         [ProtoContract]
@@ -286,8 +294,10 @@ namespace ZoneControl
                     spawn.EntityId = entityId;
                     ++currentSpawns.SpawnCounter;
                     spawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
+                    spawn.DPtitle = TextReplace(configSpawner.DataPadTitle, "[NAME]", spawn.Name);
+                    spawn.DPmessage = TextReplace(configSpawner.DataPadMessage, "[NAME]", spawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(spawn.Name, spawn.Position));
                     CheckSubZone(spawn);
-                    Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={(new DateTime(spawn.RemoveAt)).ToString()}");
+                    Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPtitle}");
 
                     SaveCurrentSpawns();
                     return;
@@ -357,9 +367,9 @@ namespace ZoneControl
                 anomaly.Position = spawn.SubZonePosition;
                 anomaly.AlertRadius = configSpawner.AlertRadius;
                 anomaly.AlertRadiusSqrd = configSpawner.AlertRadius * configSpawner.AlertRadius;
-                anomaly.AlertMessageEnter = MessageEdit(configSpawner.AlertMessageEnter, spawn.Name);
+                anomaly.AlertMessageEnter = TextReplace(configSpawner.AlertMessageEnter, "[NAME]", spawn.Name);
                 anomaly.ColourEnter = CheckColour(configSpawner.ColourEnter);
-                anomaly.AlertMessageLeave = MessageEdit(configSpawner.AlertMessageLeave, spawn.Name);
+                anomaly.AlertMessageLeave = TextReplace(configSpawner.AlertMessageLeave, "[NAME]", spawn.Name);
                 anomaly.ColourLeave = CheckColour(configSpawner.ColourLeave);
                 anomaly.AlertTimeMs = configSpawner.AlertTimeMs;
                 spawn.ZoneId = ZonesSession.Instance.SubZoneTable.AddZone(anomaly);
@@ -375,12 +385,15 @@ namespace ZoneControl
             return colour.Trim();
         }
 
-        private string MessageEdit(string message, string name)
+        private string TextReplace(string text, string key1, string value1, string key2 = null, string value2 = null)
         {
-            if (message == null)
+            if (text == null)
                 return "";
-            var sb = new StringBuilder(message.Trim());
-            sb.Replace("[NAME]", name);
+            var sb = new StringBuilder(text.Trim());
+            sb.Replace(key1, value1);
+            if (key2 == null || value2 == null)
+                return sb.ToString();
+            sb.Replace(key2, value2);
             return sb.ToString();
         }
 
