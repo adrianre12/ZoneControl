@@ -1,4 +1,5 @@
 ﻿using ProtoBuf;
+using Sandbox.Common.ObjectBuilders.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -383,6 +384,11 @@ namespace ZoneControl
             MsgItem extraMsg = null;
             SubZoneTable.GetZone(gridId, vector3D, out currentZone, out lastZone, out extraMsg);
             return currentZone;
+        }
+
+        public MyObjectBuilder_Datapad GetRandomDatapad()
+        {
+            return zoneSpawner.GetRandomDatapad();
         }
     }
 }

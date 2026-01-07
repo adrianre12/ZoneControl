@@ -61,7 +61,7 @@ namespace ZoneControl
             }
         }
 
-        private static string CheckFontColour(string font)
+        internal static string CheckFontColour(string font)
         {
             if (fonts.Contains(font))
                 return font;
@@ -183,9 +183,9 @@ namespace ZoneControl
             return true;
         }
 
-        public static string VectorToGPS(string name, Vector3D position, string colour = "#FFF17575")
+        public static string VectorToGPS(string name, Vector3D position, string colour = "#FFFFFFFF") //#FF00FF8C pale blue
         {
-            return $"GPS:{name}:{position.X}:{position.Y}:{position.Z}:{colour}:";
+            return $"GPS:{name}:{position.X:0.00}:{position.Y:0.00}:{position.Z:0.00}:{colour}:";
         }
     }
 }

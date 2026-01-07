@@ -1,5 +1,4 @@
-﻿using Sandbox.Common.ObjectBuilders.Definitions;
-using Sandbox.Game;
+﻿using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Text;
@@ -14,18 +13,18 @@ namespace ZoneControl.DPbox
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_TerminalBlock), false, new[] { "AnomalyFreight1" })]
     internal class AnomalyDatapadBox : MyGameLogicComponent
     {
-        const int DefaultRefreshPeriod = 5; //mins
+        const int DefaultRefreshPeriod = 30; //seconds
 
         public static Random GlobalRandom = new Random();
 
         private IMyTerminalBlock block;
-        private int refreshPeriodTicks = DefaultRefreshPeriod * 3600;
+        private int refreshPeriodTicks = DefaultRefreshPeriod * 60;
         private int refreshAfterFrame;
         private MyIni config = new MyIni();
         private MyInventory inventory;
 
 
-        private MyDefinitionId DatapadDefId = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
+        //private MyDefinitionId DatapadDefId = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
@@ -65,20 +64,17 @@ namespace ZoneControl.DPbox
 
             refreshAfterFrame = currentFrame + refreshPeriodTicks;
 
-            var data = "An Anomaly has been detected.\nDetails:\nIdentifier: [NAME]\nPosition: GPS:space:1186.73993738235:15929.3556984867:-41887.2376482318:#FF75C9F1:\n\nNotes:\nThe position is approximate.\nAnomalies collapse is instantaneous, if instabilities are detected attempts will be made to notify Engineers in the vicinity.";
             LoadConfigFromCD();
             inventory.Clear();
-            CreateDatapads(2, "BlaBla", data);
+            CreateDatapad();
 
         }
 
-        private void CreateDatapads(int amount, string name, string data)
+        private void CreateDatapad()
         {
-
-            var dp = (MyObjectBuilder_Datapad)MyObjectBuilderSerializer.CreateNewObject(DatapadDefId);
-            dp.Name = name;
-            dp.Data = data;
-            inventory.AddItems(amount, dp);
+            var dp = ZonesSession.Instance.GetRandomDatapad();
+            if (dp != null)
+                inventory.AddItems(1, dp);
         }
 
         private void LoadConfigFromCD()
@@ -96,11 +92,11 @@ namespace ZoneControl.DPbox
 
             config.Clear();
             var sb = new StringBuilder();
-            sb.AppendLine("Bla Bla");
+            sb.AppendLine($"Minimum RefreshPeriod = {DefaultRefreshPeriod} seconds");
 
             config.AddSection("Box");
             config.SetSectionComment("Box", sb.ToString());
-            config.Set("Box", "RefreshPeriodMins", DefaultRefreshPeriod);
+            config.Set("Box", "RefreshPeriod", DefaultRefreshPeriod);
 
             config.Invalidate();
             block.CustomData = config.ToString();
@@ -115,9 +111,9 @@ namespace ZoneControl.DPbox
                     return false;
 
                 int refreshPeriod;
-                if (!config.Get("Box", "RefreshPeriodMins").TryGetInt32(out refreshPeriod))
+                if (!config.Get("Box", "RefreshPeriod").TryGetInt32(out refreshPeriod))
                     return false;
-                refreshPeriodTicks = refreshPeriod * 3600;
+                refreshPeriodTicks = Math.Max(DefaultRefreshPeriod, refreshPeriod) * 60;
 
                 return true;
             }

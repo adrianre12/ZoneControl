@@ -1,11 +1,14 @@
 ﻿using ProtoBuf;
+using Sandbox.Common.ObjectBuilders.Definitions;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
+using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 
@@ -29,9 +32,9 @@ namespace ZoneControl
             [ProtoMember(6)]
             public int ZoneId = -1;
             [ProtoMember(7)]
-            public string DPtitle = "";
+            public string DPname = "";
             [ProtoMember(8)]
-            public string DPmessage = "";
+            public string DPdata = "";
 
             public SpawnInfo() { }
 
@@ -43,8 +46,8 @@ namespace ZoneControl
                 SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
                 EntityId = spawnInfo.EntityId;
                 ZoneId = spawnInfo.ZoneId;
-                DPtitle = spawnInfo.DPtitle;
-                DPmessage = spawnInfo.DPmessage;
+                DPname = spawnInfo.DPname;
+                DPdata = spawnInfo.DPdata;
             }
 
 
@@ -75,19 +78,24 @@ namespace ZoneControl
         const long DateTimeTicksUrgentMsgPeriod = UrgentMsgPeriodMins * DateTimeTicksPerMin;
         const long DateTimeTicksWarnMsgPeriod = WarnMsgPeriodMins * DateTimeTicksPerMin;
 
+        private readonly MyDefinitionId DatapadDefId = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
+
+
         private int nextRefreshFrame = 1800; // 30s, frame counter should be 0 at startup
         private List<PrefabInfoInternal> prefabs; //all prefabs with weighting.
         private ZonesConfig.SpawnerInfo configSpawner;
         private bool updateSpawns;
         private CurrentSpawns currentSpawns = new CurrentSpawns();
+        //private  List<SpawnInfo> randomSpawnList = new List<SpawnInfo>();
         private int nextSpawnIndex = -1;
-        private Random random = new Random();
+        private Random rng = new Random();
         private long factionOwnerId;
 
         public ZoneSpawner(ZonesConfig config)
         {
             prefabs = new List<PrefabInfoInternal>();
             configSpawner = config.Spawner;
+            configSpawner.Verify();
             double totalWeighting = 0;
 
             Log.Msg($"Spawner Enabled={configSpawner.Enabled}");
@@ -139,6 +147,37 @@ namespace ZoneControl
 
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed += PrefabSpawnedDetailed;
         }
+
+
+
+        public MyObjectBuilder_Datapad GetRandomDatapad()
+        {
+            if (currentSpawns.Spawns.Count == 0)
+                return null;
+
+            var dp = (MyObjectBuilder_Datapad)MyObjectBuilderSerializer.CreateNewObject(DatapadDefId);
+
+            var rndSpwan = currentSpawns.Spawns[rng.Next(currentSpawns.Spawns.Count)];
+            dp.Name = rndSpwan.DPname;
+            dp.Data = rndSpwan.DPdata;
+
+            return dp;
+        }
+
+
+        /*        private void CreateRandomSpawnList()
+                {
+                    randomSpawnList= GetActiveSpawns();
+                    int n = randomSpawnList.Count;
+                    while (n > 1)
+                    {
+                        n--;
+                        int k = rng.Next(n + 1);
+                        var value = randomSpawnList[k];
+                        randomSpawnList[k] = randomSpawnList[n];
+                        randomSpawnList[n] = value;
+                    }
+                }*/
 
         public List<SpawnInfo> GetActiveSpawns()
         {
@@ -199,6 +238,7 @@ namespace ZoneControl
                 if (configSpawner.Enabled && currentSpawns.Spawns.Count < configSpawner.MaxSpawns)
                     AddSpawn();
 
+                //randomSpawnList.Clear();
                 updateSpawns = false;
             }
             if (currentFrame < nextRefreshFrame)
@@ -210,7 +250,7 @@ namespace ZoneControl
 
         private void AddSpawn()
         {
-            double rnd = UpdateRndMultiplier * random.NextDouble(); //make >1 to get no spawn probability
+            double rnd = UpdateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
             Log.Msg($"AddSpawn rnd={rnd}");
 
             SpawnInfo newSpawn = new SpawnInfo();
@@ -259,10 +299,10 @@ namespace ZoneControl
             newSpawn.Position = spawnPosition.Value;
 
             //calculate anomaly position
-            newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * configSpawner.AlertRadius * (float)random.NextDouble() * MyUtils.GetRandomVector3Normalized();
+            newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * configSpawner.AlertRadius * (float)rng.NextDouble() * MyUtils.GetRandomVector3Normalized();
 
             // removeAt
-            newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(DateTimeTicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * random.NextDouble())));
+            newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(DateTimeTicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * rng.NextDouble())));
             //spawn grid
             //Log.Msg("Spawn Prefab");
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
@@ -294,10 +334,10 @@ namespace ZoneControl
                     spawn.EntityId = entityId;
                     ++currentSpawns.SpawnCounter;
                     spawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
-                    spawn.DPtitle = TextReplace(configSpawner.DataPadTitle, "[NAME]", spawn.Name);
-                    spawn.DPmessage = TextReplace(configSpawner.DataPadMessage, "[NAME]", spawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(spawn.Name, spawn.Position));
+                    spawn.DPname = TextReplace(configSpawner.DataPadTitle, "[NAME]", spawn.Name);
+                    spawn.DPdata = TextReplace(configSpawner.DataPadMessage, "[NAME]", spawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(spawn.Name, spawn.Position, configSpawner.GPScolourHex));
                     CheckSubZone(spawn);
-                    Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPtitle}");
+                    Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPname}");
 
                     SaveCurrentSpawns();
                     return;
