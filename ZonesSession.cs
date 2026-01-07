@@ -75,6 +75,10 @@ namespace ZoneControl
         {
             try
             {
+                if (MyAPIGateway.Utilities.IsDedicated)
+                    MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
+                else
+                    MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
                 zoneSpawner?.Close();
                 Instance = null;
             }
@@ -129,7 +133,90 @@ namespace ZoneControl
         {
             base.BeforeStart();
             if (MyAPIGateway.Session.IsServer)
+            {
                 zoneSpawner = new ZoneSpawner(config);
+                if (MyAPIGateway.Utilities.IsDedicated)
+                    MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
+                else
+                    MyAPIGateway.Utilities.MessageEntered += Utilities_MessageEntered;
+            }
+        }
+
+        private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
+        {
+            Log.Msg($"Recieved loca msg={msg}");
+            if (!msg.ToLower().StartsWith("/zonecontrol"))
+                return;
+            CommandHandler(null, msg);
+        }
+
+        private void Utilities_MessageRecieved(ulong steamId, string msg)
+        {
+            Log.Msg($"Recieved steamId={steamId} msg={msg}");
+            if (!msg.ToLower().StartsWith("/zonecontrol"))
+                return;
+
+            long IdentityId = MyAPIGateway.Players.TryGetIdentityId(steamId);
+
+            IMyPlayer player = MyAPIGateway.Players.TryGetIdentityId(IdentityId);
+            if (player == null)
+                return;
+
+            if (player.PromoteLevel < MyPromoteLevel.Admin)
+            {
+                Log.Msg($"No Admin player {player.DisplayName} tried to run command {msg}");
+                return;
+            }
+
+            CommandHandler(player, msg);
+        }
+
+        private void CommandHandler(IMyPlayer player, string msg)
+        {
+            var args = msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (args.Length < 2)
+            {
+                Log.Msg("Error in command, no args");
+                return;
+            }
+
+            Log.Msg($"Player {player?.DisplayName ?? "Local"} ran command {msg}");
+            switch (args[1])
+            {
+                case "RemoveAllSpawns":
+                    {
+                        zoneSpawner.RemoveSpwans = true;
+                        break;
+                    }
+
+                case "SetSpawnCounter":
+                    {
+                        if (config.Spawner.Enabled)
+                        {
+                            Log.Msg("Spwaner must be disabled to run SetSpawnCounter");
+                            return;
+                        }
+                        int value = -1;
+                        if (args.Length != 3 || !int.TryParse(args[2], out value))
+                        {
+                            Log.Msg($"Error in command '{msg}'");
+                            return;
+                        }
+                        if (value < 0)
+                        {
+                            Log.Msg("Error value < 0");
+                            return;
+                        }
+
+                        zoneSpawner.SetSpawnCounter = value;
+                        break;
+                    }
+                default:
+                    {
+                        Log.Msg($"Error in command '{msg}'");
+                        break;
+                    }
+            }
         }
 
         public override void UpdateAfterSimulation()

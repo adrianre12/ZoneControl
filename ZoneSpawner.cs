@@ -91,6 +91,9 @@ namespace ZoneControl
         private Random rng = new Random();
         private long factionOwnerId;
 
+        internal bool RemoveSpwans = false;
+        internal int SetSpawnCounter = -1;
+
         public ZoneSpawner(ZonesConfig config)
         {
             prefabs = new List<PrefabInfoInternal>();
@@ -130,8 +133,8 @@ namespace ZoneControl
                     Log.Msg($"Error: Failed to deseralize currentSpawns\n{ex.ToString()}");
                     currentSpawns = new CurrentSpawns();
                 }
-                for (int i = currentSpawns.Spawns.Count - 1; i >= 0; --i)
 
+                for (int i = currentSpawns.Spawns.Count - 1; i >= 0; --i)
                 {
                     var spawn = currentSpawns.Spawns[i];
                     if (spawn.EntityId < 0)
@@ -141,13 +144,12 @@ namespace ZoneControl
                         continue;
                     }
                     spawn.ZoneId = -1;
-                    Log.Msg($"currentSpawn loaded '{spawn.Name}' position={spawn.Position} zonePos={spawn.SubZonePosition}");
+                    Log.Msg($"currentSpawn loaded '{spawn.Name}'");
                 }
             }
 
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed += PrefabSpawnedDetailed;
         }
-
 
 
         public MyObjectBuilder_Datapad GetRandomDatapad()
@@ -179,17 +181,17 @@ namespace ZoneControl
                     }
                 }*/
 
-        public List<SpawnInfo> GetActiveSpawns()
-        {
-            List<SpawnInfo> activeSpawns = new List<SpawnInfo>();
-            foreach (SpawnInfo spawn in currentSpawns.Spawns)
-            {
-                if (spawn.EntityId < 0)
-                    continue;
-                activeSpawns.Add(new SpawnInfo(spawn));
-            }
-            return activeSpawns;
-        }
+        /*        public List<SpawnInfo> GetActiveSpawns()
+                {
+                    List<SpawnInfo> activeSpawns = new List<SpawnInfo>();
+                    foreach (SpawnInfo spawn in currentSpawns.Spawns)
+                    {
+                        if (spawn.EntityId < 0)
+                            continue;
+                        activeSpawns.Add(new SpawnInfo(spawn));
+                    }
+                    return activeSpawns;
+                }*/
 
         internal void Close()
         {
@@ -198,6 +200,22 @@ namespace ZoneControl
 
         internal void Update(int currentFrame)
         {
+            if (!configSpawner.Enabled || RemoveSpwans)
+            {
+                if (currentSpawns.Spawns.Count > 0)
+                    RemoveAllSpawns();
+                RemoveSpwans = false;
+
+                if (!configSpawner.Enabled && SetSpawnCounter >= 0)
+                {
+                    Log.Msg($"Setting SpawnCounter to {SetSpawnCounter}");
+                    currentSpawns.SpawnCounter = SetSpawnCounter;
+                    SetSpawnCounter = -1;
+                }
+
+                return;
+            }
+
             if (updateSpawns)
             {
                 //Log.Msg($"updateSpawns={updateSpawns} nextSpawnIndex={nextSpawnIndex}");
@@ -208,8 +226,8 @@ namespace ZoneControl
                     SpawnInfo spawn = currentSpawns.Spawns[nextSpawnIndex];
                     Log.Msg($"Updating spawn[{nextSpawnIndex}] '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={(new DateTime(spawn.RemoveAt)).ToString()}");
 
-                    //remove if disabled or if too old
-                    if (!configSpawner.Enabled || spawn.RemoveAt < DateTime.Now.Ticks)
+                    //remove if if too old
+                    if (spawn.RemoveAt < DateTime.Now.Ticks)
                     {
                         RemoveSpawn(spawn);
                         --nextSpawnIndex;
@@ -241,6 +259,7 @@ namespace ZoneControl
                 //randomSpawnList.Clear();
                 updateSpawns = false;
             }
+
             if (currentFrame < nextRefreshFrame)
                 return;
             nextRefreshFrame = currentFrame + DefaultRefreshPeriodTicks;
@@ -344,6 +363,17 @@ namespace ZoneControl
                 }
             }
             Log.Msg("Spawnwer could not find Entity in currentSpawns");
+        }
+
+        private void RemoveAllSpawns()
+        {
+            for (int i = currentSpawns.Spawns.Count - 1; i >= 0; --i)
+            {
+                var spawn = currentSpawns.Spawns[i];
+                currentSpawns.Spawns.Remove(spawn);
+                Log.Msg($"Removed spawn '{spawn.Name}'");
+
+            }
         }
 
         private void RemoveSpawn(SpawnInfo spawn)
