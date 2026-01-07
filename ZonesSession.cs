@@ -5,6 +5,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -36,6 +37,13 @@ namespace ZoneControl
         private int urgentMsgCounter = DefaultUrgentMsgCounter;
         private ZoneInfoInternal currentZone = null;
         private ZoneSpawner zoneSpawner = null;
+
+        internal enum CmdFlag
+        {
+            True,
+            Pending,
+            False
+        }
 
         [ProtoContract]
         private class ZoneTargets
@@ -144,7 +152,7 @@ namespace ZoneControl
 
         private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
         {
-            Log.Msg($"Recieved loca msg={msg}");
+            //Log.Msg($"Recieved local msg={msg}");
             if (!msg.ToLower().StartsWith("/zonecontrol"))
                 return;
             CommandHandler(null, msg);
@@ -152,7 +160,7 @@ namespace ZoneControl
 
         private void Utilities_MessageRecieved(ulong steamId, string msg)
         {
-            Log.Msg($"Recieved steamId={steamId} msg={msg}");
+            //Log.Msg($"Recieved steamId={steamId} msg={msg}");
             if (!msg.ToLower().StartsWith("/zonecontrol"))
                 return;
 
@@ -173,10 +181,11 @@ namespace ZoneControl
 
         private void CommandHandler(IMyPlayer player, string msg)
         {
+            long playerId = player?.IdentityId ?? 0;
             var args = msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             if (args.Length < 2)
             {
-                Log.Msg("Error in command, no args");
+                Log.Msg("Error in command, no args", playerId);
                 return;
             }
 
@@ -185,7 +194,7 @@ namespace ZoneControl
             {
                 case "RemoveAllSpawns":
                     {
-                        zoneSpawner.RemoveSpwans = true;
+                        zoneSpawner.DoRemoveSpwans = CmdFlag.True;
                         break;
                     }
 
@@ -193,27 +202,69 @@ namespace ZoneControl
                     {
                         if (config.Spawner.Enabled)
                         {
-                            Log.Msg("Spwaner must be disabled to run SetSpawnCounter");
+                            Log.Msg("Spwaner must be disabled to run SetSpawnCounter", playerId);
                             return;
                         }
                         int value = -1;
                         if (args.Length != 3 || !int.TryParse(args[2], out value))
                         {
-                            Log.Msg($"Error in command '{msg}'");
+                            Log.Msg($"Error in command '{msg}'", playerId);
                             return;
                         }
                         if (value < 0)
                         {
-                            Log.Msg("Error value < 0");
+                            Log.Msg("Error value < 0", playerId);
                             return;
                         }
 
                         zoneSpawner.SetSpawnCounter = value;
                         break;
                     }
+                case "AddSpawn":
+                    {
+                        if (!config.Spawner.Enabled)
+                        {
+                            Log.Msg("Spwaner must be enabled to run AddSpawn", playerId);
+                            return;
+                        }
+
+                        if (zoneSpawner.DoAddSpawn != CmdFlag.False)
+                        {
+                            Log.Msg("AddSpawn is running already", playerId);
+                            return;
+                        }
+                        zoneSpawner.DoAddSpawn = CmdFlag.True;
+                        break;
+                    }
+                case "Status":
+                    {
+                        var spawns = zoneSpawner.GetActiveSpawns();
+                        var sb = new StringBuilder();
+                        sb.AppendLine("Status:");
+                        sb.AppendLine($"Enabled: {config.Spawner.Enabled}");
+                        sb.AppendLine($"Spawns: {spawns.Count} of {config.Spawner.MaxSpawns}");
+                        int i = 2;
+                        foreach (var spawn in spawns)
+                        {
+                            if (sb.Length == 0)
+                                sb.AppendLine();
+                            sb.AppendLine($"{spawn.Name}  {new DateTime(spawn.RemoveAt)}");
+                            ++i;
+                            if (i == 10)
+                            {
+                                Log.Msg(sb.ToString(), playerId);
+                                sb.Clear();
+                                i = 0;
+                            }
+                        }
+
+                        if (sb.Length > 0)
+                            Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
                 default:
                     {
-                        Log.Msg($"Error in command '{msg}'");
+                        Log.Msg($"Error in command '{msg}'", playerId);
                         break;
                     }
             }
