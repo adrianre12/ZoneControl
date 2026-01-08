@@ -12,9 +12,10 @@ namespace ZoneControl
     {
         public class SpawnerInfo
         {
+            public string UpdatePeriodMins = "";
             public bool Enabled = false;
             public int MaxSpawns = 10;
-            public float SpawnRateMultiplier = 1.0f;
+            public int SpawnRateMultiplier = 1;
             public float AlertRadius = 2000;
             public string AlertMessageEnter = "Entering [NAME]";
             public string ColourEnter = "Green";

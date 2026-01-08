@@ -47,6 +47,7 @@ namespace ZoneControl
             public WormholeInfo() { }
         }
 
+        public string Debug = "";
         public IntruderInfo Intruder = new IntruderInfo();
         public List<ZoneInfo> Zones;
         public List<PlanetInfo> Planets;

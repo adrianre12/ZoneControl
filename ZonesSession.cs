@@ -5,7 +5,6 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -44,6 +43,14 @@ namespace ZoneControl
             Pending,
             False
         }
+
+        internal struct CmdMsg
+        {
+            public IMyPlayer Player;
+            public string Msg;
+        }
+
+        private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
 
         [ProtoContract]
         private class ZoneTargets
@@ -100,6 +107,8 @@ namespace ZoneControl
         {
             Log.Msg("ZoneNotification Host Start");
             config = ZonesConfig.LoadConfig();
+            Log.Debug = config.Debug?.ToLower() == "true";
+
             zoneTable = ZoneTable.NewZoneDictionary(config);
             SubZoneTable = ZoneTable.NewSubZoneDictionary(config);
             foreach (var zone in SubZoneTable.Zones)
@@ -153,118 +162,55 @@ namespace ZoneControl
         private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
         {
             //Log.Msg($"Recieved local msg={msg}");
-            if (!msg.ToLower().StartsWith("/zonecontrol"))
-                return;
-            CommandHandler(null, msg);
+            Utilities_MessageRecieved(0, msg);
         }
 
         private void Utilities_MessageRecieved(ulong steamId, string msg)
         {
             //Log.Msg($"Recieved steamId={steamId} msg={msg}");
-            if (!msg.ToLower().StartsWith("/zonecontrol"))
+
+            bool control = msg.StartsWith("/ZoneControl");
+            bool spawner = msg.StartsWith("/ZoneSpawner");
+            if (!control && !spawner)
                 return;
 
-            long IdentityId = MyAPIGateway.Players.TryGetIdentityId(steamId);
-
-            IMyPlayer player = MyAPIGateway.Players.TryGetIdentityId(IdentityId);
-            if (player == null)
-                return;
-
-            if (player.PromoteLevel < MyPromoteLevel.Admin)
+            IMyPlayer player = null;
+            if (steamId != 0)
             {
-                Log.Msg($"No Admin player {player.DisplayName} tried to run command {msg}");
-                return;
+                player = MyAPIGateway.Players.TryGetIdentityId(MyAPIGateway.Players.TryGetIdentityId(steamId));
+                if (player == null) //belt and braces
+                    return;
+
+
+                if (player.PromoteLevel < MyPromoteLevel.Admin)
+                {
+                    Log.Msg($"Non Admin player {player.DisplayName} tried to run command {msg}", player.IdentityId);
+                    return;
+                }
             }
 
-            CommandHandler(player, msg);
+            if (control)
+                cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
+            if (spawner)
+                zoneSpawner.Enqueue(new CmdMsg() { Player = player, Msg = msg });
         }
 
-        private void CommandHandler(IMyPlayer player, string msg)
+        private void CommandHandler(CmdMsg cmdMsg)
         {
-            long playerId = player?.IdentityId ?? 0;
-            var args = msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            long playerId = cmdMsg.Player?.IdentityId ?? 0;
+            var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             if (args.Length < 2)
             {
                 Log.Msg("Error in command, no args", playerId);
                 return;
             }
 
-            Log.Msg($"Player {player?.DisplayName ?? "Local"} ran command {msg}");
+            Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} ran command {cmdMsg.Msg}");
             switch (args[1])
             {
-                case "RemoveAllSpawns":
-                    {
-                        zoneSpawner.DoRemoveSpwans = CmdFlag.True;
-                        break;
-                    }
-
-                case "SetSpawnCounter":
-                    {
-                        if (config.Spawner.Enabled)
-                        {
-                            Log.Msg("Spwaner must be disabled to run SetSpawnCounter", playerId);
-                            return;
-                        }
-                        int value = -1;
-                        if (args.Length != 3 || !int.TryParse(args[2], out value))
-                        {
-                            Log.Msg($"Error in command '{msg}'", playerId);
-                            return;
-                        }
-                        if (value < 0)
-                        {
-                            Log.Msg("Error value < 0", playerId);
-                            return;
-                        }
-
-                        zoneSpawner.SetSpawnCounter = value;
-                        break;
-                    }
-                case "AddSpawn":
-                    {
-                        if (!config.Spawner.Enabled)
-                        {
-                            Log.Msg("Spwaner must be enabled to run AddSpawn", playerId);
-                            return;
-                        }
-
-                        if (zoneSpawner.DoAddSpawn != CmdFlag.False)
-                        {
-                            Log.Msg("AddSpawn is running already", playerId);
-                            return;
-                        }
-                        zoneSpawner.DoAddSpawn = CmdFlag.True;
-                        break;
-                    }
-                case "Status":
-                    {
-                        var spawns = zoneSpawner.GetActiveSpawns();
-                        var sb = new StringBuilder();
-                        sb.AppendLine("Status:");
-                        sb.AppendLine($"Enabled: {config.Spawner.Enabled}");
-                        sb.AppendLine($"Spawns: {spawns.Count} of {config.Spawner.MaxSpawns}");
-                        int i = 2;
-                        foreach (var spawn in spawns)
-                        {
-                            if (sb.Length == 0)
-                                sb.AppendLine();
-                            sb.AppendLine($"{spawn.Name}  {new DateTime(spawn.RemoveAt)}");
-                            ++i;
-                            if (i == 10)
-                            {
-                                Log.Msg(sb.ToString(), playerId);
-                                sb.Clear();
-                                i = 0;
-                            }
-                        }
-
-                        if (sb.Length > 0)
-                            Log.Msg(sb.ToString(), playerId);
-                        break;
-                    }
                 default:
                     {
-                        Log.Msg($"Error in command '{msg}'", playerId);
+                        Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
                         break;
                     }
             }
@@ -280,6 +226,12 @@ namespace ZoneControl
 
         public void UpdateAfterSimulationHost()
         {
+            if (cmdQueue.Count > 0)
+            {
+                CommandHandler(cmdQueue.Dequeue());
+                return;
+            }
+
             var currentFrame = MyAPIGateway.Session.GameplayFrameCounter;
 
             if (ps.Player != null)

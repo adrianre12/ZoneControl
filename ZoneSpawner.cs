@@ -66,22 +66,19 @@ namespace ZoneControl
         }
 
         const string VariableId = nameof(ZoneSpawner);
-        const int UpdatePeriodMins = 1;//5;
-
-        const int UrgentMsgPeriodMins = 2 * UpdatePeriodMins;
-        const int WarnMsgPeriodMins = 30;
-
-        const int UpdateRndMultiplier = 2 / UpdatePeriodMins; //60 / UpdatePeriodMins;
-
-        const int DefaultRefreshPeriodTicks = 60 * 60 * UpdatePeriodMins;
         const long DateTimeTicksPerHour = 36000000000L;
         const long DateTimeTicksPerMin = 600000000L;
-        const long DateTimeTicksUrgentMsgPeriod = UrgentMsgPeriodMins * DateTimeTicksPerMin;
-        const long DateTimeTicksWarnMsgPeriod = WarnMsgPeriodMins * DateTimeTicksPerMin;
+
+        private readonly int updatePeriodMins;
+        private readonly int urgentMsgPeriodMins;
+        private readonly int warnMsgPeriodMins;
+        private readonly long dateTimeTicksUrgentMsgPeriod;
+        private readonly long dateTimeTicksWarnMsgPeriod;
+        private readonly int defaultRefreshPeriodTicks;
 
         private readonly MyDefinitionId DatapadDefId = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
 
-
+        private int updateRndMultiplier = 0;
         private int nextRefreshFrame = 1800; // 30s, frame counter should be 0 at startup
         private List<PrefabInfoInternal> prefabs; //all prefabs with weighting.
         private ZonesConfig.SpawnerInfo configSpawner;
@@ -92,15 +89,27 @@ namespace ZoneControl
         private Random rng = new Random();
         private long factionOwnerId;
 
-        internal CmdFlag DoRemoveSpwans = CmdFlag.False;
-        internal CmdFlag DoAddSpawn = CmdFlag.False;
-        internal int SetSpawnCounter = -1;
+        private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
 
         public ZoneSpawner(ZonesConfig config)
         {
             prefabs = new List<PrefabInfoInternal>();
             configSpawner = config.Spawner;
             configSpawner.Verify();
+            int value;
+            if (configSpawner.UpdatePeriodMins != null && int.TryParse(configSpawner.UpdatePeriodMins, out value))
+                updatePeriodMins = Math.Max(value, 0);
+            else
+                value = 5;
+            Log.Msg($"Spawner UpdatePeriodMins={updatePeriodMins}");
+
+            urgentMsgPeriodMins = 2 * updatePeriodMins;
+            warnMsgPeriodMins = 30;
+            dateTimeTicksUrgentMsgPeriod = urgentMsgPeriodMins * DateTimeTicksPerMin;
+            dateTimeTicksWarnMsgPeriod = warnMsgPeriodMins * DateTimeTicksPerMin;
+            defaultRefreshPeriodTicks = 60 * 60 * updatePeriodMins;
+
+            updateRndMultiplier = 60 / (updatePeriodMins * Math.Max(Math.Min(configSpawner.SpawnRateMultiplier, 60 / updatePeriodMins), 0));
             double totalWeighting = 0;
 
             Log.Msg($"Spawner Enabled={configSpawner.Enabled}");
@@ -119,7 +128,7 @@ namespace ZoneControl
 
             foreach (PrefabInfoInternal pi in prefabs)
             {
-                pi.WeightNorm = configSpawner.SpawnRateMultiplier * pi.Weighting / totalWeighting;
+                pi.WeightNorm = pi.Weighting / totalWeighting;
                 Log.Msg($"Prefab loaded {pi.Subtype} Sector={pi.SectorInfo.UniqueName} WeightNorm={pi.WeightNorm}");
             }
 
@@ -200,32 +209,124 @@ namespace ZoneControl
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed -= PrefabSpawnedDetailed;
         }
 
-        internal void Update(int currentFrame)
+        internal void Enqueue(CmdMsg cmdMsg)
         {
-            if (!configSpawner.Enabled || DoRemoveSpwans == CmdFlag.True)
+            cmdQueue.Enqueue(cmdMsg);
+        }
+
+        private void CommandHandler(CmdMsg cmdMsg)
+        {
+            long playerId = cmdMsg.Player?.IdentityId ?? 0;
+            var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (args.Length < 2)
             {
-                if (currentSpawns.Spawns.Count > 0)
-                    RemoveAllSpawns();
-                DoRemoveSpwans = CmdFlag.False;
-
-                if (!configSpawner.Enabled && SetSpawnCounter >= 0)
-                {
-                    Log.Msg($"Setting SpawnCounter to {SetSpawnCounter}");
-                    currentSpawns.SpawnCounter = SetSpawnCounter;
-                    SetSpawnCounter = -1;
-                    SaveCurrentSpawns();
-                }
-
+                Log.Msg("Error in command, no args", playerId);
                 return;
             }
 
-            if (DoAddSpawn == CmdFlag.True)
+            Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} ran command {cmdMsg.Msg}");
+            switch (args[1])
             {
-                DoAddSpawn = CmdFlag.Pending;
-                if (configSpawner.Enabled && currentSpawns.Spawns.Count < configSpawner.MaxSpawns)
-                    AddSpawn(true);
-                else
-                    DoAddSpawn = CmdFlag.False;
+                case "RemoveAllSpawns":
+                    {
+                        if (currentSpawns.Spawns.Count > 0)
+                            RemoveAllSpawns();
+                        Log.Msg($"All spawns removed.", playerId);
+                        break;
+                    }
+
+                case "SetSpawnCounter":
+                    {
+                        if (configSpawner.Enabled)
+                        {
+                            Log.Msg("Spwaner must be disabled to run SetSpawnCounter", playerId);
+                            break;
+                        }
+                        int value = -1;
+                        if (args.Length != 3 || !int.TryParse(args[2], out value))
+                        {
+                            Log.Msg($"Error in command '{cmdMsg.Msg}'", playerId);
+                            break;
+                        }
+                        if (value < 0)
+                        {
+                            Log.Msg("Error value < 0", playerId);
+                            break;
+                        }
+                        /*                        if (currentSpawns.Spawns.Count != 0 && value < currentSpawns.SpawnCounter)
+                                                {
+                                                    Log.Msg("Error value < current value, run RemoveAllSpawns", playerId);
+                                                    break;
+                                                }*/
+                        Log.Msg($"SpawnCounter set to {value}", playerId);
+                        currentSpawns.SpawnCounter = value;
+                        SaveCurrentSpawns();
+                        break;
+                    }
+
+                case "AddSpawn":
+                    {
+                        if (!configSpawner.Enabled)
+                        {
+                            Log.Msg("Spwaner must be enabled to run AddSpawn", playerId);
+                            break;
+                        }
+
+                        if (currentSpawns.Spawns.Count >= configSpawner.MaxSpawns)
+                        {
+                            Log.Msg("Already at MaxSpawns", playerId);
+                            break;
+                        }
+                        AddSpawn(true);
+                        Log.Msg("Spawning requested");
+                        break;
+                    }
+                case "Status":
+                    {
+                        var sb = new StringBuilder();
+                        sb.AppendLine("Status:");
+                        sb.AppendLine($"Enabled: {configSpawner.Enabled}");
+                        sb.AppendLine($"Spawns: {currentSpawns.Spawns.Count} of {configSpawner.MaxSpawns}");
+                        int i = 2;
+                        foreach (var spawn in currentSpawns.Spawns)
+                        {
+                            if (sb.Length == 0)
+                                sb.AppendLine();
+                            sb.AppendLine($"{spawn.Name}  {new DateTime(spawn.RemoveAt)}");
+                            ++i;
+                            if (i == 10)
+                            {
+                                Log.Msg(sb.ToString(), playerId);
+                                sb.Clear();
+                                i = 0;
+                            }
+                        }
+
+                        if (sb.Length > 0)
+                            Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
+                default:
+                    {
+                        Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
+                        break;
+                    }
+            }
+        }
+
+        internal void Update(int currentFrame)
+        {
+            if (cmdQueue.Count > 0)
+            {
+                CommandHandler(cmdQueue.Dequeue());
+                return;
+            }
+
+            if (!configSpawner.Enabled)
+            {
+                if (currentSpawns.Spawns.Count > 0)
+                    RemoveAllSpawns();
+                return;
             }
 
             if (updateSpawns)
@@ -246,9 +347,9 @@ namespace ZoneControl
                         return;
                     }
                     //Log.Msg($"WarnAt={new DateTime(spawn.RemoveAt - DateTimeTicksWarnMsgPeriod).ToString()}");
-                    if (spawn.ZoneId > 0 && spawn.RemoveAt - DateTimeTicksWarnMsgPeriod < DateTime.Now.Ticks)
+                    if (spawn.ZoneId > 0 && spawn.RemoveAt - dateTimeTicksWarnMsgPeriod < DateTime.Now.Ticks)
                     {
-                        if (spawn.RemoveAt - DateTimeTicksUrgentMsgPeriod < DateTime.Now.Ticks)
+                        if (spawn.RemoveAt - dateTimeTicksUrgentMsgPeriod < DateTime.Now.Ticks)
                         {
                             //Log.Msg($"Adding Urgent Msg '{configSpawner.MessageUrgent}'");
                             ZonesSession.Instance.SubZoneTable.AddExtraMessage(spawn.ZoneId, configSpawner.MessageUrgent, configSpawner.MessageColour, true);
@@ -267,7 +368,6 @@ namespace ZoneControl
                 //All done
                 if (configSpawner.Enabled && currentSpawns.Spawns.Count < configSpawner.MaxSpawns)
                 {
-                    DoAddSpawn = CmdFlag.Pending; // lockout AddSpawn cmd
                     AddSpawn();
                 }
 
@@ -277,14 +377,14 @@ namespace ZoneControl
 
             if (currentFrame < nextRefreshFrame)
                 return;
-            nextRefreshFrame = currentFrame + DefaultRefreshPeriodTicks;
+            nextRefreshFrame = currentFrame + defaultRefreshPeriodTicks;
             updateSpawns = true;
             nextSpawnIndex = currentSpawns.Spawns.Count - 1;
         }
 
         private void AddSpawn(bool force = false)
         {
-            double rnd = force ? 1 : UpdateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
+            double rnd = force ? 1 : updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
             Log.Msg($"AddSpawn rnd={rnd}");
 
             if (rnd > 1)
@@ -375,7 +475,6 @@ namespace ZoneControl
                     CheckSubZone(spawn);
                     Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPname}");
 
-                    DoAddSpawn = CmdFlag.False; // could be a problem, if an update spawns at the same time
                     SaveCurrentSpawns();
                     return;
                 }
