@@ -59,7 +59,14 @@ namespace ZoneControl
                         Log.Msg($"Error duplicate planet name found: {planet.StorageName}");
                         return false;
                     }
+                    var center = planet.WorldMatrix.Translation;
+                    var blc = planet.PositionLeftBottomCorner;
+                    var trans = center - blc;
                     Log.Msg($"Planet Found {planet.StorageName}");
+                    if (Log.Debug) Log.Msg($"PlanetCenter X={center.X - 0.5} Y={center.Y - 0.5} Z={center.Z - 0.5}");
+                    if (Log.Debug) Log.Msg($"SbsPosition X={blc.X - 0.5} Y={blc.Y - 0.5} Z={blc.Z - 0.5}");
+                    if (Log.Debug) Log.Msg($"Translation X={trans.X} Y={trans.Y} Z={trans.Z}");
+
                     planetPositions.Add(planet.StorageName, planet.WorldMatrix.Translation);
                 }
                 return false;
@@ -69,7 +76,7 @@ namespace ZoneControl
             {
                 var zone = new ZoneInfoInternal(dict.Zones.Count, info);
                 dict.Zones.Add(zone);
-                Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id} to Zones list");
+                if (Log.Debug) Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id} to Zones list");
             }
 
             Vector3D planetPosition;

@@ -5,6 +5,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -105,32 +106,14 @@ namespace ZoneControl
 
         public void LoadDataOnHost()
         {
-            Log.Msg("ZoneNotification Host Start");
+            Log.Msg("Host Start");
             config = ZonesConfig.LoadConfig();
             Log.Debug = config.Debug?.ToLower() == "true";
-
-            zoneTable = ZoneTable.NewZoneDictionary(config);
-            SubZoneTable = ZoneTable.NewSubZoneDictionary(config);
-            foreach (var zone in SubZoneTable.Zones)
-            {
-                if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole)
-                    zoneTargets.Targets.Add(zone.Id, zone.Targets);
-            }
-
-            try
-            {
-                string saveText = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(zoneTargets));
-                MyAPIGateway.Utilities.SetVariable<string>(VariableId, saveText);
-            }
-            catch (Exception e)
-            {
-                Log.Msg($"Error serializing zoneTargets\n {e}");
-            }
         }
 
         public void LoadDataOnClient()
         {
-            Log.Msg("ZoneNotification Client Start");
+            Log.Msg("Client Start");
 
             try
             {
@@ -148,9 +131,28 @@ namespace ZoneControl
 
         public override void BeforeStart()
         {
+            //Log.Msg("BeforeStart");
             base.BeforeStart();
             if (MyAPIGateway.Session.IsServer)
             {
+                zoneTable = ZoneTable.NewZoneDictionary(config);
+                SubZoneTable = ZoneTable.NewSubZoneDictionary(config);
+                foreach (var zone in SubZoneTable.Zones)
+                {
+                    if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole)
+                        zoneTargets.Targets.Add(zone.Id, zone.Targets);
+                }
+
+                try
+                {
+                    string saveText = Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(zoneTargets));
+                    MyAPIGateway.Utilities.SetVariable<string>(VariableId, saveText);
+                }
+                catch (Exception e)
+                {
+                    Log.Msg($"Error serializing zoneTargets\n {e}");
+                }
+
                 zoneSpawner = new ZoneSpawner(config);
                 if (MyAPIGateway.Utilities.IsDedicated)
                     MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
@@ -201,13 +203,60 @@ namespace ZoneControl
             var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             if (args.Length < 2)
             {
-                Log.Msg("Error in command, no args", playerId);
+                var sb = new StringBuilder();
+                sb.AppendLine("Help:");
+                sb.AppendLine("/ZoneControl Status");
+                sb.AppendLine("   Lists the current Zones.");
+
+                sb.AppendLine("/ZoneSpawner");
+                sb.AppendLine("   Commands for the Spawner");
+
+
+                Log.Msg(sb.ToString(), playerId);
                 return;
             }
 
             Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} ran command {cmdMsg.Msg}");
             switch (args[1])
             {
+                case "Status":
+                    {
+                        var sb = new StringBuilder();
+                        sb.AppendLine("Status:");
+                        sb.AppendLine("Zones:");
+                        int i = 1;
+                        foreach (var zone in zoneTable.Zones)
+                        {
+                            if (sb.Length == 0)
+                                sb.AppendLine();
+                            sb.AppendLine($"{zone.Type} {zone.UniqueName}");
+                            ++i;
+                            if (i == 10)
+                            {
+                                Log.Msg(sb.ToString(), playerId);
+                                sb.Clear();
+                                i = 0;
+                            }
+                        }
+                        foreach (var zone in SubZoneTable.Zones)
+                        {
+                            if (sb.Length == 0)
+                                sb.AppendLine();
+                            sb.AppendLine($"{zone.Type} {zone.UniqueName}");
+                            ++i;
+                            if (i == 10)
+                            {
+                                Log.Msg(sb.ToString(), playerId);
+                                sb.Clear();
+                                i = 0;
+                            }
+                        }
+
+                        if (sb.Length > 0)
+                            Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
+
                 default:
                     {
                         Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);

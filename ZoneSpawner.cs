@@ -220,7 +220,27 @@ namespace ZoneControl
             var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
             if (args.Length < 2)
             {
-                Log.Msg("Error in command, no args", playerId);
+                var sb = new StringBuilder();
+                sb.AppendLine("Help:");
+                sb.AppendLine("/ZoneSpawner Status");
+                sb.AppendLine("   Lists the current status of the Spawner.");
+
+                sb.AppendLine("/ZoneSpawner AddSpawn");
+                sb.AppendLine("   Request an Anomaly spawn.");
+
+                sb.AppendLine("/ZoneSpawner RemoveAllSpawns");
+                sb.AppendLine("   Removes all current spawns and Anomalies.");
+
+                sb.AppendLine("/ZoneSpawner SetSpawnCounter");
+                sb.AppendLine("   Can only be run when the spawner is disabled in config.");
+
+
+                sb.AppendLine("/ZoneControl");
+                sb.AppendLine("   Commands for ZoneControl");
+
+
+
+                Log.Msg(sb.ToString(), playerId);
                 return;
             }
 
@@ -337,7 +357,7 @@ namespace ZoneControl
                 if (nextSpawnIndex >= 0)
                 {// update spawns
                     SpawnInfo spawn = currentSpawns.Spawns[nextSpawnIndex];
-                    Log.Msg($"Updating spawn[{nextSpawnIndex}] '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
+                    if (Log.Debug) Log.Msg($"Updating spawn[{nextSpawnIndex}] '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
 
                     //remove if if too old
                     if (spawn.RemoveAt < DateTime.Now.Ticks)
@@ -385,11 +405,11 @@ namespace ZoneControl
         private void AddSpawn(bool force = false)
         {
             double rnd = force ? 1 : updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
-            Log.Msg($"AddSpawn rnd={rnd}");
+            if (Log.Debug) Log.Msg($"AddSpawn rnd={rnd}");
 
             if (rnd > 1)
             {
-                Log.Msg($"No spawn this time rnd={rnd}");
+                if (Log.Debug) Log.Msg($"No spawn this time rnd={rnd}");
                 return;
             }
 
@@ -407,7 +427,7 @@ namespace ZoneControl
                 totalWeightNorm += pi.WeightNorm;
                 if (rnd <= totalWeightNorm)
                 {
-                    Log.Msg($"Selected prefab '{pi.Subtype}'");
+                    if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
                     selectedPrefab = pi;
                     break;
                 }
@@ -452,11 +472,11 @@ namespace ZoneControl
         /// </summary>
         public void PrefabSpawnedDetailed(long entityId, string prefabName)
         {
-            Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
+            if (Log.Debug) Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
             IMyEntity entity;
             if (!MyAPIGateway.Entities.TryGetEntityById(entityId, out entity))
             {
-                Log.Msg("Spawnwer could not find Entity");
+                Log.Msg("Spawner could not find Entity");
                 return;
             }
 
@@ -473,7 +493,7 @@ namespace ZoneControl
                     spawn.DPname = TextReplace(configSpawner.DataPadTitle, "[NAME]", spawn.Name);
                     spawn.DPdata = TextReplace(configSpawner.DataPadMessage, "[NAME]", spawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(spawn.Name, spawn.Position, configSpawner.GPScolourHex));
                     CheckSubZone(spawn);
-                    Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPname}");
+                    if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPname}");
 
                     SaveCurrentSpawns();
                     return;
@@ -488,7 +508,7 @@ namespace ZoneControl
             {
                 var spawn = currentSpawns.Spawns[i];
                 RemoveSpawn(spawn);
-                Log.Msg($"Removed spawn '{spawn.Name}'");
+                if (Log.Debug) Log.Msg($"Removed spawn '{spawn.Name}'");
 
             }
             SaveCurrentSpawns();
@@ -505,7 +525,7 @@ namespace ZoneControl
             {
                 if (Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < configSpawner.AlertRadius)
                 {
-                    Log.Msg($"Closing '{grid.DisplayName}' ");
+                    if (Log.Debug) Log.Msg($"Closing '{grid.DisplayName}' ");
                     List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
                     grid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
                     foreach (var subGrid in cubeGrids)
@@ -519,7 +539,7 @@ namespace ZoneControl
                 }
                 else
                 {
-                    Log.Msg($"Spawn moved, not being removed: '{spawn.Name}'");
+                    if (Log.Debug) Log.Msg($"Spawn moved, not being removed: '{spawn.Name}'");
                 }
             }
             currentSpawns.Spawns.Remove(spawn);
@@ -537,10 +557,11 @@ namespace ZoneControl
             {
                 Log.Msg($"Error serializing currentSpawns\n {e}");
             }
-            foreach (var spawn in currentSpawns.Spawns)
-            {
-                Log.Msg($"currentSpawn saved '{spawn.Name}");
-            }
+            if (Log.Debug)
+                foreach (var spawn in currentSpawns.Spawns)
+                {
+                    Log.Msg($"currentSpawn saved '{spawn.Name}");
+                }
         }
 
         private void CheckSubZone(SpawnInfo spawn)
@@ -562,7 +583,7 @@ namespace ZoneControl
                 anomaly.ColourLeave = CheckColour(configSpawner.ColourLeave);
                 anomaly.AlertTimeMs = configSpawner.AlertTimeMs;
                 spawn.ZoneId = ZonesSession.Instance.SubZoneTable.AddZone(anomaly);
-                Log.Msg($"Added SubZone {spawn.ZoneId} {spawn.Name}");
+                if (Log.Debug) Log.Msg($"Added SubZone {spawn.ZoneId} {spawn.Name}");
                 return;
             }
         }
@@ -592,7 +613,7 @@ namespace ZoneControl
                 return;
 
             ZonesSession.Instance.SubZoneTable.RemoveZone(spawn.ZoneId);
-            Log.Msg($"Removed SubZone {spawn.ZoneId}");
+            if (Log.Debug) Log.Msg($"Removed SubZone {spawn.ZoneId}");
         }
 
         private long FindFactionId(string tag)
