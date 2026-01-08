@@ -12,7 +12,7 @@ namespace ZoneControl
     {
         public class SpawnerInfo
         {
-            public string UpdatePeriodMins = "";
+            public string UpdatePeriodMins = null;
             public bool Enabled = false;
             public int MaxSpawns = 10;
             public int SpawnRateMultiplier = 1;

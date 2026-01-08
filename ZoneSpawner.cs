@@ -96,11 +96,11 @@ namespace ZoneControl
             prefabs = new List<PrefabInfoInternal>();
             configSpawner = config.Spawner;
             configSpawner.Verify();
-            int value;
-            if (configSpawner.UpdatePeriodMins != null && int.TryParse(configSpawner.UpdatePeriodMins, out value))
-                updatePeriodMins = Math.Max(value, 0);
+
+            if (configSpawner.UpdatePeriodMins != null && int.TryParse(configSpawner.UpdatePeriodMins, out updatePeriodMins))
+                updatePeriodMins = Math.Max(updatePeriodMins, 1);
             else
-                value = 5;
+                updatePeriodMins = 5;
             Log.Msg($"Spawner UpdatePeriodMins={updatePeriodMins}");
 
             urgentMsgPeriodMins = 2 * updatePeriodMins;
