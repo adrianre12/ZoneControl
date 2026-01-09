@@ -363,15 +363,17 @@ namespace ZoneControl
             if (ps.Player == null)
                 return null;
 
-            //Log.Msg($"CheckPlayerPosition... {ps.Player.DisplayName} ------------------------");
-
             Vector3D playerPosition = ps.Player.GetPosition();
+
+            //if (Log.Debug) Log.Msg($"CheckPlayerPosition... {ps.Player.DisplayName}  position={playerPosition} ------------------------");
 
             ZoneInfoInternal foundZone;
             ZoneInfoInternal lastZone;
             MsgItem extraMsg = null;
             bool moved = dict.GetZone(ps.Player.IdentityId, playerPosition, out foundZone, out lastZone, out extraMsg);
-            //Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg='{extraMsg.Msg}'");
+
+            //if (Log.Debug) Log.Msg($"moved={moved} foundZone={foundZone?.UniqueName} lastZone={lastZone?.UniqueName} extraMsg='{extraMsg.Msg}'");
+
             if (foundZone != null && extraMsg.Msg != null)
             {
                 if (extraMsg.Urgent && urgentMsgCounter == 0 || !extraMsg.Urgent && warnMsgCounter == 0)

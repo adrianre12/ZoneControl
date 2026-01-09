@@ -76,7 +76,7 @@ namespace ZoneControl
             {
                 var zone = new ZoneInfoInternal(dict.Zones.Count, info);
                 dict.Zones.Add(zone);
-                if (Log.Debug) Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id} to Zones list");
+                if (Log.Debug) Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id} radius={zone.AlertRadius} position={zone.Position} to Zones list");
             }
 
             Vector3D planetPosition;
@@ -158,7 +158,7 @@ namespace ZoneControl
             bool cacheHit = cache.TryGetValue(Id, out cacheItem);
             if (cacheHit)
             {
-                //Log.Msg("Cache Hit");
+                //if (Log.Debug) Log.Msg("Cache Hit");
                 if (Vector3D.DistanceSquared(cacheItem.Position, position) < CacheMovementLimitSqrd)
                 {
                     if (cacheItem.Zone == null)
@@ -183,7 +183,7 @@ namespace ZoneControl
                 cache.Remove(Id);
             }
             // cache miss find closest
-            //Log.Msg("Cache Miss or Moved");
+            //if (Log.Debug) Log.Msg("Cache Miss or Moved");
 
             foundZone = FindClosestZone(position);
             lastZone = cacheItem.Zone;
@@ -204,15 +204,16 @@ namespace ZoneControl
             double foundDistance = 0;
             double foundRadius = 0;
 
-            //Log.Msg($"FindClosestZone() position={position} Zones.Count={Zones.Count}");
+            //if (Log.Debug) Log.Msg($"FindClosestZone() position={position} Zones.Count={Zones.Count}");
             for (int i = 0; i < Zones.Count; i++)
             {
                 tmpZone = Zones[i];
 
                 if (tmpZone.AlertRadius == 0)
                     continue;
-                //Log.Msg($"tmpZone {tmpZone.UniqueName} position={tmpZone.Position} Type={tmpZone.Type}");
                 distance = Vector3D.DistanceSquared(position, tmpZone.Position);
+                //if (Log.Debug) Log.Msg($"tmpZone {tmpZone.UniqueName} position={tmpZone.Position} Type={tmpZone.Type} altRadSqrd={tmpZone.AlertRadiusSqrd} distsqrd={distance}");
+
                 if (zoneFound) //already found a zone, look for more
                 {
                     if (foundRadius != tmpZone.AlertRadiusSqrd) //not same size as zone, return zone
