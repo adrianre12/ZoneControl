@@ -72,9 +72,10 @@ namespace ZoneControl.DPbox
 
         private void CreateDatapad()
         {
-            var dp = ZonesSession.Instance.GetRandomDatapad();
-            if (dp != null)
-                inventory.AddItems(1, dp);
+            /*            var dp =  ZonesSession.Instance.GetRandomDatapad();
+                        if (dp != null)
+                            inventory.AddItems(1, dp);
+            */
         }
 
         private void LoadConfigFromCD()

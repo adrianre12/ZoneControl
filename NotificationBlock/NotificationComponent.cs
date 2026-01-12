@@ -13,24 +13,22 @@ namespace ZoneControl.NotificationBlock
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            if (!MyAPIGateway.Session.IsServer)
-                return;
-
             block = Entity as IMyFunctionalBlock;
 
+            if (!MyAPIGateway.Session.IsServer)
+                return;
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
         }
 
         public override void UpdateOnceBeforeFrame()
         {
             base.UpdateOnceBeforeFrame();
-            block.Physics = null; //disable the mass
 
             NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
         public override void UpdateAfterSimulation100()
         {
-            Log.Msg($"Tick {block.CubeGrid.DisplayName}");
+            //Log.Msg($"Tick block {block.CubeGrid.DisplayName}");
         }
 
         public override void OnAddedToScene()

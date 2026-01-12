@@ -1,21 +1,18 @@
 ﻿using ProtoBuf;
-using Sandbox.Common.ObjectBuilders.Definitions;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
-using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 using static ZoneControl.ZonesSession;
 
 namespace ZoneControl
 {
-    internal class ZoneSpawner
+    public class ZoneSpawner
     {
         [ProtoContract]
         public class SpawnInfo
@@ -33,9 +30,13 @@ namespace ZoneControl
             [ProtoMember(6)]
             public int ZoneId = -1;
             [ProtoMember(7)]
-            public string DPname = "";
+            public long AnomalyId = 0;
+            /*
             [ProtoMember(8)]
-            public string DPdata = "";
+            public string DPname = "";
+            [ProtoMember(9)]
+            public string DPdata = "";*/
+
 
             public SpawnInfo() { }
 
@@ -47,15 +48,17 @@ namespace ZoneControl
                 SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
                 EntityId = spawnInfo.EntityId;
                 ZoneId = spawnInfo.ZoneId;
-                DPname = spawnInfo.DPname;
-                DPdata = spawnInfo.DPdata;
+                AnomalyId = spawnInfo.AnomalyId;
+                //DPname = spawnInfo.DPname;
+                //DPdata = spawnInfo.DPdata;
+
             }
 
 
         }
 
         [ProtoContract]
-        internal class CurrentSpawns
+        public class CurrentSpawns
         {
             [ProtoMember(1)]
             public List<SpawnInfo> Spawns = new List<SpawnInfo>();
@@ -76,7 +79,7 @@ namespace ZoneControl
         private readonly long dateTimeTicksWarnMsgPeriod;
         private readonly int defaultRefreshPeriodTicks;
 
-        private readonly MyDefinitionId DatapadDefId = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
+        //private readonly MyDefinitionId DatapadDefId = new MyDefinitionId(typeof(MyObjectBuilder_Datapad), "Datapad");
 
         private int updateRndMultiplier = 0;
         private int nextRefreshFrame = 1800; // 30s, frame counter should be 0 at startup
@@ -163,19 +166,19 @@ namespace ZoneControl
         }
 
 
-        public MyObjectBuilder_Datapad GetRandomDatapad()
-        {
-            if (currentSpawns.Spawns.Count == 0)
-                return null;
+        /*        public MyObjectBuilder_Datapad GetRandomDatapad()
+                {
+                    if (currentSpawns.Spawns.Count == 0)
+                        return null;
 
-            var dp = (MyObjectBuilder_Datapad)MyObjectBuilderSerializer.CreateNewObject(DatapadDefId);
+                    var dp = (MyObjectBuilder_Datapad)MyObjectBuilderSerializer.CreateNewObject(DatapadDefId);
 
-            var rndSpwan = currentSpawns.Spawns[rng.Next(currentSpawns.Spawns.Count)];
-            dp.Name = rndSpwan.DPname;
-            dp.Data = rndSpwan.DPdata;
+                    var rndSpwan = currentSpawns.Spawns[rng.Next(currentSpawns.Spawns.Count)];
+                    dp.Name = rndSpwan.DPname;
+                    dp.Data = rndSpwan.DPdata;
 
-            return dp;
-        }
+                    return dp;
+                }*/
 
 
         /*        private void CreateRandomSpawnList()
@@ -417,7 +420,7 @@ namespace ZoneControl
             //var gameTime = MyAPIGateway.Session.GameDateTime;
             //newSpawn.Name = $"Anomaly {gameTime.ToString("yyMMdd HH:mm")}";
 
-            newSpawn.Name = $"Anomaly {DateTime.Now.ToString("yyMMdd HH:mm")}"; //tmp name
+            //newSpawn.Name = $"Anomaly {DateTime.Now.ToString("yyMMdd HH:mm")}"; //tmp name
 
             //find prefab
             double totalWeightNorm = 0;
@@ -461,6 +464,11 @@ namespace ZoneControl
             newSpawn.Position = spawnPosition.Value;
             newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * configSpawner.AlertRadius * (float)rng.NextDouble() * MyUtils.GetRandomVector3Normalized();
             newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(DateTimeTicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * rng.NextDouble())));
+            ++currentSpawns.SpawnCounter;
+            newSpawn.AnomalyId = currentSpawns.SpawnCounter;
+            newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
+            //newSpawn.DPname = TextReplace(configSpawner.DataPadTitle, "[NAME]", newSpawn.Name);
+            //newSpawn.DPdata = TextReplace(configSpawner.DataPadMessage, "[NAME]", newSpawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(newSpawn.Name, newSpawn.Position, configSpawner.GPScolourHex));
 
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
 
@@ -488,12 +496,8 @@ namespace ZoneControl
                 {
                     ((IMyCubeGrid)entity).IsStatic = true;
                     spawn.EntityId = entityId;
-                    ++currentSpawns.SpawnCounter;
-                    spawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
-                    spawn.DPname = TextReplace(configSpawner.DataPadTitle, "[NAME]", spawn.Name);
-                    spawn.DPdata = TextReplace(configSpawner.DataPadMessage, "[NAME]", spawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(spawn.Name, spawn.Position, configSpawner.GPScolourHex));
                     CheckSubZone(spawn);
-                    if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)} DPTitle={spawn.DPname}");
+                    if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
 
                     SaveCurrentSpawns();
                     return;

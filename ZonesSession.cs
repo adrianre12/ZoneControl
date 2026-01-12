@@ -1,5 +1,4 @@
 ﻿using ProtoBuf;
-using Sandbox.Common.ObjectBuilders.Definitions;
 using Sandbox.Game;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -37,6 +36,7 @@ namespace ZoneControl
         private int urgentMsgCounter = DefaultUrgentMsgCounter;
         private ZoneInfoInternal currentZone = null;
         private ZoneSpawner zoneSpawner = null;
+
 
         internal enum CmdFlag
         {
@@ -269,8 +269,8 @@ namespace ZoneControl
         {
             if (MyAPIGateway.Session.IsServer)
                 UpdateAfterSimulationHost();
-            else
-                UpdateAfterSimulationClient();
+            //if (!MyAPIGateway.Utilities.IsDedicated)
+            //     UpdateAfterSimulationClient();
         }
 
         public void UpdateAfterSimulationHost()
@@ -328,10 +328,10 @@ namespace ZoneControl
             zoneSpawner.Update(currentFrame);
         }
 
-        public void UpdateAfterSimulationClient()
-        {
-            //Log.Msg($"Client {zoneTargets.Targets.Count}");
-        }
+        /*        public void UpdateAfterSimulationClient()
+                {
+                    //Log.Msg($"Client {zoneTargets.Targets.Count}");
+                }*/
 
         private void RefreshPlayers()
         {
@@ -511,11 +511,8 @@ namespace ZoneControl
                         }
                     default:
                         break;
-
                 }
             }
-
-
         }
 
         internal ZoneInfoInternal FindClosestWormholeCached(long gridId, Vector3D vector3D)
@@ -527,9 +524,9 @@ namespace ZoneControl
             return currentZone;
         }
 
-        public MyObjectBuilder_Datapad GetRandomDatapad()
-        {
-            return zoneSpawner.GetRandomDatapad();
-        }
+        /*        public MyObjectBuilder_Datapad GetRandomDatapad()
+                {
+                    return zoneSpawner.GetRandomDatapad();
+                }*/
     }
 }

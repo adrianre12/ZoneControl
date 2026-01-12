@@ -8,6 +8,7 @@ namespace ZoneControl
     {
         public static string Prefix = "ZoneControl";
         public static bool Debug;
+
         public static void Msg(string msg)
         {
             MyLog.Default.WriteLine($"{Prefix} {msg}");
