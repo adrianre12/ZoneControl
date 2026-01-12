@@ -52,7 +52,7 @@ namespace ZoneControl
         public List<ZoneInfo> Zones;
         public List<PlanetInfo> Planets;
         public List<WormholeInfo> Wormholes;
-        public SpawnerInfo Spawner = new SpawnerInfo();
+
 
         public ZonesConfig()
         {

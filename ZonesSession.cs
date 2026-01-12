@@ -8,6 +8,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
+using static ZoneControl.Utils;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfigBase;
 using static ZoneControl.ZonesConfigBase.IntruderInfo;
@@ -424,7 +425,7 @@ namespace ZoneControl
             if (ps.Player.PromoteLevel != MyPromoteLevel.None && playerFactionTag != config.Intruder.AdminTestFactionTag.Trim())
                 return false; //admins dont get punished unless in AdminTestFactionTag
 
-            Log.Msg($"Intruder: {ZonesConfigBase.VectorToGPS(ps.Player.DisplayName, position)}");
+            Log.Msg($"Intruder: {VectorToGPS(ps.Player.DisplayName, position)}");
             return true;
         }
 

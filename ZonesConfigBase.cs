@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using VRageMath;
+using static ZoneControl.Utils;
 using static ZoneControl.ZonesConfig;
 
 namespace ZoneControl
@@ -14,9 +15,6 @@ namespace ZoneControl
 
         [XmlIgnore]
         public bool ConfigLoaded;
-        [XmlIgnore]
-        private static HashSet<string> fonts = new HashSet<string>() {"Debug","Red","Green","Blue", "White","DarkBlue","UrlNormal","UrlHighlight","ErrorMessageBoxCaption","ErrorMessageBoxText",
-            "InfoMessageBoxCaption","InfoMessageBoxText","ScreenCaption","GameCredits","LoadingScreen","BuildInfo","BuildInfoHighlight"};
 
         public class IntruderInfo
         {
@@ -61,14 +59,6 @@ namespace ZoneControl
             }
         }
 
-        internal static string CheckFontColour(string font)
-        {
-            if (fonts.Contains(font))
-                return font;
-
-            Log.Msg($"Invalid colour in config: {font}");
-            return "White";
-        }
 
         public static ZonesConfig LoadConfig()
         {
@@ -114,13 +104,6 @@ namespace ZoneControl
                 PlanetName = "EarthLike-12345d120000",
                 Info = new InfoCommon() { AlertMessageEnter = "Entering EarthLike", AlertMessageLeave = "Leaving EarthLike", AlertRadius = 70000 }
             });
-
-            defaultSettings.Spawner.Sectors.Add(new SpawningSector()
-            {
-                UniqueName = "TestSector",
-                GPS = "GPS:Anything:0:0:0:Anything:",
-                Prefabs = new List<PrefabInfo>() { new PrefabInfo() { Subtype = "SubtypeName" } }
-            });
             try
             {
                 using (var writer = MyAPIGateway.Utilities.WriteFileInWorldStorage(configFilename, typeof(ZonesConfig)))
@@ -156,36 +139,6 @@ namespace ZoneControl
             {
                 TryParseGPSstring(gps, out Name, out Position);
             }
-        }
-
-        public static bool TryParseGPSstring(string gps, out string name, out Vector3D position)
-        {
-            name = "Error";
-            position = Vector3D.MinValue;
-            string[] tmp = gps.ToLower().Split(':');
-            if (tmp[0] != "gps" || tmp.Length < 5)
-            {
-                Log.Msg($"Invalid GPS, does not start with GPS or is too short '{gps}'");
-                return false;
-            }
-
-            double x;
-            double y;
-            double z;
-            if (!double.TryParse(tmp[2], out x) || !double.TryParse(tmp[3], out y) || !double.TryParse(tmp[4], out z))
-            {
-                Log.Msg($"Invalid GPS, failed to parse X,Y,Z '{gps}'");
-                return false;
-            }
-
-            name = tmp[1];
-            position = new Vector3D(x, y, z);
-            return true;
-        }
-
-        public static string VectorToGPS(string name, Vector3D position, string colour = "#FFFFFFFF") //#FF00FF8C pale blue
-        {
-            return $"GPS:{name}:{position.X:0.00}:{position.Y:0.00}:{position.Z:0.00}:{colour}:";
         }
     }
 }
