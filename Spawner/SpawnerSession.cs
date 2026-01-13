@@ -1,29 +1,25 @@
-﻿using Digi.NetworkLib;
-using Sandbox.Game;
+﻿using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game.Components;
+using VRage.Game.ModAPI;
 using static ZoneControl.Utils;
+using static ZoneControl.ZonesSession;
 
 namespace ZoneControl.Spawner
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     internal partial class SpawnerSession : MySessionComponentBase
     {
-        public const long DefaultRefreshPeriod = 30 * 60;
-        public const ushort NetworkId = (ushort)(3616581249 % ushort.MaxValue); //Steam number
-        const string VariableId = nameof(ZoneSpawner);
+        const string VariableId = nameof(SpawnerSession);
         const long DateTimeTicksPerHour = 36000000000L;
         const long DateTimeTicksPerMin = 600000000L;
 
         public static SpawnerSession Instance;
 
-        public Network Net;
-
-        internal CurrentSpawnsPacket CurrentSpawns = new CurrentSpawnsPacket();
-        internal SpawnerConfig Config;
-
+        private SpawnerConfig config;
 
         private int updatePeriodMins;
         private int urgentMsgPeriodMins;
@@ -32,38 +28,181 @@ namespace ZoneControl.Spawner
         private long dateTimeTicksWarnMsgPeriod;
         private int defaultRefreshPeriodTicks;
 
-        private long nextFrame;
-
         private int updateRndMultiplier = 0;
-        private int nextRefreshFrame = 1800; // 30s, frame counter should be 0 at startup
         private List<PrefabInfoInternal> prefabs = new List<PrefabInfoInternal>(); //all prefabs with weighting.
 
         private long factionOwnerId;
+        private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
+
+        private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
+        {
+            //Log.Msg($"Recieved local msg={msg}");
+            Utilities_MessageRecieved(0, msg);
+        }
+
+        private void Utilities_MessageRecieved(ulong steamId, string msg)
+        {
+            //Log.Msg($"Recieved steamId={steamId} msg={msg}");
+
+            if (!msg.StartsWith("/ZoneSpawner"))
+                return;
+
+            IMyPlayer player = null;
+            if (steamId != 0)
+            {
+                player = MyAPIGateway.Players.TryGetIdentityId(MyAPIGateway.Players.TryGetIdentityId(steamId));
+                if (player == null) //belt and braces
+                    return;
+
+
+                if (player.PromoteLevel < MyPromoteLevel.Admin)
+                {
+                    Log.Msg($"Non Admin player {player.DisplayName} tried to run command {msg}", player.IdentityId);
+                    return;
+                }
+            }
+
+            cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
+        }
+
+        private void CommandHandler(CmdMsg cmdMsg)
+        {
+            long playerId = cmdMsg.Player?.IdentityId ?? 0;
+            var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (args.Length < 2)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine("Help:");
+                sb.AppendLine("/ZoneSpawner Status");
+                sb.AppendLine("   Lists the current status of the Spawner.");
+
+                sb.AppendLine("/ZoneSpawner AddSpawn");
+                sb.AppendLine("   Request an Anomaly spawn.");
+
+                sb.AppendLine("/ZoneSpawner RemoveAllSpawns");
+                sb.AppendLine("   Removes all current spawns and Anomalies.");
+
+                sb.AppendLine("/ZoneSpawner SetSpawnCounter");
+                sb.AppendLine("   Can only be run when the spawner is disabled in config.");
+
+
+                sb.AppendLine("/ZoneControl");
+                sb.AppendLine("   Commands for ZoneControl");
+
+
+
+                Log.Msg(sb.ToString(), playerId);
+                return;
+            }
+
+            Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} [{cmdMsg.Player?.IdentityId}] ran command {cmdMsg.Msg}");
+            switch (args[1])
+            {
+                case "RemoveAllSpawns":
+                    {
+                        if (currentSpawns.Spawns.Count > 0)
+                            RemoveAllSpawns();
+                        Log.Msg($"All spawns removed.", playerId);
+                        break;
+                    }
+
+                case "SetSpawnCounter":
+                    {
+                        if (config.Enabled)
+                        {
+                            Log.Msg("Spwaner must be disabled to run SetSpawnCounter", playerId);
+                            break;
+                        }
+                        int value = -1;
+                        if (args.Length != 3 || !int.TryParse(args[2], out value))
+                        {
+                            Log.Msg($"Error in command '{cmdMsg.Msg}'", playerId);
+                            break;
+                        }
+                        if (value < 0)
+                        {
+                            Log.Msg("Error value < 0", playerId);
+                            break;
+                        }
+                        /*                        if (currentSpawns.Spawns.Count != 0 && value < currentSpawns.SpawnCounter)
+                                                {
+                                                    Log.Msg("Error value < current value, run RemoveAllSpawns", playerId);
+                                                    break;
+                                                }*/
+                        Log.Msg($"SpawnCounter set to {value}", playerId);
+                        currentSpawns.SpawnCounter = value;
+                        SaveCurrentSpawns();
+                        break;
+                    }
+
+                case "AddSpawn":
+                    {
+                        if (!config.Enabled)
+                        {
+                            Log.Msg("Spwaner must be enabled to run AddSpawn", playerId);
+                            break;
+                        }
+
+                        if (currentSpawns.Spawns.Count >= config.MaxSpawns)
+                        {
+                            Log.Msg("Already at MaxSpawns", playerId);
+                            break;
+                        }
+                        AddSpawn(true);
+                        Log.Msg("Spawning requested", playerId);
+                        break;
+                    }
+                case "Status":
+                    {
+                        var sb = new StringBuilder();
+                        sb.AppendLine("Status:");
+                        sb.AppendLine($"Enabled: {config.Enabled}");
+                        sb.AppendLine($"Spawns: {currentSpawns.Spawns.Count} of {config.MaxSpawns}");
+                        int i = 2;
+                        foreach (var spawn in currentSpawns.Spawns)
+                        {
+                            if (sb.Length == 0)
+                                sb.AppendLine();
+                            sb.AppendLine($"{spawn.Name}  {new DateTime(spawn.RemoveAt)}");
+                            ++i;
+                            if (i == 10)
+                            {
+                                Log.Msg(sb.ToString(), playerId);
+                                sb.Clear();
+                                i = 0;
+                            }
+                        }
+
+                        if (sb.Length > 0)
+                            Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
+                default:
+                    {
+                        Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
+                        break;
+                    }
+            }
+        }
 
         public override void LoadData()
         {
             Instance = this;
             Log.Msg("Notification LoadData...........");
 
-            Net = new Network(NetworkId, ModContext.ModName);
-
-            Net.ExceptionHandler = (e) => Log.Msg(e.ToString());
-            Net.ErrorHandler = (msg) => Log.Msg(msg);
-
-            Net.SerializeTest = true;
-
-            CurrentSpawnsPacket.OnReceive += NotificationPacket_OnReceive;
+            if (MyAPIGateway.Utilities.IsDedicated)
+                MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
+            else
+                MyAPIGateway.Utilities.MessageEntered += Utilities_MessageEntered;
 
             if (MyAPIGateway.Session.IsServer)
                 LoadDataHost();
-            if (!MyAPIGateway.Utilities.IsDedicated)
-                LoadDataClient();
         }
 
         private void LoadDataHost()
         {
-            Config = SpawnerConfig.LoadConfig();
-            if (Config.UpdatePeriodMins != null && int.TryParse(Config.UpdatePeriodMins, out updatePeriodMins))
+            config = SpawnerConfig.LoadConfig();
+            if (config.UpdatePeriodMins != null && int.TryParse(config.UpdatePeriodMins, out updatePeriodMins))
                 updatePeriodMins = Math.Max(updatePeriodMins, 1);
             else
                 updatePeriodMins = 5;
@@ -75,17 +214,11 @@ namespace ZoneControl.Spawner
             dateTimeTicksWarnMsgPeriod = warnMsgPeriodMins * DateTimeTicksPerMin;
             defaultRefreshPeriodTicks = 60 * 60 * updatePeriodMins;
 
-            updateRndMultiplier = 60 / (updatePeriodMins * Math.Max(Math.Min(Config.SpawnRateMultiplier, 60 / updatePeriodMins), 0));
-            double totalWeighting = 0;
+            updateRndMultiplier = 60 / (updatePeriodMins * Math.Max(Math.Min(config.SpawnRateMultiplier, 60 / updatePeriodMins), 0));
 
-            Log.Msg($"Spawner Enabled={Config.Enabled}");
+            Log.Msg($"Spawner Enabled={config.Enabled}");
 
             MyVisualScriptLogicProvider.PrefabSpawnedDetailed += PrefabSpawnedDetailed;
-        }
-
-        private void LoadDataClient()
-        {
-            //throw new NotImplementedException();
         }
 
 
@@ -95,19 +228,15 @@ namespace ZoneControl.Spawner
             base.BeforeStart();
             if (MyAPIGateway.Session.IsServer)
                 BeforeStartHost();
-
-            if (!MyAPIGateway.Utilities.IsDedicated)
-                BeforeStartClient();
-
         }
 
         private void BeforeStartHost()
         {
             Log.Msg("Spawner Before Start Host");
-            factionOwnerId = FindFactionId(Config.FactionTag);
+            factionOwnerId = FindFactionId(config.FactionTag);
 
             double totalWeighting = 0;
-            foreach (var sector in Config.Sectors)
+            foreach (var sector in config.Sectors)
             {
                 SectorInfoInternal sectorInfo = new SectorInfoInternal(sector);
                 foreach (var prefab in sector.Prefabs)
@@ -129,107 +258,50 @@ namespace ZoneControl.Spawner
             {
                 try
                 {
-                    CurrentSpawns = MyAPIGateway.Utilities.SerializeFromBinary<CurrentSpawnsPacket>(Convert.FromBase64String(variableStr));
+                    currentSpawns = MyAPIGateway.Utilities.SerializeFromBinary<CurrentSpawnsData>(Convert.FromBase64String(variableStr));
                 }
                 catch (Exception ex)
                 {
                     Log.Msg($"Error: Failed to deseralize currentSpawns\n{ex.ToString()}");
-                    CurrentSpawns = new CurrentSpawnsPacket();
+                    currentSpawns = new CurrentSpawnsData();
                 }
 
-                for (int i = CurrentSpawns.Spawns.Count - 1; i >= 0; --i)
+                for (int i = currentSpawns.Spawns.Count - 1; i >= 0; --i)
                 {
-                    var spawn = CurrentSpawns.Spawns[i];
+                    var spawn = currentSpawns.Spawns[i];
                     if (spawn.EntityId < 0)
                     {
                         Log.Msg($"currentSpawn EntityId not set, removing '{spawn.Name}'");
-                        CurrentSpawns.Spawns.Remove(spawn);
+                        currentSpawns.Spawns.Remove(spawn);
                         continue;
                     }
                     spawn.ZoneId = -1;
                     Log.Msg($"currentSpawn loaded '{spawn.Name}'");
                 }
             }
-
-        }
-
-        private void BeforeStartClient()
-        {
-            //throw new NotImplementedException();
         }
 
         protected override void UnloadData()
         {
             try
             {
-
-                Net?.Dispose();
-                Net = null;
-
-                CurrentSpawnsPacket.OnReceive -= NotificationPacket_OnReceive;
-
                 if (MyAPIGateway.Session.IsServer)
                 {
                     MyVisualScriptLogicProvider.PrefabSpawnedDetailed -= PrefabSpawnedDetailed;
 
                 }
 
-                //if (!MyAPIGateway.Utilities.IsDedicated)
-                //{
-                //}
-
-
+                if (MyAPIGateway.Utilities.IsDedicated)
+                    MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
+                else
+                    MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
 
                 Instance = null;
-
             }
             catch (Exception e)
             {
                 Log.Msg($"Error in UnloadData\n{e.ToString()}");
             }
-        }
-
-        public override void UpdateAfterSimulation()
-        {
-            var currentFrame = MyAPIGateway.Session.GameplayFrameCounter;
-            if (nextFrame > currentFrame)
-                return;
-            nextFrame = currentFrame + DefaultRefreshPeriod;
-
-            if (MyAPIGateway.Session.IsServer)
-                UpdateAfterSimulationHost();
-            if (!MyAPIGateway.Utilities.IsDedicated)
-                UpdateAfterSimulationClient();
-        }
-
-
-        private void UpdateAfterSimulationHost()
-        {
-            Log.Msg("Tick Host");
-            ;
-            //notificationPacket.Setup();
-            //Net.SendToServer(notificationPacket);
-        }
-
-        private void UpdateAfterSimulationClient()
-        {
-            Log.Msg("Tick Client");
-        }
-
-        private void NotificationPacket_OnReceive(CurrentSpawnsPacket packet, ref PacketInfo packetInfo, ulong senderSteamId)
-        {
-
-            string msg = $"[Example] Received {packet.GetType().Name}: text={packet.SpawnCounter})";
-            Log.Msg(msg);
-
-            if (MyAPIGateway.Session.Player != null)
-            {
-                MyAPIGateway.Utilities.ShowNotification(msg, 5000);
-            }
-
-
-            // to see how this works in practice, try it in both singleplayer (you're the server) and as a MP client in a dedicated server (you can start one from steam tools).
-            packetInfo.Relay = RelayMode.ToEveryone;
         }
 
     }

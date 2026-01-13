@@ -1,5 +1,4 @@
-﻿using Digi.NetworkLib;
-using ProtoBuf;
+﻿using ProtoBuf;
 using System.Collections.Generic;
 using VRageMath;
 
@@ -47,22 +46,15 @@ namespace ZoneControl.Spawner
     }
 
     [ProtoContract]
-    public class CurrentSpawnsPacket : PacketBase
+    public class CurrentSpawnsData
     {
         [ProtoMember(1)]
         public List<SpawnInfo> Spawns = new List<SpawnInfo>();
         [ProtoMember(2)]
         public int SpawnCounter = 0;
 
-        public CurrentSpawnsPacket() { }
+        public CurrentSpawnsData() { }
 
-
-        public static event ReceiveDelegate<CurrentSpawnsPacket> OnReceive;
-
-        public override void Received(ref PacketInfo packetInfo, ulong senderSteamId)
-        {
-            OnReceive?.Invoke(this, ref packetInfo, senderSteamId);
-        }
     }
 
 }

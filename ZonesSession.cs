@@ -8,6 +8,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
+using ZoneControl.Spawner;
 using static ZoneControl.Utils;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfigBase;
@@ -36,7 +37,6 @@ namespace ZoneControl
         private int warnMsgCounter = DefaultWarnMsgCounter;
         private int urgentMsgCounter = DefaultUrgentMsgCounter;
         private ZoneInfoInternal currentZone = null;
-        private ZoneSpawner zoneSpawner = null;
 
 
         internal enum CmdFlag
@@ -96,7 +96,6 @@ namespace ZoneControl
                     MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
                 else
                     MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
-                zoneSpawner?.Close();
                 Instance = null;
             }
             catch (Exception e)
@@ -154,7 +153,6 @@ namespace ZoneControl
                     Log.Msg($"Error serializing zoneTargets\n {e}");
                 }
 
-                zoneSpawner = new ZoneSpawner(config);
                 if (MyAPIGateway.Utilities.IsDedicated)
                     MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
                 else
@@ -172,9 +170,7 @@ namespace ZoneControl
         {
             //Log.Msg($"Recieved steamId={steamId} msg={msg}");
 
-            bool control = msg.StartsWith("/ZoneControl");
-            bool spawner = msg.StartsWith("/ZoneSpawner");
-            if (!control && !spawner)
+            if (!msg.StartsWith("/ZoneControl"))
                 return;
 
             IMyPlayer player = null;
@@ -192,10 +188,7 @@ namespace ZoneControl
                 }
             }
 
-            if (control)
-                cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
-            if (spawner)
-                zoneSpawner.Enqueue(new CmdMsg() { Player = player, Msg = msg });
+            cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
         }
 
         private void CommandHandler(CmdMsg cmdMsg)
@@ -268,14 +261,9 @@ namespace ZoneControl
 
         public override void UpdateAfterSimulation()
         {
-            if (MyAPIGateway.Session.IsServer)
-                UpdateAfterSimulationHost();
-            //if (!MyAPIGateway.Utilities.IsDedicated)
-            //     UpdateAfterSimulationClient();
-        }
+            if (!MyAPIGateway.Session.IsServer)
+                return;
 
-        public void UpdateAfterSimulationHost()
-        {
             if (cmdQueue.Count > 0)
             {
                 CommandHandler(cmdQueue.Dequeue());
@@ -326,13 +314,8 @@ namespace ZoneControl
                 NextPlayer();
             }
 
-            zoneSpawner.Update(currentFrame);
+            SpawnerSession.Instance?.Update(currentFrame);
         }
-
-        /*        public void UpdateAfterSimulationClient()
-                {
-                    //Log.Msg($"Client {zoneTargets.Targets.Count}");
-                }*/
 
         private void RefreshPlayers()
         {
