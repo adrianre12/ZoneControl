@@ -88,7 +88,7 @@ namespace ZoneControl.Spawner
             nextSpawnIndex = currentSpawns.Spawns.Count - 1;
         }
 
-        private bool AddSpawn(bool force = false, string prefabName = null)
+        private bool AddSpawn(bool force = false, string prefabName = "")
         {
             if (Log.Debug) Log.Msg($"Starting AddSpawn force={force} prefabName='{prefabName}'");
             double rnd = force ? 1 : updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
@@ -188,13 +188,17 @@ namespace ZoneControl.Spawner
         /// </summary>
         public void PrefabSpawnedDetailed(long entityId, string prefabName)
         {
-            if (Log.Debug) Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
             IMyEntity entity;
             if (!MyAPIGateway.Entities.TryGetEntityById(entityId, out entity))
             {
                 Log.Msg("Spawner could not find Entity");
                 return;
             }
+            IMyCubeGrid cubeGrid = entity as IMyCubeGrid;
+            if (cubeGrid.BigOwners[0] != factionOwnerId)
+                return;
+
+            if (Log.Debug) Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
 
             foreach (var spawn in currentSpawns.Spawns)
             {
@@ -202,7 +206,7 @@ namespace ZoneControl.Spawner
                     continue;
                 if (Vector3D.DistanceSquared(entity.GetPosition(), spawn.Position) < 0.0001)
                 {
-                    ((IMyCubeGrid)entity).IsStatic = true;
+                    cubeGrid.IsStatic = true;
                     spawn.EntityId = entityId;
                     CheckSubZone(spawn);
                     if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
