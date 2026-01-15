@@ -1,8 +1,6 @@
 ﻿using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using VRage.Utils;
 using VRageMath;
 using ZoneControl.Spawner;
 
@@ -11,6 +9,8 @@ namespace ZoneControl.NotificationBlock
     internal class ScreenNotification : ScreenBase
     {
         private const long TicksPerSecond = 10000000L;
+        private const long TicksPerMin = 60 * TicksPerSecond;
+        private const long TicksPerHour = 60 * TicksPerMin;
         private const float SecondsPerTick = 1.0f / TicksPerSecond;
 
 
@@ -24,18 +24,20 @@ namespace ZoneControl.NotificationBlock
         internal ScreenNotification(IMyTextSurfaceProvider surfaceProvider, int index)
         {
             base.Init(surfaceProvider, index);
-            DefaultRotationOrScale = 1.5f;
-            BackgroundColor = Color.MidnightBlue;
+            DefaultRotationOrScale = 1.25f;
+            BackgroundColor = Color.Black;//.MidnightBlue;
+            DefaultColor = GreenCRT;
         }
 
         internal void Refresh(List<SummaryItem> selected)
         {
             var frame = GetFrame(BackgroundColor);
             var positionTop = new Vector2(5, 5);
-            var positionList = new Vector2(5, 80);
+            var positionList = new Vector2(5, 100);
             var positionBtm = new Vector2(5, 455);
 
             var positionTab1 = new Vector2(300, 0);
+            var positionTab2 = new Vector2(475, 0);
 
             /*
             for (int x = 0; x < viewport.Width; x += 50)
@@ -51,25 +53,31 @@ namespace ZoneControl.NotificationBlock
 
 
             long now = DateTime.Now.Ticks;
-            var sb = new StringBuilder();
 
             foreach (var item in selected)
             {
+                long ticksLeft = item.RemoveAt - now;
+                if (ticksLeft < 0)
+                    continue;
 
-                sb.Clear();
-                MyValueFormatter.AppendTimeInBestUnit((item.RemoveAt - now) * SecondsPerTick, sb);
-                Log.Msg($"({item.RemoveAt - now} {SecondsPerTick} time ={sb.ToString()}");
                 frame.Add(NewTextSprite(item.Name, positionList));
-                frame.Add(NewTextSprite(sb.ToString(), positionTab1 + positionList));
-
-                positionList.Y += 125;
+                frame.Add(NewTextSprite(FormatHHHHMM(ticksLeft), positionTab1 + positionList));
+                frame.Add(NewTextSprite(">", positionTab2 + positionList));
+                positionList.Y += 130;
             }
 
-            frame.Add(NewTextSprite("Click button to save GPS", positionBtm));
+            frame.Add(NewTextSprite("Press button to save GPS", positionBtm));
             //frame.Add(NewTextSprite($"{RunInfo.AvailableUranium}", position + positionTab1, Color.Green));
 
             Dirty = false;
             frame.Dispose();
+        }
+
+        private String FormatHHHHMM(long ticks)
+        {
+            long hrs = ticks * 1 / TicksPerHour;
+            long mins = (ticks - (hrs * TicksPerHour)) * 1 / TicksPerMin;
+            return $"{hrs}:{mins:00}";
         }
     }
 }

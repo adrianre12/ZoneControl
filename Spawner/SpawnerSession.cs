@@ -278,6 +278,8 @@ namespace ZoneControl.Spawner
                     spawn.ZoneId = -1;
                     Log.Msg($"currentSpawn loaded '{spawn.Name}'");
                 }
+
+                spawnSummary = new SpawnSummary(currentSpawns);
             }
         }
 
