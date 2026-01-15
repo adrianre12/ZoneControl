@@ -22,6 +22,7 @@ namespace ZoneControl.NotificationBlock
         protected virtual void Init(IMyTextSurfaceProvider surfaceProvider, int index)
         {
             surface = (IMyTextSurface)surfaceProvider.GetSurface(index);
+            Log.Msg($"TextureSize={surface.TextureSize} SurfaceSize={surface.SurfaceSize}");
             viewport = new RectangleF((surface.TextureSize - surface.SurfaceSize) / 2f, surface.SurfaceSize);
             surface.ContentType = ContentType.SCRIPT;
             surface.Script = "";
