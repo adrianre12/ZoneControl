@@ -24,10 +24,8 @@ namespace ZoneControl.NotificationBlock
             surface = (IMyTextSurface)surfaceProvider.GetSurface(index);
             viewport = new RectangleF((surface.TextureSize - surface.SurfaceSize) / 2f, surface.SurfaceSize);
             surface.ContentType = ContentType.SCRIPT;
-
             surface.Script = "";
-            Log.Msg($"TextureSize={surface.TextureSize} SurfaceSize={surface.SurfaceSize} FontSize={surface.FontSize}");
-
+            //Log.Msg($"TextureSize={surface.TextureSize} SurfaceSize={surface.SurfaceSize} FontSize={surface.FontSize}");
         }
 
         /*        public MySpriteDrawFrame GetFrame()
@@ -37,8 +35,8 @@ namespace ZoneControl.NotificationBlock
 
         public MySpriteDrawFrame GetFrame(Color color)
         {
-            //            surface.ContentType = ContentType.SCRIPT;
-            //            surface.Script = "";
+            surface.ContentType = ContentType.SCRIPT;
+            surface.Script = "";
             var frame = surface.DrawFrame();
             frame.Add(new MySprite() //Background
             {

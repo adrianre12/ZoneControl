@@ -213,6 +213,12 @@ namespace ZoneControl
             Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} ran command {cmdMsg.Msg}");
             switch (args[1])
             {
+                case "Debug":
+                    {
+                        Log.Debug = !Log.Debug;
+                        Log.Msg($"Log Debug={Log.Debug}", playerId);
+                        break;
+                    }
                 case "Status":
                     {
                         var sb = new StringBuilder();

@@ -49,6 +49,9 @@ namespace ZoneControl.NotificationBlock
 
         public override void UpdateOnceBeforeFrame() //only on server
         {
+            if (!MyAPIGateway.Utilities.IsDedicated)
+                TerminalControls.DoOnce(ModContext);
+
             buton1UserId.ValueChanged += Buton1UserId_ValueChanged;
             buton2UserId.ValueChanged += Buton2UserId_ValueChanged;
             buton3UserId.ValueChanged += Buton3UserId_ValueChanged;
@@ -93,7 +96,7 @@ namespace ZoneControl.NotificationBlock
                 if (summaryPtr >= summary.Items.Count)
                     summaryPtr = 0;
                 summary.Selected.Add(summary.Items[summaryPtr]);
-                Log.Msg($"Selected {summaryPtr} {summary.Items[summaryPtr].Name}");
+                //Log.Msg($"Selected {summaryPtr} {summary.Items[summaryPtr].Name}");
                 summaryPtr++;
             }
         }

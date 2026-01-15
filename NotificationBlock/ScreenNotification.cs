@@ -24,7 +24,7 @@ namespace ZoneControl.NotificationBlock
         internal ScreenNotification(IMyTextSurfaceProvider surfaceProvider, int index)
         {
             base.Init(surfaceProvider, index);
-            DefaultRotationOrScale = 0.625f;
+            DefaultRotationOrScale = 1.25f;
             BackgroundColor = Color.Black;//.MidnightBlue;
             DefaultColor = GreenCRT;
         }
@@ -33,8 +33,8 @@ namespace ZoneControl.NotificationBlock
         {
             var frame = GetFrame(BackgroundColor);
             var positionTop = new Vector2(5, 5);
-            var positionList = new Vector2(5, 35);
-            var positionBtm = new Vector2(5, 170);
+            var positionList = new Vector2(5, 75);
+            var positionBtm = new Vector2(5, 345);
 
             var positionTab1 = new Vector2(300, 0);
             var positionTab2 = new Vector2(475, 0);
@@ -64,7 +64,7 @@ namespace ZoneControl.NotificationBlock
                 frame.Add(NewTextSprite(item.Name, positionList));
                 frame.Add(NewTextSprite(FormatHHHHMM(ticksLeft), positionTab1 + positionList));
                 frame.Add(NewTextSprite(">", positionTab2 + positionList));
-                positionList.Y += 30;
+                positionList.Y += 90;
             }
 
             frame.Add(NewTextSprite("Press button to save GPS", positionBtm));

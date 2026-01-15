@@ -88,16 +88,16 @@ namespace ZoneControl.Spawner
             nextSpawnIndex = currentSpawns.Spawns.Count - 1;
         }
 
-        private void AddSpawn(bool force = false)
+        private bool AddSpawn(bool force = false, string prefabName = null)
         {
-            if (Log.Debug) Log.Msg($"Starting AddSpawn foce={force}");
+            if (Log.Debug) Log.Msg($"Starting AddSpawn force={force} prefabName='{prefabName}'");
             double rnd = force ? 1 : updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
             if (Log.Debug) Log.Msg($"AddSpawn rnd={rnd}");
 
             if (rnd > 1)
             {
                 if (Log.Debug) Log.Msg($"No spawn this time rnd={rnd}");
-                return;
+                return false;
             }
 
             SpawnInfo newSpawn = new SpawnInfo();
@@ -109,21 +109,44 @@ namespace ZoneControl.Spawner
             //find prefab
             double totalWeightNorm = 0;
             PrefabInfoInternal selectedPrefab = null;
-            foreach (PrefabInfoInternal pi in prefabs)
+            if (prefabName != "")
             {
-                totalWeightNorm += pi.WeightNorm;
-                if (rnd <= totalWeightNorm)
+                foreach (PrefabInfoInternal pi in prefabs)
                 {
-                    if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
-                    selectedPrefab = pi;
-                    break;
+                    if (Log.Debug) Log.Msg($"'{pi.Subtype}' == '{prefabName}'");
+                    if (pi.Subtype == prefabName)
+                    {
+                        if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
+                        selectedPrefab = pi;
+                        break;
+                    }
+                }
+                if (selectedPrefab == null)
+                {
+                    Log.Msg($"Error: prefab '{prefabName}' not found in list");
+                    return false;
                 }
             }
-            if (selectedPrefab == null)
+            else
             {
-                Log.Msg($"Error: should have a prefab, rnd={rnd}");
-                return;
+                foreach (PrefabInfoInternal pi in prefabs)
+                {
+                    totalWeightNorm += pi.WeightNorm;
+                    if (rnd <= totalWeightNorm)
+                    {
+                        if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
+                        selectedPrefab = pi;
+                        break;
+                    }
+                }
+                if (selectedPrefab == null)
+                {
+                    Log.Msg($"Error: should have a prefab, rnd={rnd}");
+                    return false;
+                }
             }
+
+
 
             //find free position
             int i = 20;
@@ -142,7 +165,7 @@ namespace ZoneControl.Spawner
             if (spawnPosition == null)
             {
                 Log.Msg($"Could not find free position");
-                return;
+                return false;
             }
 
             newSpawn.Position = spawnPosition.Value;
@@ -157,6 +180,7 @@ namespace ZoneControl.Spawner
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
 
             currentSpawns.Spawns.Add(newSpawn);
+            return true;
         }
 
         /// <summary>

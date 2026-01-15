@@ -3,6 +3,7 @@ using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using static ZoneControl.Utils;
@@ -16,6 +17,7 @@ namespace ZoneControl.Spawner
         const string VariableId = nameof(SpawnerSession);
         const long DateTimeTicksPerHour = 36000000000L;
         const long DateTimeTicksPerMin = 600000000L;
+        const string regxArgs = " (?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))";
 
         public static SpawnerSession Instance;
 
@@ -68,7 +70,7 @@ namespace ZoneControl.Spawner
         private void CommandHandler(CmdMsg cmdMsg)
         {
             long playerId = cmdMsg.Player?.IdentityId ?? 0;
-            var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            var args = Regex.Split(cmdMsg.Msg, regxArgs);
             if (args.Length < 2)
             {
                 var sb = new StringBuilder();
@@ -76,8 +78,14 @@ namespace ZoneControl.Spawner
                 sb.AppendLine("/ZoneSpawner Status");
                 sb.AppendLine("   Lists the current status of the Spawner.");
 
+                sb.AppendLine("/ZoneSpawner PrefabList");
+                sb.AppendLine("   Lists all the prefabs.");
+
                 sb.AppendLine("/ZoneSpawner AddSpawn");
-                sb.AppendLine("   Request an Anomaly spawn.");
+                sb.AppendLine("   Request a random Anomaly spawn.");
+
+                sb.AppendLine("/ZoneSpawner AddSpawn \"prefabName\"");
+                sb.AppendLine("   Request an Anomaly spawn of the prefab.");
 
                 sb.AppendLine("/ZoneSpawner RemoveAllSpawns");
                 sb.AppendLine("   Removes all current spawns and Anomalies.");
@@ -85,11 +93,8 @@ namespace ZoneControl.Spawner
                 sb.AppendLine("/ZoneSpawner SetSpawnCounter");
                 sb.AppendLine("   Can only be run when the spawner is disabled in config.");
 
-
                 sb.AppendLine("/ZoneControl");
                 sb.AppendLine("   Commands for ZoneControl");
-
-
 
                 Log.Msg(sb.ToString(), playerId);
                 return;
@@ -98,6 +103,12 @@ namespace ZoneControl.Spawner
             Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} [{cmdMsg.Player?.IdentityId}] ran command {cmdMsg.Msg}");
             switch (args[1])
             {
+                case "Debug":
+                    {
+                        Log.Debug = !Log.Debug;
+                        Log.Msg($"Log Debug={Log.Debug}", playerId);
+                        break;
+                    }
                 case "RemoveAllSpawns":
                     {
                         if (currentSpawns.Spawns.Count > 0)
@@ -124,11 +135,7 @@ namespace ZoneControl.Spawner
                             Log.Msg("Error value < 0", playerId);
                             break;
                         }
-                        /*                        if (currentSpawns.Spawns.Count != 0 && value < currentSpawns.SpawnCounter)
-                                                {
-                                                    Log.Msg("Error value < current value, run RemoveAllSpawns", playerId);
-                                                    break;
-                                                }*/
+
                         Log.Msg($"SpawnCounter set to {value}", playerId);
                         currentSpawns.SpawnCounter = value;
                         SaveCurrentSpawns();
@@ -148,10 +155,23 @@ namespace ZoneControl.Spawner
                             Log.Msg("Already at MaxSpawns", playerId);
                             break;
                         }
-                        AddSpawn(true);
-                        Log.Msg("Spawning requested", playerId);
+                        if (args.Length < 3)
+                        {
+                            AddSpawn(true);
+                            Log.Msg("Spawning random prefab requested", playerId);
+                        }
+                        else
+                        {
+                            string prefabName = args[2].Trim(new char[] { ' ', '"' });
+                            if (AddSpawn(true, prefabName))
+                                Log.Msg($"Spawning prefab '{prefabName}' requested", playerId);
+                            else
+                                Log.Msg($"Failed to submit '{prefabName}' see log", playerId);
+                        }
+
                         break;
                     }
+
                 case "Status":
                     {
                         var sb = new StringBuilder();
@@ -177,6 +197,31 @@ namespace ZoneControl.Spawner
                             Log.Msg(sb.ToString(), playerId);
                         break;
                     }
+
+                case "PrefabList":
+                    {
+                        var sb = new StringBuilder();
+                        sb.AppendLine("PrefabList:");
+                        int i = 0;
+                        foreach (var prefab in prefabs)
+                        {
+                            if (i == 0)
+                                sb.AppendLine("PrefabName WeightNorm Sector");
+                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm} \"{prefab.SectorInfo.UniqueName}\"");
+                            ++i;
+                            if (i == 10)
+                            {
+                                Log.Msg(sb.ToString(), playerId);
+                                sb.Clear();
+                                i = 0;
+                            }
+                        }
+
+                        if (sb.Length > 0)
+                            Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
+
                 default:
                     {
                         Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
