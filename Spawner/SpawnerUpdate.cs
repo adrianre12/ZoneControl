@@ -195,9 +195,17 @@ namespace ZoneControl.Spawner
                 return;
             }
             IMyCubeGrid cubeGrid = entity as IMyCubeGrid;
-            if (cubeGrid.BigOwners[0] != factionOwnerId)
+            if (Log.Debug)
+            {
+                var bigOwner = cubeGrid?.BigOwners.Count > 0 ? cubeGrid?.BigOwners[0] : 0;
+                Log.Msg($"Grid name={prefabName} BigOwners Count={cubeGrid?.BigOwners.Count} BigOwners[0]={bigOwner} FactionOwner={factionOwnerId}");
+            }
+            if (cubeGrid?.BigOwners.Count == 0 || cubeGrid?.BigOwners[0] != factionOwnerId)
+            {
+                if (Log.Debug)
+                    Log.Msg($"Rejecting name={prefabName}");
                 return;
-
+            }
             if (Log.Debug) Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
 
             foreach (var spawn in currentSpawns.Spawns)
