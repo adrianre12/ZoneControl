@@ -24,7 +24,7 @@ namespace ZoneControl.NotificationBlock
         internal ScreenNotification(IMyTextSurfaceProvider surfaceProvider, int index)
         {
             base.Init(surfaceProvider, index);
-            DefaultRotationOrScale = 1.25f;
+            DefaultRotationOrScale = 0.625f;
             BackgroundColor = Color.Black;//.MidnightBlue;
             DefaultColor = GreenCRT;
         }
@@ -33,20 +33,21 @@ namespace ZoneControl.NotificationBlock
         {
             var frame = GetFrame(BackgroundColor);
             var positionTop = new Vector2(5, 5);
-            var positionList = new Vector2(5, 100);
-            var positionBtm = new Vector2(5, 455);
+            var positionList = new Vector2(5, 35);
+            var positionBtm = new Vector2(5, 170);
 
             var positionTab1 = new Vector2(300, 0);
             var positionTab2 = new Vector2(475, 0);
 
             /*
-            for (int x = 0; x < viewport.Width; x += 50)
-                frame.Add(NewTextSprite("_", new Vector2(position.X + x, position.Y)));
-            for (int y = 0; y < 20; ++y)
-            {
-                frame.Add(NewTextSprite($"{y}", position));
-                position.Y += LineSpaceing;
-            }
+                        var position = new Vector2(5, 5);
+                        for (int x = 0; x < viewport.Width; x += 50)
+                            frame.Add(NewTextSprite("_", new Vector2(position.X + x, position.Y)));
+                        for (int y = 0; y < 20; ++y)
+                        {
+                            frame.Add(NewTextSprite($"{y}", position));
+                            position.Y += LineSpaceing;
+                        }
             */
 
             frame.Add(NewTextSprite("Scanning for Anomalies:", positionTop));
@@ -63,7 +64,7 @@ namespace ZoneControl.NotificationBlock
                 frame.Add(NewTextSprite(item.Name, positionList));
                 frame.Add(NewTextSprite(FormatHHHHMM(ticksLeft), positionTab1 + positionList));
                 frame.Add(NewTextSprite(">", positionTab2 + positionList));
-                positionList.Y += 130;
+                positionList.Y += 30;
             }
 
             frame.Add(NewTextSprite("Press button to save GPS", positionBtm));

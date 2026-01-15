@@ -10,7 +10,7 @@ namespace ZoneControl.NotificationBlock
         internal RectangleF viewport;
 
         internal SpriteType DefaultType = SpriteType.TEXT;
-        internal float DefaultRotationOrScale = 1f;  // FontId White Scale 1f is 20px high
+        internal float DefaultRotationOrScale = 1f;
         internal Color DefaultColor = Color.White;
         internal TextAlignment DefaultAlignment = TextAlignment.LEFT;
         internal string DefaultFontId = "White";
@@ -22,10 +22,12 @@ namespace ZoneControl.NotificationBlock
         protected virtual void Init(IMyTextSurfaceProvider surfaceProvider, int index)
         {
             surface = (IMyTextSurface)surfaceProvider.GetSurface(index);
-            Log.Msg($"TextureSize={surface.TextureSize} SurfaceSize={surface.SurfaceSize}");
             viewport = new RectangleF((surface.TextureSize - surface.SurfaceSize) / 2f, surface.SurfaceSize);
             surface.ContentType = ContentType.SCRIPT;
+
             surface.Script = "";
+            Log.Msg($"TextureSize={surface.TextureSize} SurfaceSize={surface.SurfaceSize} FontSize={surface.FontSize}");
+
         }
 
         /*        public MySpriteDrawFrame GetFrame()

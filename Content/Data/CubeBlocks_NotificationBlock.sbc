@@ -95,7 +95,7 @@
 			</BuildProgressModels>
 			<BlockPairName>NotificationBlock</BlockPairName>
 			<ScreenAreas>
-				<ScreenArea Name="CockpitScreen_01" DisplayName="DisplayName_Screen_Large" TextureResolution="256" ScreenWidth="4" ScreenHeight="3" />
+				<ScreenArea Name="CockpitScreen_01" DisplayName="DisplayName_Screen_Large" TextureResolution="512" ScreenWidth="4" ScreenHeight="3" />
 
 				<!--ScreenArea Name="CockpitScreen_01" DisplayName="Anomalies" TextureResolution="512" ScreenWidth="4" ScreenHeight="3" /-->
 				<ScreenArea Name="CockpitScreen_02" DisplayName="DisplayName_Screen_Left" TextureResolution="256" ScreenWidth="4" ScreenHeight="3" />
