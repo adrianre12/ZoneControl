@@ -13,7 +13,8 @@ using ZoneControl.Spawner;
 
 namespace ZoneControl.NotificationBlock
 {
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_TextPanel), false, new[] { "NotificationBlock" })]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_ButtonPanel), false, new[] { "NotificationBlock" })]
+
     internal class NotificationComponent : MyGameLogicComponent
     {
         const int DefaultRefreshPeriod = 30;
@@ -147,6 +148,9 @@ namespace ZoneControl.NotificationBlock
 
         internal void ButtonPressed(IMyEntity user, int button) //client
         {
+            if (!block.Enabled)
+                return;
+
             long identityId = MyAPIGateway.Session.Player.IdentityId;
 
             Log.Msg($"Button pressed:{button}  id={identityId}");

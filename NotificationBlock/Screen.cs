@@ -34,6 +34,8 @@ namespace ZoneControl.NotificationBlock
 
         public MySpriteDrawFrame GetFrame(Color color)
         {
+            //            surface.ContentType = ContentType.SCRIPT;
+            //            surface.Script = "";
             var frame = surface.DrawFrame();
             frame.Add(new MySprite() //Background
             {

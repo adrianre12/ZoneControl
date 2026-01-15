@@ -1,4 +1,4 @@
-﻿using Sandbox.ModAPI;
+﻿using SpaceEngineers.Game.ModAPI;
 using VRage.Game.Entity.UseObject;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
@@ -9,7 +9,7 @@ namespace ZoneControl.NotificationBlock
     [MyUseObject("zonenote")]
     public class Button1 : MyUseObjectBase
     {
-        private IMyTextPanel block;
+        private IMyButtonPanel block;
         private NotificationComponent component;
 
         public override UseActionEnum SupportedActions => UseActionEnum.Manipulate;
@@ -29,7 +29,7 @@ namespace ZoneControl.NotificationBlock
 
         public Button1(IMyEntity owner, string dummyName, IMyModelDummy dummyData, uint shapeKey) : base(owner, dummyData)
         {
-            block = owner as IMyTextPanel;
+            block = owner as IMyButtonPanel;
             component = block.GameLogic.GetAs<NotificationComponent>();
         }
 
