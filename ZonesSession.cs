@@ -37,6 +37,7 @@ namespace ZoneControl
         private int warnMsgCounter = DefaultWarnMsgCounter;
         private int urgentMsgCounter = DefaultUrgentMsgCounter;
         private ZoneInfoInternal currentZone = null;
+        private HashSet<long> punishAdminSet = new HashSet<long>();
 
 
         internal enum CmdFlag
@@ -202,6 +203,9 @@ namespace ZoneControl
                 sb.AppendLine("/ZoneControl Status");
                 sb.AppendLine("   Lists the current Zones.");
 
+                sb.AppendLine("/ZoneControl PunishMe");
+                sb.AppendLine("   Toggels if Admins get punished when intruding");
+
                 sb.AppendLine("/ZoneSpawner");
                 sb.AppendLine("   Commands for the Spawner");
 
@@ -209,8 +213,8 @@ namespace ZoneControl
                 Log.Msg(sb.ToString(), playerId);
                 return;
             }
-
-            Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} ran command {cmdMsg.Msg}");
+            string playerName = cmdMsg.Player?.DisplayName ?? "Local";
+            Log.Msg($"Player {playerName} ran command {cmdMsg.Msg}");
             switch (args[1])
             {
                 case "Debug":
@@ -219,6 +223,7 @@ namespace ZoneControl
                         Log.Msg($"Log Debug={Log.Debug}", playerId);
                         break;
                     }
+
                 case "Status":
                     {
                         var sb = new StringBuilder();
@@ -254,6 +259,23 @@ namespace ZoneControl
 
                         if (sb.Length > 0)
                             Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
+
+                case "PunishMe":
+                    {
+                        long id = playerId == 0 ? MyAPIGateway.Session.Player.IdentityId : playerId;
+
+                        if (punishAdminSet.Contains(id))
+                        {
+                            punishAdminSet.Remove(id);
+                            Log.Msg($"Mistress Everdawn is disapointed but still removes {playerName} from her whipping list.", playerId);
+                        }
+                        else
+                        {
+                            punishAdminSet.Add(id);
+                            Log.Msg($"Mistress Everdawn happily adds {playerName} to her whipping list.", playerId);
+                        }
                         break;
                     }
 
@@ -399,7 +421,7 @@ namespace ZoneControl
             string playerFactionTag = MyVisualScriptLogicProvider.GetPlayersFactionTag(ps.Player.IdentityId).Trim();
 
 
-            //Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {zone.UniqueName} {zone.FactionTag}");
+            if (Log.Debug) Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {zone.UniqueName} {zone.FactionTag}");
 
             if (!zone.NoIntruders || zone.FactionTag == null || zone.FactionTag.Length == 0)
                 return false;
@@ -411,9 +433,11 @@ namespace ZoneControl
 
             MyVisualScriptLogicProvider.ShowNotification(config.Intruder.Message, config.Intruder.AlertTimeMs, config.Intruder.Colour, playerId: ps.Player.IdentityId);
 
-            if (ps.Player.PromoteLevel != MyPromoteLevel.None && playerFactionTag != config.Intruder.AdminTestFactionTag.Trim())
+            if (ps.Player.PromoteLevel != MyPromoteLevel.None && !punishAdminSet.Contains(ps.Player.IdentityId))
+            {
+                if (Log.Debug) Log.Msg($"Admin {ps.Player.DisplayName} escapes punishment {ps.Player.IdentityId}");
                 return false; //admins dont get punished unless in AdminTestFactionTag
-
+            }
             Log.Msg($"Intruder: {VectorToGPS(ps.Player.DisplayName, position)}");
             return true;
         }
