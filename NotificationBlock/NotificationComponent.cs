@@ -129,9 +129,9 @@ namespace ZoneControl.NotificationBlock
                 return;
             if (summary.Selected.Count > 1)
             {
-                var sel = summary.Selected[0];
+                var sel = summary.Selected[1];
                 Log.Msg($"Button2 pressed by {buton2UserId.Value} {sel.Name}");
-                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton1UserId.Value);
+                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton2UserId.Value);
             }
             buton2UserId.Value = 0;
         }
@@ -142,9 +142,9 @@ namespace ZoneControl.NotificationBlock
                 return;
             if (summary.Selected.Count > 2)
             {
-                var sel = summary.Selected[0];
+                var sel = summary.Selected[2];
                 Log.Msg($"Button3 pressed by {buton3UserId.Value} {sel.Name}");
-                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton1UserId.Value);
+                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton3UserId.Value);
             }
             buton3UserId.Value = 0;
         }

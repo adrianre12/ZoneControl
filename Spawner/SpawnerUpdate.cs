@@ -146,8 +146,6 @@ namespace ZoneControl.Spawner
                 }
             }
 
-
-
             //find free position
             int i = 20;
             Vector3D? spawnPosition = null;
@@ -174,8 +172,6 @@ namespace ZoneControl.Spawner
             ++currentSpawns.SpawnCounter;
             newSpawn.AnomalyId = currentSpawns.SpawnCounter;
             newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
-            //newSpawn.DPname = TextReplace(configSpawner.DataPadTitle, "[NAME]", newSpawn.Name);
-            //newSpawn.DPdata = TextReplace(configSpawner.DataPadMessage, "[NAME]", newSpawn.Name, "[GPS]", ZonesConfigBase.VectorToGPS(newSpawn.Name, newSpawn.Position, configSpawner.GPScolourHex));
 
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
 

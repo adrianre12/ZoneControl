@@ -22,9 +22,8 @@ namespace ZoneControl.Spawner
                 Items.Add(new SummaryItem(spawn));
             }
         }
-
-
     }
+
     internal class SummaryItem
     {
         public string Name = "";

@@ -60,8 +60,6 @@ namespace ZoneControl
             FactionTag = FactionTag ?? "";
         }
 
-
-
         public class SpawningSector
         {
             public string UniqueName;
@@ -129,7 +127,6 @@ namespace ZoneControl
             return defaultSettings;
         }
     }
-
 
     internal class SectorInfoInternal
     {

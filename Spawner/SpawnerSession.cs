@@ -38,14 +38,11 @@ namespace ZoneControl.Spawner
 
         private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
         {
-            //Log.Msg($"Recieved local msg={msg}");
             Utilities_MessageRecieved(0, msg);
         }
 
         private void Utilities_MessageRecieved(ulong steamId, string msg)
         {
-            //Log.Msg($"Recieved steamId={steamId} msg={msg}");
-
             if (!msg.StartsWith("/ZoneSpawner"))
                 return;
 

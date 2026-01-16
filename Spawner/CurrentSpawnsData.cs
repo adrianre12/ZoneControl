@@ -21,12 +21,6 @@ namespace ZoneControl.Spawner
         public int ZoneId = -1;
         [ProtoMember(7)]
         public long AnomalyId = 0;
-        /*
-        [ProtoMember(8)]
-        public string DPname = "";
-        [ProtoMember(9)]
-        public string DPdata = "";*/
-
 
         public SpawnInfo() { }
 
@@ -39,9 +33,6 @@ namespace ZoneControl.Spawner
             EntityId = spawnInfo.EntityId;
             ZoneId = spawnInfo.ZoneId;
             AnomalyId = spawnInfo.AnomalyId;
-            //DPname = spawnInfo.DPname;
-            //DPdata = spawnInfo.DPdata;
-
         }
     }
 
