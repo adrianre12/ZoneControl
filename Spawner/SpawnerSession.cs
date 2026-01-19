@@ -80,16 +80,16 @@ namespace ZoneControl.Spawner
                 sb.AppendLine("   Request a random Anomaly spawn.");
 
                 sb.AppendLine("/ZoneSpawner AddSpawn \"prefabName\"");
-                sb.AppendLine("   Request an Anomaly spawn of the prefab.");
+                sb.AppendLine("   Request an Anomaly spawn of the configured prefab.");
 
                 sb.AppendLine("/ZoneSpawner RemoveAllSpawns");
                 sb.AppendLine("   Removes all current spawns and Anomalies.");
 
                 sb.AppendLine("/ZoneSpawner PrefabList");
-                sb.AppendLine("   Lists all the prefabs.");
+                sb.AppendLine("   Lists all the configured prefabs.");
 
                 sb.AppendLine("/ZoneSpawner PrefabSpawn \"Subtype\"");
-                sb.AppendLine("   Spawns any prefab by its Subtype, it is not an Anomaly and will not be removed!");
+                sb.AppendLine("   Spawns any prefab by its Subtype, it does not have to be in configuratin. This is not an Anomaly and will not be removed!");
 
                 sb.AppendLine("/ZoneSpawner SetSpawnCounter");
                 sb.AppendLine("   Can only be run when the spawner is disabled in config.");
