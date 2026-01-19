@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
+using VRageMath;
 using static ZoneControl.Utils;
 using static ZoneControl.ZonesSession;
 
@@ -75,9 +76,6 @@ namespace ZoneControl.Spawner
                 sb.AppendLine("/ZoneSpawner Status");
                 sb.AppendLine("   Lists the current status of the Spawner.");
 
-                sb.AppendLine("/ZoneSpawner PrefabList");
-                sb.AppendLine("   Lists all the prefabs.");
-
                 sb.AppendLine("/ZoneSpawner AddSpawn");
                 sb.AppendLine("   Request a random Anomaly spawn.");
 
@@ -86,6 +84,12 @@ namespace ZoneControl.Spawner
 
                 sb.AppendLine("/ZoneSpawner RemoveAllSpawns");
                 sb.AppendLine("   Removes all current spawns and Anomalies.");
+
+                sb.AppendLine("/ZoneSpawner PrefabList");
+                sb.AppendLine("   Lists all the prefabs.");
+
+                sb.AppendLine("/ZoneSpawner PrefabSpawn \"Subtype\"");
+                sb.AppendLine("   Spawns any prefab by its Subtype, it is not an Anomaly and will not be removed!");
 
                 sb.AppendLine("/ZoneSpawner SetSpawnCounter");
                 sb.AppendLine("   Can only be run when the spawner is disabled in config.");
@@ -204,7 +208,7 @@ namespace ZoneControl.Spawner
                         {
                             if (i == 0)
                                 sb.AppendLine("PrefabName WeightNorm Sector");
-                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm} \"{prefab.SectorInfo.UniqueName}\"");
+                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm:0.000} \"{prefab.SectorInfo.UniqueName}\"");
                             ++i;
                             if (i == 10)
                             {
@@ -216,6 +220,43 @@ namespace ZoneControl.Spawner
 
                         if (sb.Length > 0)
                             Log.Msg(sb.ToString(), playerId);
+                        break;
+                    }
+
+                case "PrefabSpawn":
+                    {
+                        if (args.Length < 3)
+                        {
+                            Log.Msg("Prefab Subtype must be given.", playerId);
+                            break;
+                        }
+
+                        string subtype = args[2].Trim(new char[] { ' ', '"' });
+                        if (subtype.Length == 0)
+                        {
+                            Log.Msg("Prefab Subtype must be given.", playerId);
+                        }
+
+                        Vector3D spawnPosition = cmdMsg.Player?.GetPosition() ?? MyAPIGateway.Session.Player.GetPosition();
+                        var character = cmdMsg.Player?.Character ?? MyAPIGateway.Session.Player.Character;
+                        spawnPosition = spawnPosition + character.LocalMatrix.Forward * 100; //new Vector3D(200, 0, 0);
+                        if (MyAPIGateway.GravityProviderSystem.IsPositionInNaturalGravity(spawnPosition, 1000))
+                        {
+                            Log.Msg("Spawning in gravity disabled", playerId);
+                            break;
+                        }
+
+                        var freePosition = MyAPIGateway.Entities.FindFreePlace(spawnPosition, 50);
+                        if (!freePosition.HasValue)
+                        {
+                            Log.Msg("A spawn position was not found", playerId);
+                            break;
+                        }
+
+                        MyVisualScriptLogicProvider.SpawnPrefab(subtype, freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, subtype, spawningOptions: SpawningOptions.UseOnlyWorldMatrix);
+                        Log.Msg($"Requested spawn of Subtype '{subtype}'", playerId);
+                        Log.Msg($"This is not an Anomaly and will not be removed!, REMEMBER TO REMOVE IT!", playerId);
+
                         break;
                     }
 

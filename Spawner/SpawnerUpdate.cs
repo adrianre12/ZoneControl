@@ -36,7 +36,7 @@ namespace ZoneControl.Spawner
 
             if (updateSpawns)
             {
-                if (Log.Debug) Log.Msg($"updateSpawns={updateSpawns} nextSpawnIndex={nextSpawnIndex}");
+                //if (Log.Debug) Log.Msg($"updateSpawns={updateSpawns} nextSpawnIndex={nextSpawnIndex}");
 
                 //do the loop
                 if (nextSpawnIndex >= 0)
@@ -173,7 +173,7 @@ namespace ZoneControl.Spawner
             newSpawn.AnomalyId = currentSpawns.SpawnCounter;
             newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
 
-            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.RotateFirstCockpitTowardsDirection | SpawningOptions.UseOnlyWorldMatrix);
+            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo);
 
             currentSpawns.Spawns.Add(newSpawn);
             return true;
@@ -191,15 +191,14 @@ namespace ZoneControl.Spawner
                 return;
             }
             IMyCubeGrid cubeGrid = entity as IMyCubeGrid;
-            if (Log.Debug)
-            {
-                var bigOwner = cubeGrid?.BigOwners.Count > 0 ? cubeGrid?.BigOwners[0] : 0;
-                Log.Msg($"Grid name={prefabName} BigOwners Count={cubeGrid?.BigOwners.Count} BigOwners[0]={bigOwner} FactionOwner={factionOwnerId}");
-            }
+            //if (Log.Debug)
+            //{
+            //    var bigOwner = cubeGrid?.BigOwners.Count > 0 ? cubeGrid?.BigOwners[0] : 0;
+            //    Log.Msg($"Grid name={prefabName} BigOwners Count={cubeGrid?.BigOwners.Count} BigOwners[0]={bigOwner} FactionOwner={factionOwnerId}");
+            //}
             if (cubeGrid?.BigOwners.Count == 0 || cubeGrid?.BigOwners[0] != factionOwnerId)
             {
-                if (Log.Debug)
-                    Log.Msg($"Rejecting name={prefabName}");
+                //if (Log.Debug) Log.Msg($"Rejecting name={prefabName}");
                 return;
             }
             if (Log.Debug) Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
