@@ -253,7 +253,7 @@ namespace ZoneControl.Spawner
                             break;
                         }
 
-                        MyVisualScriptLogicProvider.SpawnPrefab(subtype, freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, subtype, spawningOptions: SpawningOptions.UseOnlyWorldMatrix);
+                        MyVisualScriptLogicProvider.SpawnPrefab(subtype, freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix);
                         Log.Msg($"Requested spawn of Subtype '{subtype}'", playerId);
                         Log.Msg($"This is not an Anomaly and will not be removed!, REMEMBER TO REMOVE IT!", playerId);
 
