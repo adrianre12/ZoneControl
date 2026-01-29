@@ -180,13 +180,6 @@ namespace ZoneControl
                 player = MyAPIGateway.Players.TryGetIdentityId(MyAPIGateway.Players.TryGetIdentityId(steamId));
                 if (player == null) //belt and braces
                     return;
-
-
-                if (player.PromoteLevel < MyPromoteLevel.Admin)
-                {
-                    Log.Msg($"Non Admin player {player.DisplayName} tried to run command {msg}", player.IdentityId);
-                    return;
-                }
             }
 
             cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
@@ -200,89 +193,147 @@ namespace ZoneControl
             {
                 var sb = new StringBuilder();
                 sb.AppendLine("Help:");
-                sb.AppendLine("/ZoneControl Status");
-                sb.AppendLine("   Lists the current Zones.");
 
-                sb.AppendLine("/ZoneControl PunishMe");
-                sb.AppendLine("   Toggels if Admins get punished when intruding");
+                sb.AppendLine("/ZoneControl GPS FactionTag");
+                sb.AppendLine("   Adds a factions' Wormhole and zone positions to the GPS list. FactionTag is the 3 letter faction tag.");
 
-                sb.AppendLine("/ZoneSpawner");
-                sb.AppendLine("   Commands for the Spawner");
+                if (playerId == 0 || cmdMsg.Player.PromoteLevel >= MyPromoteLevel.Admin)
+                {
+                    sb.AppendLine("/ZoneControl Status");
+                    sb.AppendLine("   Lists the current Zones.");
 
+                    sb.AppendLine("/ZoneControl PunishMe");
+                    sb.AppendLine("   Toggels if Admins get punished when intruding");
+
+                    sb.AppendLine("/ZoneSpawner");
+                    sb.AppendLine("   Commands for the Spawner");
+                }
 
                 Log.Msg(sb.ToString(), playerId);
                 return;
             }
             string playerName = cmdMsg.Player?.DisplayName ?? "Local";
             Log.Msg($"Player {playerName} ran command {cmdMsg.Msg}");
+
+
+            if (playerId == 0 || cmdMsg.Player.PromoteLevel >= MyPromoteLevel.Admin)
+            {
+                switch (args[1])
+                {
+                    case "Debug":
+                        {
+                            Log.Debug = !Log.Debug;
+                            Log.Msg($"Log Debug={Log.Debug}", playerId);
+                            return;
+                        }
+
+                    case "Status":
+                        {
+                            var sb = new StringBuilder();
+                            sb.AppendLine("Status:");
+                            sb.AppendLine("Zones:");
+                            int i = 1;
+                            foreach (var zone in zoneTable.Zones)
+                            {
+                                if (sb.Length == 0)
+                                    sb.AppendLine();
+                                sb.AppendLine($"{zone.Type} {zone.UniqueName}");
+                                ++i;
+                                if (i == 10)
+                                {
+                                    Log.Msg(sb.ToString(), playerId);
+                                    sb.Clear();
+                                    i = 0;
+                                }
+                            }
+                            foreach (var zone in SubZoneTable.Zones)
+                            {
+                                if (sb.Length == 0)
+                                    sb.AppendLine();
+                                sb.AppendLine($"{zone.Type} {zone.UniqueName}");
+                                ++i;
+                                if (i == 10)
+                                {
+                                    Log.Msg(sb.ToString(), playerId);
+                                    sb.Clear();
+                                    i = 0;
+                                }
+                            }
+
+                            if (sb.Length > 0)
+                                Log.Msg(sb.ToString(), playerId);
+                            return;
+                        }
+
+                    case "PunishMe":
+                        {
+                            long id = playerId == 0 ? MyAPIGateway.Session.Player.IdentityId : playerId;
+
+                            if (punishAdminSet.Contains(id))
+                            {
+                                punishAdminSet.Remove(id);
+                                Log.Msg($"Mistress Everdawn is disapointed but still removes {playerName} from her whipping list.", playerId);
+                            }
+                            else
+                            {
+                                punishAdminSet.Add(id);
+                                Log.Msg($"Mistress Everdawn happily adds {playerName} to her whipping list.", playerId);
+                            }
+                            return;
+                        }
+                    default:
+                        {
+                            {
+                                break;
+                            }
+                        }
+
+                }
+            }
+
             switch (args[1])
             {
-                case "Debug":
+                case "GPS":
                     {
-                        Log.Debug = !Log.Debug;
-                        Log.Msg($"Log Debug={Log.Debug}", playerId);
-                        break;
-                    }
+                        if (args.Length < 3)
+                        {
+                            Log.Msg("The FactionTag must be given.", playerId);
+                            return;
+                        }
 
-                case "Status":
-                    {
-                        var sb = new StringBuilder();
-                        sb.AppendLine("Status:");
-                        sb.AppendLine("Zones:");
-                        int i = 1;
+                        string tag = args[2].Trim(new char[] { ' ', '"' });
+                        if (tag.Length == 0)
+                        {
+                            Log.Msg("Faction Tag must be given.", playerId);
+                            return;
+                        }
+
                         foreach (var zone in zoneTable.Zones)
                         {
-                            if (sb.Length == 0)
-                                sb.AppendLine();
-                            sb.AppendLine($"{zone.Type} {zone.UniqueName}");
-                            ++i;
-                            if (i == 10)
+                            if (zone.Type == ZoneInfoInternal.ZoneType.Zone && zone.FactionTag != null && zone.FactionTag == tag)
                             {
-                                Log.Msg(sb.ToString(), playerId);
-                                sb.Clear();
-                                i = 0;
+                                Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
+
+                                MyVisualScriptLogicProvider.AddGPS(zone.UniqueName, "Faction owned Zone", zone.Position, VRageMath.Color.White, 900, playerId);
                             }
                         }
                         foreach (var zone in SubZoneTable.Zones)
                         {
-                            if (sb.Length == 0)
-                                sb.AppendLine();
-                            sb.AppendLine($"{zone.Type} {zone.UniqueName}");
-                            ++i;
-                            if (i == 10)
+                            if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole && zone.FactionTag != null && zone.FactionTag == tag)
                             {
-                                Log.Msg(sb.ToString(), playerId);
-                                sb.Clear();
-                                i = 0;
+                                Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
+
+                                MyVisualScriptLogicProvider.AddGPS(zone.UniqueName, "Faction owned Wormhole", zone.Position, VRageMath.Color.White, 900, playerId);
                             }
                         }
 
-                        if (sb.Length > 0)
-                            Log.Msg(sb.ToString(), playerId);
-                        break;
+                        return;
                     }
-
-                case "PunishMe":
-                    {
-                        long id = playerId == 0 ? MyAPIGateway.Session.Player.IdentityId : playerId;
-
-                        if (punishAdminSet.Contains(id))
-                        {
-                            punishAdminSet.Remove(id);
-                            Log.Msg($"Mistress Everdawn is disapointed but still removes {playerName} from her whipping list.", playerId);
-                        }
-                        else
-                        {
-                            punishAdminSet.Add(id);
-                            Log.Msg($"Mistress Everdawn happily adds {playerName} to her whipping list.", playerId);
-                        }
-                        break;
-                    }
-
                 default:
                     {
                         Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
-                        break;
+                        return;
+
                     }
             }
         }
@@ -423,7 +474,7 @@ namespace ZoneControl
 
             if (Log.Debug) Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {zone.UniqueName} {zone.FactionTag}");
 
-            if (!zone.NoIntruders || zone.FactionTag == null || zone.FactionTag.Length == 0)
+            if (!zone.NoIntruders || zone.FactionTag == null || zone.FactionTag.Length == 0 || zone.FactionTag == config.Intruder.AdminTestFactionTag)
                 return false;
 
             if (playerFactionTag == zone.FactionTag.Trim())
@@ -433,10 +484,10 @@ namespace ZoneControl
 
             MyVisualScriptLogicProvider.ShowNotification(config.Intruder.Message, config.Intruder.AlertTimeMs, config.Intruder.Colour, playerId: ps.Player.IdentityId);
 
-            if (ps.Player.PromoteLevel != MyPromoteLevel.None && !punishAdminSet.Contains(ps.Player.IdentityId))
+            if (ps.Player.PromoteLevel >= MyPromoteLevel.Admin && !punishAdminSet.Contains(ps.Player.IdentityId))
             {
                 if (Log.Debug) Log.Msg($"Admin {ps.Player.DisplayName} escapes punishment {ps.Player.IdentityId}");
-                return false; //admins dont get punished unless in AdminTestFactionTag
+                return false; //admins dont get punished unless in punishAdminSet
             }
             Log.Msg($"Intruder: {VectorToGPS(ps.Player.DisplayName, position)}");
             return true;
