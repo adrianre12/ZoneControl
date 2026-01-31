@@ -36,6 +36,8 @@ namespace ZoneControl
             if (block?.CubeGrid?.Physics == null)
                 return;
 
+            gridId = block.CubeGrid.EntityId;
+
             NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
 
             if (!MyAPIGateway.Session.IsServer)
@@ -63,7 +65,7 @@ namespace ZoneControl
 
         public virtual void Block_EnabledChanged(IMyTerminalBlock obj)
         {
-            //Log.Msg("Base Block_EnabledChanged");
+            //Log.Msg($"Base Block_EnabledChanged Enabled={block.Enabled}");
             if (CheckDuplicate())
             {
                 Log.Msg($"Duplicate block grid='{block.CubeGrid.CustomName}' block='{block.CustomName}'");
