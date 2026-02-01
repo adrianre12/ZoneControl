@@ -30,12 +30,14 @@ namespace ZoneControl.Wormhole
 
         static bool CustomVisibleCondition(IMyTerminalBlock b)
         {
-            return b?.GameLogic?.GetAs<WormDrive>() != null;
+            var gl = b?.GameLogic?.GetAs<WormDrive>();
+            return gl != null && !gl.IsNotWormholeDrive;
         }
 
         static bool CustomHiddenCondition(IMyTerminalBlock b)
         {
-            return b?.GameLogic?.GetAs<WormDrive>() == null;
+            var gl = b?.GameLogic?.GetAs<WormDrive>();
+            return gl == null || gl.IsNotWormholeDrive;
         }
 
         static bool CustomHiddenEnabledCondition(IMyTerminalBlock b)

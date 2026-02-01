@@ -65,7 +65,7 @@ namespace ZoneControl
 
         public virtual void Block_EnabledChanged(IMyTerminalBlock obj)
         {
-            //if (Log.Debug) Log.Msg($"Base Block_EnabledChanged {block.CustomName} Enabled={block.Enabled} overrideSetting={overrideSetting}");
+            if (Log.Debug) Log.Msg($"Base Block_EnabledChanged '{block.CustomName}' Enabled={block.Enabled} overrideSetting={overrideSetting}");
 
             if (overrideSetting == OverrideState.None)
             {
@@ -100,7 +100,7 @@ namespace ZoneControl
 
         public void SetOverride(OverrideState state)
         {
-            //Log.Msg($"{block.CustomName} overrideState={state}");
+            //if (Log.Debug) Log.Msg($"SetOverride '{block.CustomName}' overrideState={state}");
             overrideSetting = state;
             SetOverrideCounter();
             if (overrideSetting == OverrideState.None)

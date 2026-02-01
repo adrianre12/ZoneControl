@@ -327,8 +327,8 @@ namespace ZoneControl
                                 ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
                                 if (gl == null)
                                     continue;
-
-                                gl.SetOverride(OverrideState.None);
+                                if (gl.IsNotWormholeDrive)
+                                    gl.SetOverride(OverrideState.None);
                             }
 
                             Log.Msg($"Grid '{grid.DisplayName} punishment removed.", playerId);
@@ -616,8 +616,8 @@ namespace ZoneControl
                                 ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
                                 if (gl == null)
                                     continue;
-
-                                gl.SetOverride(OverrideState.Disabled);
+                                if (gl.IsNotWormholeDrive)
+                                    gl.SetOverride(OverrideState.Disabled);
                             }
                             break;
                         }
