@@ -205,6 +205,9 @@ namespace ZoneControl
                     sb.AppendLine("/ZoneControl PunishMe");
                     sb.AppendLine("   Toggels if Admins get punished when intruding");
 
+                    sb.AppendLine("/ZoneControl EnableShip");
+                    sb.AppendLine("   Removes the Disable punishment from a ship. You must be in a cockpit.");
+
                     sb.AppendLine("/ZoneSpawner");
                     sb.AppendLine("   Commands for the Spawner");
                 }
@@ -281,13 +284,64 @@ namespace ZoneControl
                             }
                             return;
                         }
+
+                    case "EnableShip":
+                        {
+                            var player = cmdMsg.Player ?? MyAPIGateway.Session.Player;
+                            if (Log.Debug) Log.Msg($"Enable for player '{player.DisplayName}'");
+                            var cockpit = player.Character?.UsingEntity as IMyCockpit;
+                            if (cockpit == null)
+                            {
+                                Log.Msg("You must be in a cockpit", playerId);
+                                return;
+                            }
+
+                            var grid = cockpit.CubeGrid;
+                            if (grid == null)
+                            {
+                                Log.Msg("Error Punish cubegrid null", playerId);
+                                return;
+                            }
+
+                            Log.Msg($"Enable grid '{player.DisplayName}' grid name '{grid.DisplayName}'");
+
+                            int expiryFrame;
+                            if (punishmentCache.TryGetValue(grid.EntityId, out expiryFrame))
+                            {
+                                punishmentCache.Remove(grid.EntityId);
+                            }
+
+                            foreach (var jd in grid.GetFatBlocks<IMyGyro>())
+                            {
+                                var fb = jd as IMyFunctionalBlock;
+                                ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
+                                if (gl == null)
+                                    continue;
+
+                                gl.SetOverride(OverrideState.None);
+                            }
+
+                            foreach (var jd in grid.GetFatBlocks<IMyJumpDrive>())
+                            {
+                                var fb = jd as IMyFunctionalBlock;
+                                ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
+                                if (gl == null)
+                                    continue;
+
+                                gl.SetOverride(OverrideState.None);
+                            }
+
+                            Log.Msg($"Grid '{grid.DisplayName} punishment removed.", playerId);
+
+                            return;
+                        }
+
                     default:
                         {
                             {
                                 break;
                             }
                         }
-
                 }
             }
 
