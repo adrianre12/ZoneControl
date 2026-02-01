@@ -13,7 +13,7 @@ using VRageMath;
 
 namespace ZoneControl.Wormhole
 {
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_JumpDrive), false, new string[] { "LargeWormholeDrive" })]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_JumpDrive), false)]//, new string[] { "LargeWormholeDrive" })]
     internal class WormDrive : ZoneControlBase
     {
         const double MaxMovementSqrd = 1d;
@@ -27,6 +27,10 @@ namespace ZoneControl.Wormhole
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             base.Init(objectBuilder);
+            if (IsNotWormholeDrive)
+                return;
+            if (Log.Debug) Log.Msg($"Init for Wormhole drive on '{block.CubeGrid.CustomName}'");
+
             OverrideDefault = OverrideState.None;
             OverrideDefaultTimeout = 15;
             DefaultEnabledState = false;
@@ -35,6 +39,18 @@ namespace ZoneControl.Wormhole
         public override void UpdateOnceBeforeFrame()
         {
             base.UpdateOnceBeforeFrame();
+            if (IsNotWormholeDrive)
+            {
+                //Log.Msg($"UpdateOnceBeforeFrame {block.DisplayNameText}");
+                return;
+            }
+            if (CheckDuplicate())
+            {
+                block.Enabled = false;
+                OverrideDefault = OverrideState.Disabled;
+                overrideSetting = OverrideState.Disabled;
+            }
+
             JumpTarget.SetLocalValue(Vector3D.PositiveInfinity);
 
             if (!MyAPIGateway.Utilities.IsDedicated) //client only
@@ -81,6 +97,9 @@ namespace ZoneControl.Wormhole
         {
             base.UpdateAfterSimulation100();
 
+            if (IsNotWormholeDrive)
+                return;
+
             if (!MyAPIGateway.Utilities.IsDedicated) //client only
             {
                 try
@@ -115,6 +134,19 @@ namespace ZoneControl.Wormhole
 
         public override void Block_EnabledChanged(IMyTerminalBlock obj)
         {
+            if (IsNotWormholeDrive)
+            {
+                base.Block_EnabledChanged(obj);
+                return;
+            }
+
+            if (CheckDuplicate())
+            {
+                Log.Msg($"Duplicate block grid='{block.CubeGrid.CustomName}' block='{block.CustomName}'");
+                block.Enabled = false;
+                return;
+            }
+
             base.Block_EnabledChanged(obj);
 
             //Log.Msg($"Wormhole Enable changed {block.Enabled}");
@@ -122,9 +154,15 @@ namespace ZoneControl.Wormhole
             {
                 //check for wormhole zone
                 ZoneInfoInternal closetZone = ZonesSession.Instance.FindClosestWormholeCached(gridId, block.CubeGrid.GetPosition());
-                if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole ||
-                    (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag()))
-                { // its not a accessable wormhole
+                if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole)
+                {
+                    if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' Not in a wormhole");
+                    SetDefaultOverride();
+                    return;
+                }
+                if (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag())
+                { // its not an accessable wormhole
+                    if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' closetZone.FactionTag={closetZone?.FactionTag} != block.GetOwnerFactionTag()={block.GetOwnerFactionTag()}");
                     SetDefaultOverride();
                     return;
                 }
@@ -150,7 +188,7 @@ namespace ZoneControl.Wormhole
             foreach (var jd in block.CubeGrid.GetFatBlocks<IMyJumpDrive>())
             {
                 var fb = jd as IMyFunctionalBlock;
-                if (fb == null || subTypeId == jd.SlimBlock.GetObjectBuilder().SubtypeId)
+                if (fb == null || subTypeId == jd.SlimBlock.GetObjectBuilder().SubtypeId) // reject the wormhole block
                     continue;
                 ZoneControlBase gl = fb.GameLogic?.GetAs<ZoneControlBase>();
                 if (gl == null)
@@ -160,7 +198,7 @@ namespace ZoneControl.Wormhole
             }
         }
 
-        internal override bool CheckDuplicate()
+        private bool CheckDuplicate()
         {
             IMyFunctionalBlock fblock;
             if (!driveRegister.TryGetValue(gridId, out fblock))
@@ -172,7 +210,6 @@ namespace ZoneControl.Wormhole
             {
                 return false;
             }
-
             return true;
         }
 
@@ -186,6 +223,12 @@ namespace ZoneControl.Wormhole
 
         public override void Close()
         {
+            if (IsNotWormholeDrive)
+            {
+                base.Close();
+                return;
+            }
+
             if (!MyAPIGateway.Utilities.IsDedicated) //client only
             {
                 WormholeZoneId.ValueChanged -= TargetZoneId_ValueChanged;

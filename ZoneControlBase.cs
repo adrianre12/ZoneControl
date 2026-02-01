@@ -16,23 +16,28 @@ namespace ZoneControl
             Enabled,
             Disabled
         }
-        private OverrideState overrideSetting;
+        internal OverrideState overrideSetting;
 
         private bool originalEnabledState;
         private long overrideCounter = 0;
         internal OverrideState OverrideDefault = OverrideState.None;
         internal bool? DefaultEnabledState = null;
-        internal long OverrideDefaultTimeout = 0;
+        internal long OverrideDefaultTimeout = 20;
+        internal bool IsNotWormholeDrive = true;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             block = Entity as IMyFunctionalBlock;
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+            if (block.BlockDefinition.SubtypeName == "LargeWormholeDrive")
+            {
+                Log.Msg("Wormhole Drive found");
+                IsNotWormholeDrive = false;
+            }
         }
 
         public override void UpdateOnceBeforeFrame()
         {
-            base.UpdateOnceBeforeFrame();
             if (block?.CubeGrid?.Physics == null)
                 return;
 
@@ -45,12 +50,6 @@ namespace ZoneControl
 
             originalEnabledState = block.Enabled;
             SetDefaultOverride();
-            if (CheckDuplicate())
-            {
-                block.Enabled = false;
-                OverrideDefault = OverrideState.Disabled;
-                overrideSetting = OverrideState.Disabled;
-            }
 
             block.EnabledChanged += Block_EnabledChanged;
         }
@@ -61,17 +60,13 @@ namespace ZoneControl
                 return;
             if (overrideCounter > 0 && --overrideCounter <= 0)
                 SetDefaultOverride();
+            //if (Log.Debug) Log.Msg($"'{block.CustomName}' overrideCounter={overrideCounter}");
         }
 
         public virtual void Block_EnabledChanged(IMyTerminalBlock obj)
         {
-            //Log.Msg($"Base Block_EnabledChanged Enabled={block.Enabled}");
-            if (CheckDuplicate())
-            {
-                Log.Msg($"Duplicate block grid='{block.CubeGrid.CustomName}' block='{block.CustomName}'");
-                block.Enabled = false;
-                return;
-            }
+            //if (Log.Debug) Log.Msg($"Base Block_EnabledChanged {block.CustomName} Enabled={block.Enabled} overrideSetting={overrideSetting}");
+
             if (overrideSetting == OverrideState.None)
             {
                 originalEnabledState = block.Enabled;
@@ -113,8 +108,6 @@ namespace ZoneControl
 
             Block_EnabledChanged(null);
         }
-
-        internal abstract bool CheckDuplicate();
 
         public override void Close()
         {
