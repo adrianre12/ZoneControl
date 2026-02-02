@@ -3,7 +3,6 @@ using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Text.RegularExpressions;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -18,7 +17,6 @@ namespace ZoneControl.Spawner
         const string VariableId = nameof(SpawnerSession);
         const long DateTimeTicksPerHour = 36000000000L;
         const long DateTimeTicksPerMin = 600000000L;
-        const string regxArgs = " (?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))";
 
         public static SpawnerSession Instance;
 
@@ -68,8 +66,8 @@ namespace ZoneControl.Spawner
         private void CommandHandler(CmdMsg cmdMsg)
         {
             long playerId = cmdMsg.Player?.IdentityId ?? 0;
-            var args = Regex.Split(cmdMsg.Msg, regxArgs);
-            if (args.Length < 2)
+            var args = GetArgs(cmdMsg.Msg);
+            if (args.Count < 2)
             {
                 var sb = new StringBuilder();
                 sb.AppendLine("Help:");
@@ -126,7 +124,7 @@ namespace ZoneControl.Spawner
                             break;
                         }
                         int value = -1;
-                        if (args.Length != 3 || !int.TryParse(args[2], out value))
+                        if (args.Count != 3 || !int.TryParse(args[2], out value))
                         {
                             Log.Msg($"Error in command '{cmdMsg.Msg}'", playerId);
                             break;
@@ -156,7 +154,7 @@ namespace ZoneControl.Spawner
                             Log.Msg("Already at MaxSpawns", playerId);
                             break;
                         }
-                        if (args.Length < 3)
+                        if (args.Count < 3)
                         {
                             AddSpawn(true);
                             Log.Msg("Spawning random prefab requested", playerId);
@@ -225,14 +223,13 @@ namespace ZoneControl.Spawner
 
                 case "PrefabSpawn":
                     {
-                        if (args.Length < 3)
+                        if (args.Count < 3)
                         {
                             Log.Msg("Prefab Subtype must be given.", playerId);
                             break;
                         }
 
-                        string subtype = args[2].Trim(new char[] { ' ', '"' });
-                        if (subtype.Length == 0)
+                        if (args[2].Length == 0)
                         {
                             Log.Msg("Prefab Subtype must be given.", playerId);
                         }
@@ -253,8 +250,8 @@ namespace ZoneControl.Spawner
                             break;
                         }
 
-                        MyVisualScriptLogicProvider.SpawnPrefab(subtype, freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix);
-                        Log.Msg($"Requested spawn of Subtype '{subtype}'", playerId);
+                        MyVisualScriptLogicProvider.SpawnPrefab(args[2], freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix);
+                        Log.Msg($"Requested spawn of Subtype '{args[2]}'", playerId);
                         Log.Msg($"This is not an Anomaly and will not be removed!, REMEMBER TO REMOVE IT!", playerId);
 
                         break;

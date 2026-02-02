@@ -188,8 +188,8 @@ namespace ZoneControl
         private void CommandHandler(CmdMsg cmdMsg)
         {
             long playerId = cmdMsg.Player?.IdentityId ?? 0;
-            var args = cmdMsg.Msg.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
-            if (args.Length < 2)
+            var args = GetArgs(cmdMsg.Msg);
+            if (args.Count < 2)
             {
                 var sb = new StringBuilder();
                 sb.AppendLine("Help:");
@@ -349,14 +349,13 @@ namespace ZoneControl
             {
                 case "GPS":
                     {
-                        if (args.Length < 3)
+                        if (args.Count < 3)
                         {
                             Log.Msg("The FactionTag must be given.", playerId);
                             return;
                         }
 
-                        string tag = args[2].Trim(new char[] { ' ', '"' });
-                        if (tag.Length == 0)
+                        if (args[2].Length == 0)
                         {
                             Log.Msg("Faction Tag must be given.", playerId);
                             return;
@@ -364,7 +363,7 @@ namespace ZoneControl
 
                         foreach (var zone in zoneTable.Zones)
                         {
-                            if (zone.Type == ZoneInfoInternal.ZoneType.Zone && zone.FactionTag != null && zone.FactionTag == tag)
+                            if (zone.Type == ZoneInfoInternal.ZoneType.Zone && zone.FactionTag != null && zone.FactionTag == args[2])
                             {
                                 Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
 
@@ -373,7 +372,7 @@ namespace ZoneControl
                         }
                         foreach (var zone in SubZoneTable.Zones)
                         {
-                            if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole && zone.FactionTag != null && zone.FactionTag == tag)
+                            if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole && zone.FactionTag != null && zone.FactionTag == args[2])
                             {
                                 Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
 

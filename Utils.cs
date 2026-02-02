@@ -1,6 +1,8 @@
 ﻿using Sandbox.ModAPI;
 using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 using VRage.Game.ModAPI;
 using VRageMath;
 
@@ -8,7 +10,9 @@ namespace ZoneControl
 {
     internal class Utils
     {
+        const string regxArgs = " (?=(?:[^\"]*\"[^\"]*\")*(?![^\"]*\"))";
         public enum Fonts { Red, Green, Blue, White, DarkBlue };
+
 
         internal static string CheckFontColour(string font)
         {
@@ -84,6 +88,21 @@ namespace ZoneControl
             }
             Log.Msg($"Spawnwer UNKN not found using NOBODY");
             return 0;
+        }
+
+        internal static List<string> GetArgs(string msg)
+        {
+            var parts = Regex.Split(msg, regxArgs);
+            List<string> args = new List<string>();
+            foreach (var part in parts)
+            {
+                string arg = part.Trim(new char[] { ' ', '"' });
+                if (arg.Length == 0)
+                    continue;
+
+                args.Add(arg);
+            }
+            return args;
         }
     }
 }
