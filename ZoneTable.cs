@@ -1,7 +1,9 @@
 ﻿using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using VRage.Game;
 using VRageMath;
 
 namespace ZoneControl
@@ -47,27 +49,31 @@ namespace ZoneControl
         {
             Log.Msg("NewZoneDictionary()");
             ZoneTable dict = new ZoneTable();
-
-            Dictionary<string, Vector3D> planetPositions = new Dictionary<string, Vector3D>();
+            MyPlanet planet;
+            Dictionary<string, MyPlanet> planetPositions = new Dictionary<string, MyPlanet>();
             MyAPIGateway.Entities.GetEntities(null, e =>
             {
                 if (e is MyPlanet)
                 {
-                    var planet = e as MyPlanet;
+                    planet = e as MyPlanet;
+
                     if (planetPositions.ContainsKey(planet.StorageName))
                     {
                         Log.Msg($"Error duplicate planet name found: {planet.StorageName}");
                         return false;
                     }
-                    var center = planet.WorldMatrix.Translation;
-                    var blc = planet.PositionLeftBottomCorner;
-                    var trans = center - blc;
                     Log.Msg($"Planet Found {planet.StorageName}");
-                    if (Log.Debug) Log.Msg($"PlanetCenter X={center.X - 0.5} Y={center.Y - 0.5} Z={center.Z - 0.5}");
-                    if (Log.Debug) Log.Msg($"SbsPosition X={blc.X - 0.5} Y={blc.Y - 0.5} Z={blc.Z - 0.5}");
-                    if (Log.Debug) Log.Msg($"Translation X={trans.X} Y={trans.Y} Z={trans.Z}");
+                    if (Log.Debug)
+                    {
+                        var center = planet.WorldMatrix.Translation;
+                        var blc = planet.PositionLeftBottomCorner;
+                        var trans = center - blc;
+                        Log.Msg($"PlanetCenter X={center.X - 0.5} Y={center.Y - 0.5} Z={center.Z - 0.5}");
+                        Log.Msg($"SbsPosition X={blc.X - 0.5} Y={blc.Y - 0.5} Z={blc.Z - 0.5}");
+                        Log.Msg($"Translation X={trans.X} Y={trans.Y} Z={trans.Z}");
+                    }
 
-                    planetPositions.Add(planet.StorageName, planet.WorldMatrix.Translation);
+                    planetPositions.Add(planet.StorageName, planet);
                 }
                 return false;
             });
@@ -79,12 +85,17 @@ namespace ZoneControl
                 if (Log.Debug) Log.Msg($"Adding {zone.Type} {info.UniqueName} zoneId={zone.Id} radius={zone.AlertRadius} position={zone.Position} to Zones list");
             }
 
-            Vector3D planetPosition;
+
             foreach (var info in config.Planets)
             {
-                if (planetPositions.TryGetValue(info.PlanetName, out planetPosition))
+                if (planetPositions.TryGetValue(info.PlanetName, out planet))
                 { // Planets cant be wormholes so no targets.
-                    var zone = new ZoneInfoInternal(dict.Zones.Count, info, planetPosition);
+                    if (info.AlertRadiusGravity)
+                    {
+                        var ob = planet.GetObjectBuilder() as MyObjectBuilder_Planet;
+                        info.Info.AlertRadius = ob.MaximumHillRadius * Math.Pow(ob.SurfaceGravity * 20, 1 / ob.GravityFalloff);
+                    }
+                    var zone = new ZoneInfoInternal(dict.Zones.Count, info, planet.WorldMatrix.Translation);
                     dict.Zones.Add(zone);
                     Log.Msg($"Adding Planet {zone.Type} {info.PlanetName} zoneId={zone.Id} to Zones list");
                 }

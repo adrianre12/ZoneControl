@@ -24,6 +24,7 @@ namespace ZoneControl
         {
             public string PlanetName = "";
             public bool NoIntruders = false;
+            public bool AlertRadiusGravity = false;
             public InfoCommon Info = new InfoCommon();
 
             public PlanetInfo() { }
