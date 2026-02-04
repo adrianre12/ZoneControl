@@ -9,6 +9,7 @@ using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
 using ZoneControl.Spawner;
+using ZoneControl.Wormhole;
 using static ZoneControl.Utils;
 using static ZoneControl.ZoneControlBase;
 using static ZoneControl.ZonesConfigBase;
@@ -208,6 +209,9 @@ namespace ZoneControl
                     sb.AppendLine("/ZoneControl EnableShip");
                     sb.AppendLine("   Removes the Disable punishment from a ship. You must be in a cockpit.");
 
+                    sb.AppendLine("/ZoneControl EnableWD");
+                    sb.AppendLine("   Enables Wormdrive for one jump outside a wormhole. Use a Jumpdrive for the jump.");
+
                     sb.AppendLine("/ZoneSpawner");
                     sb.AppendLine("   Commands for the Spawner");
                 }
@@ -332,6 +336,42 @@ namespace ZoneControl
                             }
 
                             Log.Msg($"Grid '{grid.DisplayName} punishment removed.", playerId);
+
+                            return;
+                        }
+
+                    case "EnableWD":
+                        {
+                            var player = cmdMsg.Player ?? MyAPIGateway.Session.Player;
+                            if (Log.Debug) Log.Msg($"EnableWD for player '{player.DisplayName}'");
+                            var cockpit = player.Character?.UsingEntity as IMyCockpit;
+                            if (cockpit == null)
+                            {
+                                Log.Msg("You must be in a cockpit", playerId);
+                                return;
+                            }
+
+                            var grid = cockpit.CubeGrid;
+                            if (grid == null)
+                            {
+                                Log.Msg("Error cubegrid null", playerId);
+                                return;
+                            }
+
+                            Log.Msg($"Enable grid '{player.DisplayName}' grid name '{grid.DisplayName}'");
+
+
+                            foreach (var jd in grid.GetFatBlocks<IMyJumpDrive>())
+                            {
+                                var fb = jd as IMyFunctionalBlock;
+                                WormDrive gl = fb.GameLogic?.GetAs<WormDrive>();
+                                if (gl == null)
+                                    continue;
+                                if (gl.IsNotWormholeDrive == false)
+                                    gl.SetAdminBypassChecks();
+                            }
+
+                            Log.Msg($"Grid '{grid.DisplayName} Wormdrive enabled.", playerId);
 
                             return;
                         }

@@ -23,6 +23,7 @@ namespace ZoneControl.Wormhole
         internal MySync<long, SyncDirection.FromServer> WormholeZoneId;
         internal MySync<Vector3D, SyncDirection.BothWays> JumpTarget; //PositiveInfinity do nothing, position jump, negative infinity abort
         public int SelectedTargetListItem = -1;
+        private bool adminBypassChecks = false;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
@@ -126,6 +127,7 @@ namespace ZoneControl.Wormhole
                 if (movedSqrd > MaxMovementSqrd)
                 {
                     SetDefaultOverride();
+                    adminBypassChecks = false;
                     return;
                 }
             }
@@ -152,19 +154,21 @@ namespace ZoneControl.Wormhole
             //if (Log.Debug) Log.Msg($"Wormhole Enable changed {block.Enabled} overrideSetting={overrideSetting}");
             if (block.Enabled)
             {
-                //check for wormhole zone
                 ZoneInfoInternal closetZone = ZonesSession.Instance.FindClosestWormholeCached(gridId, block.CubeGrid.GetPosition());
-                if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole)
+                if (adminBypassChecks == false)
                 {
-                    //if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' Not in a wormhole");
-                    SetDefaultOverride();
-                    return;
-                }
-                if (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag())
-                { // its not an accessable wormhole
-                    //if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' closetZone.FactionTag={closetZone?.FactionTag} != block.GetOwnerFactionTag()={block.GetOwnerFactionTag()}");
-                    SetDefaultOverride();
-                    return;
+                    if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole)
+                    {
+                        //if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' Not in a wormhole");
+                        SetDefaultOverride();
+                        return;
+                    }
+                    if (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag())
+                    { // its not an accessable wormhole
+                      //if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' closetZone.FactionTag={closetZone?.FactionTag} != block.GetOwnerFactionTag()={block.GetOwnerFactionTag()}");
+                        SetDefaultOverride();
+                        return;
+                    }
                 }
 
                 activationPosition = block.CubeGrid.GetPosition();
@@ -249,5 +253,9 @@ namespace ZoneControl.Wormhole
             }
         }
 
+        public void SetAdminBypassChecks()
+        {
+            adminBypassChecks = true;
+        }
     }
 }
