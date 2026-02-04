@@ -173,7 +173,7 @@ namespace ZoneControl.Wormhole
 
                 activationPosition = block.CubeGrid.GetPosition();
                 SetOverrideCounter();
-                WormholeZoneId.Value = closetZone.Id;
+                WormholeZoneId.Value = closetZone == null ? -1 : closetZone.Id;
             }
             else
             {
@@ -181,7 +181,8 @@ namespace ZoneControl.Wormhole
             }
 
             //look for jumpdrives enable/disable
-            SetJumpdriveState(block.Enabled ? OverrideState.Disabled : OverrideState.None);
+            if (!adminBypassChecks)
+                SetJumpdriveState(block.Enabled ? OverrideState.Disabled : OverrideState.None);
 
             JumpTarget.Value = Vector3D.PositiveInfinity;
         }

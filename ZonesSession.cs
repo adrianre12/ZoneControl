@@ -361,14 +361,27 @@ namespace ZoneControl
                             Log.Msg($"Enable grid '{player.DisplayName}' grid name '{grid.DisplayName}'");
 
 
+                            foreach (var jd in grid.GetFatBlocks<IMyJumpDrive>()) // have to do WD first as WD disables JD
+                            {
+                                var fb = jd as IMyFunctionalBlock;
+                                WormDrive wdgl = fb.GameLogic?.GetAs<WormDrive>();
+                                if (wdgl?.IsNotWormholeDrive == false)
+                                {
+                                    wdgl.SetAdminBypassChecks();
+                                    jd.CurrentStoredPower = jd.MaxStoredPower;
+                                    jd.Enabled = true;
+                                }
+                            }
                             foreach (var jd in grid.GetFatBlocks<IMyJumpDrive>())
                             {
                                 var fb = jd as IMyFunctionalBlock;
-                                WormDrive gl = fb.GameLogic?.GetAs<WormDrive>();
-                                if (gl == null)
-                                    continue;
-                                if (gl.IsNotWormholeDrive == false)
-                                    gl.SetAdminBypassChecks();
+                                ZoneControlBase jdgl = fb.GameLogic?.GetAs<ZoneControlBase>();
+                                if (jdgl.IsNotWormholeDrive)
+                                {
+                                    jdgl.SetOverride(OverrideState.None);
+                                    jd.CurrentStoredPower = jd.MaxStoredPower;
+                                    jd.Enabled = true;
+                                }
                             }
 
                             Log.Msg($"Grid '{grid.DisplayName} Wormdrive enabled.", playerId);
