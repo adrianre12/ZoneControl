@@ -196,7 +196,7 @@ namespace ZoneControl
                 sb.AppendLine("Help:");
 
                 sb.AppendLine("/ZoneControl GPS FactionTag");
-                sb.AppendLine("   Adds a factions' Wormhole and zone positions to the GPS list. FactionTag is the 3 letter faction tag.");
+                sb.AppendLine("   Adds a faction's Wormhole and zone positions to the GPS list. FactionTag is the 3-letter faction tag.");
 
                 if (playerId == 0 || cmdMsg.Player.PromoteLevel >= MyPromoteLevel.Admin)
                 {
