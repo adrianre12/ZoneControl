@@ -204,7 +204,7 @@ namespace ZoneControl
                     sb.AppendLine("   Lists the current Zones.");
 
                     sb.AppendLine("/ZoneControl PunishMe");
-                    sb.AppendLine("   Toggels if Admins get punished when intruding");
+                    sb.AppendLine("   Toggles if Admins get punished when intruding");
 
                     sb.AppendLine("/ZoneControl EnableShip");
                     sb.AppendLine("   Removes the Disable punishment from a ship. You must be in a cockpit.");

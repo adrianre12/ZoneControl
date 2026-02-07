@@ -87,7 +87,7 @@ namespace ZoneControl.Spawner
                 sb.AppendLine("   Lists all the configured prefabs.");
 
                 sb.AppendLine("/ZoneSpawner PrefabSpawn \"Subtype\"");
-                sb.AppendLine("   Spawns any prefab by its Subtype, it does not have to be in configuratin. This is not an Anomaly and will not be removed!");
+                sb.AppendLine("   Spawns any prefab by its Subtype, it does not have to be in configuration. This is not an Anomaly and will not be removed!");
 
                 sb.AppendLine("/ZoneSpawner SetSpawnCounter");
                 sb.AppendLine("   Can only be run when the spawner is disabled in config.");
