@@ -377,12 +377,14 @@ namespace ZoneControl.Spawner
                     MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
                 else
                     MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
-
-                Instance = null;
             }
             catch (Exception e)
             {
                 Log.Msg($"Error in UnloadData\n{e.ToString()}");
+            }
+            finally
+            {
+                Instance = null;
             }
         }
 
