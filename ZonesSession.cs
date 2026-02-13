@@ -8,6 +8,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
+using ZoneControl.Networking;
 using ZoneControl.Spawner;
 using ZoneControl.Wormhole;
 using static ZoneControl.Utils;
@@ -41,17 +42,10 @@ namespace ZoneControl
         private HashSet<long> punishAdminSet = new HashSet<long>();
 
 
-        internal enum CmdFlag
-        {
-            True,
-            Pending,
-            False
-        }
-
         internal struct CmdMsg
         {
             public IMyPlayer Player;
-            public string Msg;
+            public CmdMsgPacket Packet;
         }
 
         private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
@@ -92,21 +86,7 @@ namespace ZoneControl
 
         protected override void UnloadData()
         {
-            try
-            {
-                if (MyAPIGateway.Utilities.IsDedicated)
-                    MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
-                else
-                    MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
-            }
-            catch (Exception e)
-            {
-                Log.Msg($"Error in UnloadData\n{e.ToString()}");
-            }
-            finally
-            {
-                Instance = null;
-            }
+            Instance = null;
         }
 
         public void LoadDataOnHost()
@@ -157,42 +137,19 @@ namespace ZoneControl
                 {
                     Log.Msg($"Error serializing zoneTargets\n {e}");
                 }
-
-                if (MyAPIGateway.Utilities.IsDedicated)
-                    MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
-                else
-                    MyAPIGateway.Utilities.MessageEntered += Utilities_MessageEntered;
             }
         }
 
-        private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
+
+        internal void CmdQueueEnqueue(CmdMsg cmdMsg)
         {
-            //Log.Msg($"Recieved local msg={msg}");
-            Utilities_MessageRecieved(0, msg);
-        }
-
-        private void Utilities_MessageRecieved(ulong steamId, string msg)
-        {
-            //Log.Msg($"Recieved steamId={steamId} msg={msg}");
-
-            if (!msg.StartsWith("/ZoneControl"))
-                return;
-
-            IMyPlayer player = null;
-            if (steamId != 0)
-            {
-                player = MyAPIGateway.Players.TryGetIdentityId(MyAPIGateway.Players.TryGetIdentityId(steamId));
-                if (player == null) //belt and braces
-                    return;
-            }
-
-            cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
+            cmdQueue.Enqueue(cmdMsg);
         }
 
         private void CommandHandler(CmdMsg cmdMsg)
         {
             long playerId = cmdMsg.Player?.IdentityId ?? 0;
-            var args = GetArgs(cmdMsg.Msg);
+            List<string> args = cmdMsg.Packet.Args;
             if (args.Count < 2)
             {
                 var sb = new StringBuilder();
@@ -223,7 +180,7 @@ namespace ZoneControl
                 return;
             }
             string playerName = cmdMsg.Player?.DisplayName ?? "Local";
-            Log.Msg($"Player {playerName} ran command {cmdMsg.Msg}");
+            Log.Msg($"Player {playerName} ran command {cmdMsg.Packet.Msg}");
 
 
             if (playerId == 0 || cmdMsg.Player.PromoteLevel >= MyPromoteLevel.Admin)
@@ -440,7 +397,7 @@ namespace ZoneControl
                     }
                 default:
                     {
-                        Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
+                        Log.Msg($"Error unknown command '{cmdMsg.Packet.Msg}'", playerId);
                         return;
 
                     }

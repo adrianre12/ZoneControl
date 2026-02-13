@@ -35,38 +35,16 @@ namespace ZoneControl.Spawner
         private long factionOwnerId;
         private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
 
-        private void Utilities_MessageEntered(string msg, ref bool sendToOthers)
+
+        internal void CmdQueueEnqueue(CmdMsg cmdMsg)
         {
-            Utilities_MessageRecieved(0, msg);
-        }
-
-        private void Utilities_MessageRecieved(ulong steamId, string msg)
-        {
-            if (!msg.StartsWith("/ZoneSpawner"))
-                return;
-
-            IMyPlayer player = null;
-            if (steamId != 0)
-            {
-                player = MyAPIGateway.Players.TryGetIdentityId(MyAPIGateway.Players.TryGetIdentityId(steamId));
-                if (player == null) //belt and braces
-                    return;
-
-
-                if (player.PromoteLevel < MyPromoteLevel.Admin)
-                {
-                    Log.Msg($"Non Admin player {player.DisplayName} tried to run command {msg}", player.IdentityId);
-                    return;
-                }
-            }
-
-            cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
+            cmdQueue.Enqueue(cmdMsg);
         }
 
         private void CommandHandler(CmdMsg cmdMsg)
         {
             long playerId = cmdMsg.Player?.IdentityId ?? 0;
-            var args = GetArgs(cmdMsg.Msg);
+            List<string> args = cmdMsg.Packet.Args;
             if (args.Count < 2)
             {
                 var sb = new StringBuilder();
@@ -99,7 +77,7 @@ namespace ZoneControl.Spawner
                 return;
             }
 
-            Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} [{cmdMsg.Player?.IdentityId}] ran command {cmdMsg.Msg}");
+            Log.Msg($"Player {cmdMsg.Player?.DisplayName ?? "Local"} [{cmdMsg.Player?.IdentityId}] ran command {cmdMsg.Packet.Msg}");
             switch (args[1])
             {
                 case "Debug":
@@ -126,7 +104,7 @@ namespace ZoneControl.Spawner
                         int value = -1;
                         if (args.Count != 3 || !int.TryParse(args[2], out value))
                         {
-                            Log.Msg($"Error in command '{cmdMsg.Msg}'", playerId);
+                            Log.Msg($"Error in command '{cmdMsg.Packet.Msg}'", playerId);
                             break;
                         }
                         if (value < 0)
@@ -259,7 +237,7 @@ namespace ZoneControl.Spawner
 
                 default:
                     {
-                        Log.Msg($"Error unknown command '{cmdMsg.Msg}'", playerId);
+                        Log.Msg($"Error unknown command '{cmdMsg.Packet.Msg}'", playerId);
                         break;
                     }
             }
@@ -269,11 +247,6 @@ namespace ZoneControl.Spawner
         {
             Instance = this;
             Log.Msg("Notification LoadData...........");
-
-            if (MyAPIGateway.Utilities.IsDedicated)
-                MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
-            else
-                MyAPIGateway.Utilities.MessageEntered += Utilities_MessageEntered;
 
             if (MyAPIGateway.Session.IsServer)
                 LoadDataHost();
@@ -372,11 +345,6 @@ namespace ZoneControl.Spawner
                     MyVisualScriptLogicProvider.PrefabSpawnedDetailed -= PrefabSpawnedDetailed;
 
                 }
-
-                if (MyAPIGateway.Utilities.IsDedicated)
-                    MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
-                else
-                    MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
             }
             catch (Exception e)
             {

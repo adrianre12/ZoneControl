@@ -6,6 +6,7 @@ using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using VRageMath;
+using ZoneControl.Spawner;
 
 namespace ZoneControl.Networking
 {
@@ -42,20 +43,12 @@ namespace ZoneControl.Networking
                 Log.Msg("LoadData Client");
                 MyAPIGateway.Utilities.MessageEntered += Utilities_MessageEntered;
             }
-            //if (MyAPIGateway.Session.IsServer)
-            //    MyAPIGateway.Utilities.MessageRecieved += Utilities_MessageRecieved;
-
-        }
-
-        public override void BeforeStart()
-        {
-            Log.Msg("BeforeStart");
         }
 
         private void Utilities_MessageEntered(string messageText, ref bool sendToOthers)
         {
             sendToOthers = false;
-            Log.Msg($"MessageEntered local msg={messageText}");
+            if (Log.Debug) Log.Msg($"MessageEntered local msg={messageText}");
 
             if (messageText.StartsWith("/ZoneControl"))
             {
@@ -69,19 +62,20 @@ namespace ZoneControl.Networking
                 Net.SendToServer(cmdMsgPacket);
                 return;
             }
-            else if (messageText.StartsWith("/Test"))
-            {
-                cmdMsgPacket.Setup(CmdMsgType.None, messageText);
-                Net.SendToServer(cmdMsgPacket);
-                return;
-            }
+            /*            else if (messageText.StartsWith("/Test"))
+                        {
+                            cmdMsgPacket.Setup(CmdMsgType.None, messageText);
+                            Net.SendToServer(cmdMsgPacket);
+                            return;
+                        }*/
 
+            sendToOthers = true;
             return;
         }
 
         private void CmdMsgPacket_OnReceive(CmdMsgPacket packet, ref PacketInfo packetInfo, ulong senderSteamId)
         {
-            Log.Msg($"CmdMsgPacket_OnReceive steamId={senderSteamId} type={packet.MsgType} args.Count={packet.Args.Count} msg={packet.Msg}");
+            if (Log.Debug) Log.Msg($"CmdMsgPacket_OnReceive steamId={senderSteamId} type={packet.MsgType} args.Count={packet.Args.Count} msg={packet.Msg}");
             long IdentityId = MyAPIGateway.Players.TryGetIdentityId(senderSteamId);
 
             IMyPlayer player = null;
@@ -110,14 +104,12 @@ namespace ZoneControl.Networking
                     }
                 case CmdMsgType.ZoneControl:
                     {
-                        // cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
-
+                        ZonesSession.Instance.CmdQueueEnqueue(new ZonesSession.CmdMsg() { Player = player, Packet = packet });
                         break;
                     }
                 case CmdMsgType.ZoneSpawner:
                     {
-                        //cmdQueue.Enqueue(new CmdMsg() { Player = player, Msg = msg });
-
+                        SpawnerSession.Instance.CmdQueueEnqueue(new ZonesSession.CmdMsg() { Player = player, Packet = packet });
                         break;
                     }
             }
@@ -134,8 +126,6 @@ namespace ZoneControl.Networking
 
                 if (!MyAPIGateway.Utilities.IsDedicated)
                     MyAPIGateway.Utilities.MessageEntered -= Utilities_MessageEntered;
-                //if (MyAPIGateway.Session.IsServer)
-                //    MyAPIGateway.Utilities.MessageRecieved -= Utilities_MessageRecieved;
             }
             catch (Exception e)
             {
@@ -143,13 +133,8 @@ namespace ZoneControl.Networking
             }
             finally
             {
-                Instance = null; // important for avoiding this instance and all its references to remain allocated in memory
+                Instance = null;
             }
-        }
-
-        public override void UpdateBeforeSimulation()
-        {
-            // executed every tick, 60 times a second, before physics simulation and only if game is not paused.
         }
 
     }
