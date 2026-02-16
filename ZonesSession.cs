@@ -360,21 +360,15 @@ namespace ZoneControl
             {
                 case "GPS":
                     {
-                        if (args.Count < 3)
+                        if (args.Count < 3 || (args[2].Length == 0 && args[2] != "Open"))
                         {
                             Log.Msg("The FactionTag must be given.", playerId);
                             return;
                         }
-
-                        if (args[2].Length == 0)
-                        {
-                            Log.Msg("Faction Tag must be given.", playerId);
-                            return;
-                        }
-
+                        string factionTag = args[2] == "Open" ? "" : args[2];
                         foreach (var zone in zoneTable.Zones)
                         {
-                            if (zone.Type == ZoneInfoInternal.ZoneType.Zone && zone.FactionTag != null && zone.FactionTag == args[2])
+                            if (zone.Type == ZoneInfoInternal.ZoneType.Zone && zone.FactionTag != null && zone.FactionTag == factionTag)
                             {
                                 Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
 
@@ -383,7 +377,7 @@ namespace ZoneControl
                         }
                         foreach (var zone in SubZoneTable.Zones)
                         {
-                            if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole && zone.FactionTag != null && zone.FactionTag == args[2])
+                            if (zone.Type == ZoneInfoInternal.ZoneType.Wormhole && zone.FactionTag != null && zone.FactionTag == factionTag)
                             {
                                 Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
 
