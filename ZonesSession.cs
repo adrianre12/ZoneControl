@@ -27,7 +27,6 @@ namespace ZoneControl
         const string VariableId = nameof(ZonesSession);
         const int DefaultWarnMsgCounter = 5; //RefreshPeriods 60s
         const int DefaultUrgentMsgCounter = 1; //RefreshPeriods 20s
-        const int GPSDisplayPeriod = 14400; // 4hrs
 
         public static ZonesSession Instance;
 
@@ -352,13 +351,11 @@ namespace ZoneControl
 
                     default:
                         {
-                            {
-                                break;
-                            }
+                            break;
                         }
                 }
             }
-
+            //Player commands
             switch (args[1])
             {
                 case "GPS":
@@ -390,7 +387,7 @@ namespace ZoneControl
                             {
                                 Log.Msg($"Adding GPS for {zone.UniqueName}", playerId);
 
-                                MyVisualScriptLogicProvider.AddGPS(zone.UniqueName, "Faction owned Wormhole", zone.Position, VRageMath.Color.White, GPSDisplayPeriod, playerId);
+                                MyVisualScriptLogicProvider.AddGPS(zone.UniqueName, "Faction owned Wormhole", zone.Position, VRageMath.Color.White, 0, playerId);
                             }
                         }
 
@@ -400,7 +397,6 @@ namespace ZoneControl
                     {
                         Log.Msg($"Error unknown command '{cmdMsg.Packet.Msg}'", playerId);
                         return;
-
                     }
             }
         }

@@ -18,6 +18,7 @@ namespace ZoneControl.NotificationBlock
     internal class NotificationComponent : MyGameLogicComponent
     {
         const int DefaultRefreshPeriod = 30;
+        const int GPSDisplayPeriod = 14400; // 4hrs
 
         private IMyFunctionalBlock block;
 
@@ -117,8 +118,8 @@ namespace ZoneControl.NotificationBlock
             if (summary.Selected.Count > 0)
             {
                 var sel = summary.Selected[0];
-                Log.Msg($"Button1 pressed by {buton1UserId.Value} {sel.Name}");
-                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton1UserId.Value);
+                if (Log.Debug) Log.Msg($"Button1 pressed by {buton1UserId.Value} {sel.Name}");
+                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, buton1UserId.Value);
             }
             buton1UserId.Value = 0;
         }
@@ -130,8 +131,8 @@ namespace ZoneControl.NotificationBlock
             if (summary.Selected.Count > 1)
             {
                 var sel = summary.Selected[1];
-                Log.Msg($"Button2 pressed by {buton2UserId.Value} {sel.Name}");
-                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton2UserId.Value);
+                if (Log.Debug) Log.Msg($"Button2 pressed by {buton2UserId.Value} {sel.Name}");
+                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, buton2UserId.Value);
             }
             buton2UserId.Value = 0;
         }
@@ -143,8 +144,8 @@ namespace ZoneControl.NotificationBlock
             if (summary.Selected.Count > 2)
             {
                 var sel = summary.Selected[2];
-                Log.Msg($"Button3 pressed by {buton3UserId.Value} {sel.Name}");
-                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, 900, buton3UserId.Value);
+                if (Log.Debug) Log.Msg($"Button3 pressed by {buton3UserId.Value} {sel.Name}");
+                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, buton3UserId.Value);
             }
             buton3UserId.Value = 0;
         }

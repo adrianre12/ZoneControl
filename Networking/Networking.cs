@@ -84,13 +84,6 @@ namespace ZoneControl.Networking
                 player = MyAPIGateway.Players.TryGetIdentityId(MyAPIGateway.Players.TryGetIdentityId(senderSteamId));
                 if (player == null) //belt and braces
                     return;
-
-
-                if (player.PromoteLevel < MyPromoteLevel.Admin)
-                {
-                    Log.Msg($"Non Admin player {player.DisplayName} tried to run command {packet.Msg}", player.IdentityId);
-                    return;
-                }
             }
 
             MyVisualScriptLogicProvider.SendChatMessageColored(packet.Msg, Color.Yellow, player.DisplayName, IdentityId);
