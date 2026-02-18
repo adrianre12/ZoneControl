@@ -529,7 +529,7 @@ namespace ZoneControl
             string playerFactionTag = MyVisualScriptLogicProvider.GetPlayersFactionTag(ps.Player.IdentityId).Trim();
 
 
-            if (Log.Debug) Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {zone.UniqueName} {zone.FactionTag}");
+            //if (Log.Debug) Log.Msg($"CheckIfIntruding {ps.Player.DisplayName} player factionTag={playerFactionTag} zone {zone.UniqueName} {zone.FactionTag}");
 
             if (!zone.NoIntruders || zone.FactionTag == null || zone.FactionTag.Length == 0 || zone.FactionTag == config.Intruder.AdminTestFactionTag)
                 return false;

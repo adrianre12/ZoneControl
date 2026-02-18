@@ -2,13 +2,12 @@
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using System;
-using System.Text;
 using VRage.Game.Components;
-using VRage.Game.ModAPI.Ingame.Utilities;
 using VRage.Game.ModAPI.Network;
 using VRage.ModAPI;
 using VRage.ObjectBuilders;
 using VRage.Sync;
+using VRageMath;
 using ZoneControl.Spawner;
 
 namespace ZoneControl.NotificationBlock
@@ -17,7 +16,7 @@ namespace ZoneControl.NotificationBlock
 
     internal class NotificationComponent : MyGameLogicComponent
     {
-        const int DefaultRefreshPeriod = 30;
+        const int DefaultRefreshPeriodTicks = 30 * 60;
         const int GPSDisplayPeriod = 14400; // 4hrs
 
         private IMyFunctionalBlock block;
@@ -26,10 +25,7 @@ namespace ZoneControl.NotificationBlock
         private MySync<long, SyncDirection.BothWays> buton2UserId;
         private MySync<long, SyncDirection.BothWays> buton3UserId;
 
-        private int refreshPeriodTicks = DefaultRefreshPeriod * 60;
         private int refreshAfterFrame;
-        private string lastCustomData = "";
-        private MyIni config = new MyIni();
 
         private SpawnSummary summary = new SpawnSummary();
         private int summaryPtr = 0;
@@ -43,42 +39,47 @@ namespace ZoneControl.NotificationBlock
             buton2UserId.SetLocalValue(0);
             buton3UserId.SetLocalValue(0);
 
-            if (!MyAPIGateway.Session.IsServer)
-                return;
+            if (Log.Debug) Log.Msg($"Init IsServer={MyAPIGateway.Session.IsServer} IsDedicated={MyAPIGateway.Utilities.IsDedicated}");
+
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
         }
 
         public override void UpdateOnceBeforeFrame() //only on server
         {
-            if (!MyAPIGateway.Utilities.IsDedicated)
+            if (!MyAPIGateway.Utilities.IsDedicated) //Client
+            {
+                if (Log.Debug) Log.Msg($"Init Should be client");
                 TerminalControls.DoOnce(ModContext);
+            }
 
-            buton1UserId.ValueChanged += Buton1UserId_ValueChanged;
-            buton2UserId.ValueChanged += Buton2UserId_ValueChanged;
-            buton3UserId.ValueChanged += Buton3UserId_ValueChanged;
+            if (MyAPIGateway.Session.IsServer)
+            {
+                if (Log.Debug) Log.Msg($"Init Should be server");
 
-            LoadConfigFromCD();
-            refreshAfterFrame = MyAPIGateway.Session.GameplayFrameCounter + DefaultRefreshPeriod;
+                buton1UserId.ValueChanged += Buton1UserId_ValueChanged;
+                buton2UserId.ValueChanged += Buton2UserId_ValueChanged;
+                buton3UserId.ValueChanged += Buton3UserId_ValueChanged;
 
-            screen0 = new ScreenNotification((IMyTextSurfaceProvider)block, 0);
+                refreshAfterFrame = MyAPIGateway.Session.GameplayFrameCounter + DefaultRefreshPeriodTicks;
+                screen0 = new ScreenNotification((IMyTextSurfaceProvider)block, 0);
 
-            NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
+                NeedsUpdate = MyEntityUpdateEnum.EACH_100TH_FRAME;
+            }
         }
 
         public override void UpdateAfterSimulation100() //only on server
         {
             var currentFrame = MyAPIGateway.Session.GameplayFrameCounter;
-            //Log.Msg($"Tick {block.CubeGrid.DisplayName} frame={currentFrame}, termExpiry={showInTerminalExpiary} refresh={refreshAfterFrame}");
 
             if (currentFrame < refreshAfterFrame)
                 return;
-            LoadConfigFromCD();
-            refreshAfterFrame = currentFrame + refreshPeriodTicks;
+            refreshAfterFrame = currentFrame + DefaultRefreshPeriodTicks;
 
             UpdateSpawnSummary();
-
             screen0.Refresh(summary.Selected);
-
+            buton1UserId.Value = 0; //hack to get them to reset
+            buton2UserId.Value = 0;
+            buton3UserId.Value = 0;
         }
 
         private void UpdateSpawnSummary()
@@ -103,7 +104,7 @@ namespace ZoneControl.NotificationBlock
         }
         public override void Close()
         {
-            if (!MyAPIGateway.Session.IsServer)
+            if (MyAPIGateway.Utilities.IsDedicated)
                 return;
 
             buton1UserId.ValueChanged -= Buton1UserId_ValueChanged;
@@ -120,8 +121,11 @@ namespace ZoneControl.NotificationBlock
                 var sel = summary.Selected[0];
                 if (Log.Debug) Log.Msg($"Button1 pressed by {buton1UserId.Value} {sel.Name}");
                 MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, buton1UserId.Value);
+                MyVisualScriptLogicProvider.SendChatMessageColored($"Added GPS for {sel.Name}", Color.Yellow, "", buton1UserId.Value);
             }
-            buton1UserId.Value = 0;
+            buton1UserId.Value = 0; //hack to get them to reset
+            buton2UserId.Value = 0;
+            buton3UserId.Value = 0;
         }
 
         private void Buton2UserId_ValueChanged(MySync<long, SyncDirection.BothWays> obj)
@@ -133,8 +137,11 @@ namespace ZoneControl.NotificationBlock
                 var sel = summary.Selected[1];
                 if (Log.Debug) Log.Msg($"Button2 pressed by {buton2UserId.Value} {sel.Name}");
                 MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, buton2UserId.Value);
+                MyVisualScriptLogicProvider.SendChatMessageColored($"Added GPS for {sel.Name}", Color.Yellow, "GPS", buton1UserId.Value);
             }
+            buton1UserId.Value = 0; //hack to get them to reset
             buton2UserId.Value = 0;
+            buton3UserId.Value = 0;
         }
 
         private void Buton3UserId_ValueChanged(MySync<long, SyncDirection.BothWays> onj)
@@ -146,7 +153,10 @@ namespace ZoneControl.NotificationBlock
                 var sel = summary.Selected[2];
                 if (Log.Debug) Log.Msg($"Button3 pressed by {buton3UserId.Value} {sel.Name}");
                 MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, buton3UserId.Value);
+                MyVisualScriptLogicProvider.SendChatMessageColored($"Added GPS for {sel.Name}", Color.Yellow, "GPS", buton1UserId.Value);
             }
+            buton1UserId.Value = 0; //hack to get them to reset
+            buton2UserId.Value = 0;
             buton3UserId.Value = 0;
         }
 
@@ -157,73 +167,34 @@ namespace ZoneControl.NotificationBlock
 
             long identityId = MyAPIGateway.Session.Player.IdentityId;
 
-            Log.Msg($"Button pressed:{button}  id={identityId}");
+            Log.Msg($"Button pressed:{button} id={identityId}");
             switch (button)
             {
                 case 1:
                     {
-                        Log.Msg($"buttonValue={buton1UserId.Value}");
-                        buton1UserId.Value = identityId;
+                        //Log.Msg($"buttonValue={buton1UserId.Value}");
+                        buton1UserId.Value = buton1UserId.Value == 0 ? identityId : 0;
+                        buton2UserId.Value = 0;//hack to get them to reset
+                        buton3UserId.Value = 0;
                         break;
                     }
                 case 2:
                     {
-                        buton2UserId.Value = identityId;
+                        //Log.Msg($"buttonValue={buton2UserId.Value}");
+                        buton2UserId.Value = buton2UserId.Value == 0 ? identityId : 0;
+                        buton1UserId.Value = 0; //hack to get them to reset
+                        buton3UserId.Value = 0;
                         break;
                     }
                 case 3:
                     {
-                        buton3UserId.Value = identityId;
+                        //Log.Msg($"buttonValue={buton3UserId.Value}");
+                        buton3UserId.Value = buton3UserId.Value == 0 ? identityId : 0;
+                        buton1UserId.Value = 0; //hack to get them to reset
+                        buton2UserId.Value = 0;
                         break;
                     }
             }
-        }
-
-        private void LoadConfigFromCD()
-        {
-            if (lastCustomData.Equals(block.CustomData))
-                return;
-            if (!ParseConfigFromCD())
-            {
-                Log.Msg("Error in CD, creating a new config.");
-                SaveConfigToCD();
-            }
-            lastCustomData = block.CustomData;
-        }
-
-        private void SaveConfigToCD()
-        {
-            Log.Msg("Saving config to CD.");
-
-            config.Clear();
-            var sb = new StringBuilder();
-            sb.AppendLine($"Minimum RefreshPeriod = {DefaultRefreshPeriod} seconds");
-
-            config.AddSection("Box");
-            config.SetSectionComment("Box", sb.ToString());
-            config.Set("Box", "RefreshPeriod", DefaultRefreshPeriod);
-
-            config.Invalidate();
-            block.CustomData = config.ToString();
-        }
-
-        private bool ParseConfigFromCD()
-        {
-            //Log.Msg("ParseConfigFromCD");
-            if (config.TryParse(block.CustomData))
-            {
-                if (!config.ContainsSection("Box"))
-                    return false;
-
-                int refreshPeriod;
-                if (!config.Get("Box", "RefreshPeriod").TryGetInt32(out refreshPeriod))
-                    return false;
-                refreshPeriodTicks = Math.Max(DefaultRefreshPeriod, refreshPeriod) * 60;
-
-                return true;
-            }
-            Log.Msg("Error: Failed to load config");
-            return false;
         }
     }
 }
