@@ -11,7 +11,7 @@ namespace ZoneControl.NotificationBlock
         private const long TicksPerSecond = 10000000L;
         private const long TicksPerMin = 60 * TicksPerSecond;
         private const long TicksPerHour = 60 * TicksPerMin;
-        private const float SecondsPerTick = 1.0f / TicksPerSecond;
+        //private const float SecondsPerTick = 1.0f / TicksPerSecond;
 
 
         private readonly Color GreenCRT = new Color(51, 255, 0);

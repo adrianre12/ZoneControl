@@ -12,10 +12,14 @@ namespace ZoneControl.Spawner
 {
     internal partial class SpawnerSession
     {
+        const int DefaultSummaryUpdatePeriodTicks = 30 * 60;
+        const int GPSDisplayPeriod = 14400; // 4hrs
+
         private bool updateSpawns;
         private int nextSpawnIndex = -1;
         private Random rng = new Random();
         private int nextRefreshFrame = 1800; // inital delay 30s, frame counter should be 0 at startup
+        private int nextSummaryRefreshFrame = DefaultSummaryUpdatePeriodTicks;
         private CurrentSpawnsData currentSpawns = new CurrentSpawnsData();
         private SpawnSummary spawnSummary = new SpawnSummary();
 
@@ -75,9 +79,14 @@ namespace ZoneControl.Spawner
                 {
                     AddSpawn();
                 }
-
-                //randomSpawnList.Clear();
                 updateSpawns = false;
+            }
+
+            if (nextSummaryRefreshFrame < currentFrame)
+            {
+                nextSummaryRefreshFrame = currentFrame + DefaultSummaryUpdatePeriodTicks;
+                //if (Log.Debug) Log.Msg("Starting Summary selection.");
+                spawnSummary.UpdateSelected(currentSpawns);
             }
 
             if (currentFrame < nextRefreshFrame)
@@ -316,6 +325,19 @@ namespace ZoneControl.Spawner
         public SpawnSummary GetSpawnSummary()
         {
             return spawnSummary;
+        }
+
+        public void AddPlayerGPS(int button, long identityId)
+        {
+            if (button == 0)
+                return;
+            if (spawnSummary.Selected.Count >= button)
+            {
+                var sel = spawnSummary.Selected[button - 1];
+                if (Log.Debug) Log.Msg($"AddPlayerGPS Button {button} pressed by {identityId} {sel.Name}");
+                MyVisualScriptLogicProvider.AddGPS(sel.Name, "Aproximate position of detected navigation hazzard.", sel.SubZonePosition, VRageMath.Color.White, GPSDisplayPeriod, identityId);
+                MyVisualScriptLogicProvider.SendChatMessageColored($"Added GPS for {sel.Name}", Color.Yellow, "", identityId);
+            }
         }
     }
 }

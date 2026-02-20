@@ -8,7 +8,7 @@ using System.Text;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRageMath;
-using ZoneControl.Networking;
+using ZoneControl.NetworkLayer;
 using ZoneControl.Spawner;
 using ZoneControl.Wormhole;
 using static ZoneControl.Utils;

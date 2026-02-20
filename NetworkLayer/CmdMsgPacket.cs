@@ -3,7 +3,7 @@ using ProtoBuf;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace ZoneControl.Networking
+namespace ZoneControl.NetworkLayer
 {
 
     public enum CmdMsgType

@@ -8,7 +8,7 @@ using VRage.Utils;
 using VRageMath;
 using ZoneControl.Spawner;
 
-namespace ZoneControl.Networking
+namespace ZoneControl.NetworkLayer
 {
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     internal class Networking : MySessionComponentBase
@@ -19,6 +19,7 @@ namespace ZoneControl.Networking
         public Network Net;
 
         private CmdMsgPacket cmdMsgPacket;
+        private GPSbuttonPacket gpsBtnPacket;
 
         public override void LoadData()
         {
@@ -35,14 +36,29 @@ namespace ZoneControl.Networking
             Net.SerializeTest = false;
 
             cmdMsgPacket = new CmdMsgPacket();
+            gpsBtnPacket = new GPSbuttonPacket();
 
             CmdMsgPacket.OnReceive += CmdMsgPacket_OnReceive;
+            GPSbuttonPacket.OnReceive += GPSbuttonPacket_OnReceive;
 
             if (!MyAPIGateway.Utilities.IsDedicated)
             {
                 Log.Msg("LoadData Client");
                 MyAPIGateway.Utilities.MessageEntered += Utilities_MessageEntered;
             }
+        }
+
+        public void SendGPSbuttonPressed(int button, long identityId)
+        {
+            if (Log.Debug) Log.Msg($"SendGPSbuttonPressed button={button}, identityId={identityId}");
+            gpsBtnPacket.Setup(button, identityId);
+            Net.SendToServer(gpsBtnPacket);
+        }
+
+        private void GPSbuttonPacket_OnReceive(GPSbuttonPacket packet, ref PacketInfo packetInfo, ulong senderSteamId)
+        {
+            if (Log.Debug) Log.Msg($"GPSbuttonPacket_OnReceive button={packet.Button} identityId={packet.IdentityId}");
+            SpawnerSession.Instance.AddPlayerGPS(packet.Button, packet.IdentityId);
         }
 
         private void Utilities_MessageEntered(string messageText, ref bool sendToOthers)

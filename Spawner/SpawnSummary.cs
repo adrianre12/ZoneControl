@@ -1,26 +1,41 @@
-﻿using System.Collections.Generic;
+﻿using Sandbox.ModAPI;
+using System;
+using System.Collections.Generic;
 using VRageMath;
 
 namespace ZoneControl.Spawner
 {
     internal class SpawnSummary
     {
-        public List<SummaryItem> Items = new List<SummaryItem>();
         public List<SummaryItem> Selected = new List<SummaryItem>();
+        private int summaryPtr;
+        public int UpdatedAtFrame;
 
         public SpawnSummary()
         {
-            Items = new List<SummaryItem>();
             Selected = new List<SummaryItem>();
         }
 
         public SpawnSummary(CurrentSpawnsData currentSpawns)
         {
-            Items = new List<SummaryItem>();
-            foreach (var spawn in currentSpawns.Spawns)
+            summaryPtr = 0;
+            UpdateSelected(currentSpawns);
+        }
+
+        public void UpdateSelected(CurrentSpawnsData currentSpawns)
+        {
+            Selected.Clear();
+            int numRows = Math.Min(3, currentSpawns.Spawns.Count);
+            for (int i = 0; i < numRows; i++)
             {
-                Items.Add(new SummaryItem(spawn));
+                if (summaryPtr >= currentSpawns.Spawns.Count)
+                    summaryPtr = 0;
+                SummaryItem summaryItem = new SummaryItem(currentSpawns.Spawns[summaryPtr]);
+                Selected.Add(summaryItem);
+                //if (Log.Debug) Log.Msg($"Selected {summaryPtr} {summaryItem.Name}");
+                summaryPtr++;
             }
+            UpdatedAtFrame = MyAPIGateway.Session.GameplayFrameCounter;
         }
     }
 

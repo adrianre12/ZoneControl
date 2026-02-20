@@ -285,7 +285,6 @@ namespace ZoneControl.Spawner
 
         private void BeforeStartHost()
         {
-            Log.Msg("Spawner Before Start Host");
             factionOwnerId = FindFactionId(config.FactionTag);
 
             double totalWeighting = 0;

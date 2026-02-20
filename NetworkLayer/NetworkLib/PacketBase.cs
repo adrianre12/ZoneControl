@@ -14,7 +14,7 @@ namespace Digi.NetworkLib
 
         public PacketBase()
         {
-            if(MyAPIGateway.Multiplayer == null)
+            if (MyAPIGateway.Multiplayer == null)
                 Network.CrashAfterLoad($"Cannot instantiate packets in fields ({GetType().Name}), too early! Do it in one of the methods where MyAPIGateway.Multiplayer is not null.");
             else
                 OriginalSenderSteamId = MyAPIGateway.Multiplayer.MyId;
