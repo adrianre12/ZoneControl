@@ -47,19 +47,21 @@ namespace ZoneControl.Networking
 
         private void Utilities_MessageEntered(string messageText, ref bool sendToOthers)
         {
-            sendToOthers = false;
+
             if (Log.Debug) Log.Msg($"MessageEntered local msg={messageText}");
 
             if (messageText.StartsWith("/ZoneControl"))
             {
                 cmdMsgPacket.Setup(CmdMsgType.ZoneControl, messageText);
                 Net.SendToServer(cmdMsgPacket);
+                sendToOthers = false;
                 return;
             }
             else if (messageText.StartsWith("/ZoneSpawner"))
             {
                 cmdMsgPacket.Setup(CmdMsgType.ZoneSpawner, messageText);
                 Net.SendToServer(cmdMsgPacket);
+                sendToOthers = false;
                 return;
             }
             /*            else if (messageText.StartsWith("/Test"))
@@ -69,14 +71,12 @@ namespace ZoneControl.Networking
                             return;
                         }*/
 
-            sendToOthers = true;
             return;
         }
 
         private void CmdMsgPacket_OnReceive(CmdMsgPacket packet, ref PacketInfo packetInfo, ulong senderSteamId)
         {
             if (Log.Debug) Log.Msg($"CmdMsgPacket_OnReceive steamId={senderSteamId} type={packet.MsgType} args.Count={packet.Args.Count} msg={packet.Msg}");
-            long IdentityId = MyAPIGateway.Players.TryGetIdentityId(senderSteamId);
 
             IMyPlayer player = null;
             if (senderSteamId != 0)
@@ -85,8 +85,7 @@ namespace ZoneControl.Networking
                 if (player == null) //belt and braces
                     return;
             }
-
-            MyVisualScriptLogicProvider.SendChatMessageColored(packet.Msg, Color.Yellow, player.DisplayName, IdentityId);
+            MyVisualScriptLogicProvider.SendChatMessageColored(packet.Msg, Color.Green, player.DisplayName, player.IdentityId);
 
             switch (packet.MsgType)
             {
