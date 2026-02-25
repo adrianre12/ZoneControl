@@ -16,7 +16,7 @@ namespace ZoneControl.Wormhole
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_JumpDrive), false)]//, new string[] { "LargeWormholeDrive" })]
     internal class WormDrive : ZoneControlBase
     {
-        const double MaxMovementSqrd = 1d;
+        const double MaxMovementSqrd = 400d; //20m
         private Vector3D activationPosition;
         internal static Dictionary<long, IMyFunctionalBlock> driveRegister = new Dictionary<long, IMyFunctionalBlock>();
 
@@ -77,12 +77,12 @@ namespace ZoneControl.Wormhole
 
             if (JumpTarget.Value == Vector3D.NegativeInfinity)
             {
-                //Log.Msg("Abort jump");
+                if (Log.Debug) Log.Msg($"Abort jump on grid '{block.CubeGrid.CustomName}'");
                 jumpSystem.AbortJump(6);
             }
             else
             {
-                //Log.Msg($"Start Jump to {JumpTarget.Value}");
+                if (Log.Debug) Log.Msg($"Start Jump on grid '{block.CubeGrid.CustomName}' to {JumpTarget.Value} from {block.CubeGrid.GetPosition()} distance {Vector3D.Distance(JumpTarget.Value, block.CubeGrid.GetPosition())}");
                 jumpSystem.RequestJump(JumpTarget.Value, block.OwnerId, 10, block.EntityId);
             }
             JumpTarget.Value = Vector3D.PositiveInfinity;
