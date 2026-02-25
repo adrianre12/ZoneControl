@@ -64,8 +64,9 @@ namespace ZoneControl.Spawner
                 sb.AppendLine("/ZoneSpawner PrefabList");
                 sb.AppendLine("   Lists all the configured prefabs.");
 
-                sb.AppendLine("/ZoneSpawner PrefabSpawn \"Subtype\"");
+                sb.AppendLine("/ZoneSpawner PrefabSpawn \"Subtype\" [Loot]");
                 sb.AppendLine("   Spawns any prefab by its Subtype, it does not have to be in configuration. This is not an Anomaly and will not be removed!");
+                sb.AppendLine("   The optional Loot parameter triggers the random loot generation.");
 
                 sb.AppendLine("/ZoneSpawner SetSpawnCounter");
                 sb.AppendLine("   Can only be run when the spawner is disabled in config.");
@@ -227,8 +228,13 @@ namespace ZoneControl.Spawner
                             Log.Msg("A spawn position was not found", playerId);
                             break;
                         }
-
-                        MyVisualScriptLogicProvider.SpawnPrefab(args[2], freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix);
+                        SpawningOptions spawnOptions = SpawningOptions.UseOnlyWorldMatrix;
+                        if (args.Count >= 4 && args[3] == "Loot")
+                        {
+                            spawnOptions |= SpawningOptions.SpawnRandomCargo;
+                            Log.Msg("Adding random Loot to prefab", playerId);
+                        }
+                        MyVisualScriptLogicProvider.SpawnPrefab(args[2], freePosition.Value, Vector3D.Forward, Vector3D.Up, playerId, spawningOptions: spawnOptions);
                         Log.Msg($"Requested spawn of Subtype '{args[2]}'", playerId);
                         Log.Msg($"This is not an Anomaly and will not be removed!, REMEMBER TO REMOVE IT!", playerId);
 
