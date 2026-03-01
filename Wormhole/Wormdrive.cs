@@ -32,7 +32,7 @@ namespace ZoneControl.Wormhole
                 return;
             if (Log.Debug) Log.Msg($"Init for Wormhole drive on '{block.CubeGrid.CustomName}'");
 
-            OverrideDefault = OverrideState.None;
+            OverrideDefault = OverrideState.Disabled;
             OverrideDefaultTimeout = 15;
             DefaultEnabledState = false;
         }
@@ -149,9 +149,9 @@ namespace ZoneControl.Wormhole
                 return;
             }
 
-            base.Block_EnabledChanged(obj);
+            //base.Block_EnabledChanged(obj);
 
-            //if (Log.Debug) Log.Msg($"Wormhole Enable changed {block.Enabled} overrideSetting={overrideSetting}");
+            if (Log.Debug) Log.Msg($"Wormhole Enable changed {block.Enabled} overrideSetting={overrideSetting}");
             if (block.Enabled)
             {
                 ZoneInfoInternal closetZone = ZonesSession.Instance.FindClosestWormholeCached(gridId, block.CubeGrid.GetPosition());
@@ -159,13 +159,13 @@ namespace ZoneControl.Wormhole
                 {
                     if (closetZone == null || closetZone.Type != ZoneInfoInternal.ZoneType.Wormhole)
                     {
-                        //if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' Not in a wormhole");
+                        if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' Not in a wormhole");
                         SetDefaultOverride();
                         return;
                     }
                     if (closetZone.FactionTag.Length > 0 && closetZone.FactionTag != block.GetOwnerFactionTag())
                     { // its not an accessable wormhole
-                      //if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' closetZone.FactionTag={closetZone?.FactionTag} != block.GetOwnerFactionTag()={block.GetOwnerFactionTag()}");
+                        if (Log.Debug) Log.Msg($"Grid '{block.CubeGrid.CustomName}' closetZone.FactionTag={closetZone?.FactionTag} != block.GetOwnerFactionTag()={block.GetOwnerFactionTag()}");
                         SetDefaultOverride();
                         return;
                     }
