@@ -72,6 +72,7 @@ namespace ZoneControl
         public class PrefabInfo
         {
             public string Subtype;
+            public int GroupId = -1;
             public float Weighting = 1.0f;
             public float LifetimeMin = 12;
             public float LifetimeMax = 48;
@@ -150,6 +151,7 @@ namespace ZoneControl
     internal class PrefabInfoInternal
     {
         public string Subtype;
+        public int GroupId = -1;
         public float Weighting = 1.0f;
         public double WeightNorm = 0;
         public float LifetimeMin = 12;
@@ -159,6 +161,7 @@ namespace ZoneControl
         public PrefabInfoInternal(SpawnerConfig.PrefabInfo prefab, SectorInfoInternal sectorInfo)
         {
             Subtype = prefab.Subtype;
+            GroupId = prefab.GroupId;
             Weighting = prefab.Weighting;
             LifetimeMin = prefab.LifetimeMin;
             LifetimeMax = prefab.LifetimeMax;

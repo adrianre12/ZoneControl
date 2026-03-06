@@ -163,7 +163,7 @@ namespace ZoneControl.Spawner
                         {
                             if (sb.Length == 0)
                                 sb.AppendLine();
-                            sb.AppendLine($"{spawn.Name}  {new DateTime(spawn.RemoveAt)}");
+                            sb.AppendLine($"#{spawn.AnomalyId} '{spawn.PrefabName}'  {new DateTime(spawn.RemoveAt).ToString("dd/MMM HH:mm")}");
                             ++i;
                             if (i == 10)
                             {

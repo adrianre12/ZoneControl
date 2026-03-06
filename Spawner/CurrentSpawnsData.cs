@@ -21,6 +21,10 @@ namespace ZoneControl.Spawner
         public int ZoneId = -1;
         [ProtoMember(7)]
         public long AnomalyId = 0;
+        [ProtoMember(8)]
+        public string PrefabName = "";
+        [ProtoMember(9)]
+        public int GroupId = -1;
 
         public SpawnInfo() { }
 
@@ -33,6 +37,7 @@ namespace ZoneControl.Spawner
             EntityId = spawnInfo.EntityId;
             ZoneId = spawnInfo.ZoneId;
             AnomalyId = spawnInfo.AnomalyId;
+
         }
     }
 
@@ -45,6 +50,19 @@ namespace ZoneControl.Spawner
         public int SpawnCounter = 0;
 
         public CurrentSpawnsData() { }
+
+        public bool HasGroupId(int groupId)
+        {
+            if (groupId < 0)
+                return false;
+
+            for (int i = 0; i < Spawns.Count; i++)
+            {
+                if (Spawns[i].GroupId == groupId)
+                    return true;
+            }
+            return false;
+        }
 
     }
 

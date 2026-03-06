@@ -100,10 +100,9 @@ namespace ZoneControl.Spawner
         private bool AddSpawn(bool force = false, string prefabName = "")
         {
             if (Log.Debug) Log.Msg($"Starting AddSpawn force={force} prefabName='{prefabName}'");
-            double rnd = force ? 1 : updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
-            if (Log.Debug) Log.Msg($"AddSpawn rnd={rnd}");
+            double rnd = updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
 
-            if (rnd > 1)
+            if (!force && rnd > 1)
             {
                 if (Log.Debug) Log.Msg($"No spawn this time rnd={rnd}");
                 return false;
@@ -116,7 +115,6 @@ namespace ZoneControl.Spawner
             //newSpawn.Name = $"Anomaly {DateTime.Now.ToString("yyMMdd HH:mm")}"; //tmp name
 
             //find prefab
-            double totalWeightNorm = 0;
             PrefabInfoInternal selectedPrefab = null;
             if (prefabName != "")
             {
@@ -138,19 +136,33 @@ namespace ZoneControl.Spawner
             }
             else
             {
-                foreach (PrefabInfoInternal pi in prefabs)
+                int c = 5;
+                while (c-- > 0 && selectedPrefab == null)
                 {
-                    totalWeightNorm += pi.WeightNorm;
-                    if (rnd <= totalWeightNorm)
+                    rnd = rng.NextDouble();
+                    double totalWeightNorm = 0;
+
+                    if (Log.Debug) Log.Msg($"AddSpawn c={c} rnd={rnd}");
+
+                    foreach (PrefabInfoInternal pi in prefabs)
                     {
-                        if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
-                        selectedPrefab = pi;
-                        break;
+                        totalWeightNorm += pi.WeightNorm;
+                        if (rnd <= totalWeightNorm)
+                        {
+                            if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
+                            if (currentSpawns.HasGroupId(pi.GroupId))
+                            {
+                                if (Log.Debug) Log.Msg("GroupId already spawned, try again");
+                                break;
+                            }
+                            selectedPrefab = pi;
+                            break;
+                        }
                     }
                 }
                 if (selectedPrefab == null)
                 {
-                    Log.Msg($"Error: should have a prefab, rnd={rnd}");
+                    if (Log.Debug) Log.Msg($"Could not find a unique prefb");
                     return false;
                 }
             }
@@ -181,6 +193,8 @@ namespace ZoneControl.Spawner
             ++currentSpawns.SpawnCounter;
             newSpawn.AnomalyId = currentSpawns.SpawnCounter;
             newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
+            newSpawn.PrefabName = selectedPrefab.Subtype;
+            newSpawn.GroupId = selectedPrefab.GroupId;
 
             MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo);
 
@@ -221,7 +235,7 @@ namespace ZoneControl.Spawner
                     cubeGrid.IsStatic = true;
                     spawn.EntityId = entityId;
                     CheckSubZone(spawn);
-                    if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
+                    if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' prefab={spawn.PrefabName} GroupId={spawn.GroupId} ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
 
                     SaveCurrentSpawns();
                     return;
@@ -283,7 +297,7 @@ namespace ZoneControl.Spawner
         {
             try
             {
-                MyAPIGateway.Utilities.SetVariable<string>(VariableId, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(currentSpawns)));
+                MyAPIGateway.Utilities.SetVariable<string>(VariableId, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary<CurrentSpawnsData>(currentSpawns)));
             }
             catch (Exception e)
             {
