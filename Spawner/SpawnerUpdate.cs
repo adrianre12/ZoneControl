@@ -196,7 +196,7 @@ namespace ZoneControl.Spawner
             newSpawn.PrefabName = selectedPrefab.Subtype;
             newSpawn.GroupId = selectedPrefab.GroupId;
 
-            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo);
+            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
 
             currentSpawns.Spawns.Add(newSpawn);
             return true;
@@ -266,14 +266,16 @@ namespace ZoneControl.Spawner
             }
 
             //close grid
-            var grid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId) as IMyCubeGrid;
-            if (grid != null)
+            var cubeGrid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId) as IMyCubeGrid;
+            if (cubeGrid != null)
             {
-                if (Vector3D.Distance(grid.GetPosition(), spawn.SubZonePosition) < config.AlertRadius)
+                bool factionOwned = cubeGrid?.BigOwners.Count > 0 && cubeGrid?.BigOwners[0] == factionOwnerId;
+
+                if (Vector3D.Distance(cubeGrid.GetPosition(), spawn.SubZonePosition) < config.AlertRadius || factionOwned)
                 {
-                    if (Log.Debug) Log.Msg($"Closing '{grid.DisplayName}' ");
+                    if (Log.Debug) Log.Msg($"Closing '{cubeGrid.DisplayName}' ");
                     List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
-                    grid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
+                    cubeGrid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
                     foreach (var subGrid in cubeGrids)
                     {
                         foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())

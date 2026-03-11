@@ -156,7 +156,7 @@ namespace ZoneControl.Spawner
                         sb.AppendLine("Status:");
                         sb.AppendLine($"Enabled: {config.Enabled}");
                         sb.AppendLine($"Spawns: {currentSpawns.Spawns.Count} of {config.MaxSpawns}");
-                        sb.AppendLine($"Date Now: {DateTime.Now}");
+                        sb.AppendLine($"Date Now: {DateTime.Now.ToString("dd/MMM HH:mm")}");
 
                         int i = 0;
                         foreach (var spawn in currentSpawns.Spawns)
