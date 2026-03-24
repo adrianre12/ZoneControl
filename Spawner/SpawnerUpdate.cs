@@ -77,7 +77,7 @@ namespace ZoneControl.Spawner
                 //All done
                 if (config.Enabled && currentSpawns.Spawns.Count < config.MaxSpawns)
                 {
-                    AddSpawn();
+                    AddWreckSpawn();
                 }
                 updateSpawns = false;
             }
@@ -97,7 +97,7 @@ namespace ZoneControl.Spawner
             nextSpawnIndex = currentSpawns.Spawns.Count - 1;
         }
 
-        private bool AddSpawn(bool force = false, string prefabName = "")
+        private bool AddWreckSpawn(bool force = false, string prefabName = "")
         {
             if (Log.Debug) Log.Msg($"Starting AddSpawn force={force} prefabName='{prefabName}'");
             double rnd = updateRndMultiplier * rng.NextDouble(); //make >1 to get no spawn probability
@@ -118,17 +118,7 @@ namespace ZoneControl.Spawner
             PrefabInfoInternal selectedPrefab = null;
             if (prefabName != "")
             {
-                foreach (PrefabInfoInternal pi in prefabs)
-                {
-                    if (Log.Debug) Log.Msg($"'{pi.Subtype}' == '{prefabName}'");
-                    if (pi.Subtype == prefabName)
-                    {
-                        if (Log.Debug) Log.Msg($"Selected prefab '{pi.Subtype}'");
-                        selectedPrefab = pi;
-                        break;
-                    }
-                }
-                if (selectedPrefab == null)
+                if (!prefabs.TryGetValue(prefabName, out selectedPrefab))
                 {
                     Log.Msg($"Error: prefab '{prefabName}' not found in list");
                     return false;
@@ -144,7 +134,7 @@ namespace ZoneControl.Spawner
 
                     if (Log.Debug) Log.Msg($"AddSpawn c={c} rnd={rnd}");
 
-                    foreach (PrefabInfoInternal pi in prefabs)
+                    foreach (PrefabInfoInternal pi in prefabs.Values)
                     {
                         totalWeightNorm += pi.WeightNorm;
                         if (rnd <= totalWeightNorm)
@@ -162,7 +152,7 @@ namespace ZoneControl.Spawner
                 }
                 if (selectedPrefab == null)
                 {
-                    if (Log.Debug) Log.Msg($"Could not find a unique prefb");
+                    if (Log.Debug) Log.Msg($"Could not find a unique prefab");
                     return false;
                 }
             }
@@ -195,10 +185,77 @@ namespace ZoneControl.Spawner
             newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
             newSpawn.PrefabName = selectedPrefab.Subtype;
             newSpawn.GroupId = selectedPrefab.GroupId;
+            newSpawn.PiratesEnabled = selectedPrefab.EnablePirates;
 
-            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
+            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, selectedPrefab.EnablePirates ? pirateOwnerId : factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
 
             currentSpawns.Spawns.Add(newSpawn);
+            return true;
+        }
+
+        public void SpawnPirate(int zoneId)
+        {
+            SpawnInfo spawn = currentSpawns.FindZoneId(zoneId);
+            if (spawn == null)
+            {
+                Log.Msg($"Spawn not found for ZoneId={zoneId}");
+                return;
+            }
+            if (!spawn.PiratesEnabled)
+            {
+                //if (Log.Debug) Log.Msg($"spawn '{spawn.Name}' PiratesEnabled = False;");
+                return;
+            }
+            AddPirateSpawn(spawn);
+        }
+
+        private bool AddPirateSpawn(SpawnInfo spawn)
+        {
+            if (Log.Debug) Log.Msg($"Starting AddPirateSpawn for spawn={spawn.Name} prefabName='{config.PiratePrefab}'");
+
+            //MyPrefabDefinition prefabDefinition = MyDefinitionManager.Static.GetPrefabDefinition(prefabName);
+
+            PrefabInfoInternal spawnPrefab = null;
+            if (!prefabs.TryGetValue(spawn.PrefabName, out spawnPrefab))
+            {
+                Log.Msg($"Could not find spawn prefab '{spawn.PrefabName}'");
+                return false;
+            }
+
+
+            //find free position
+            int i = 20;
+            Vector3D? spawnPosition = null;
+            while (i > 0 && spawnPosition == null)
+            {
+                --i;
+                spawnPosition = spawn.Position + spawnPrefab.PirateRadius * MyUtils.GetRandomVector3Normalized();
+
+                if (MyAPIGateway.GravityProviderSystem.IsPositionInNaturalGravity(spawnPosition.Value, 2000))  //more than 2Km outside grav
+                    continue;
+
+                spawnPosition = MyAPIGateway.Entities.FindFreePlace(spawnPosition.Value, 100);
+            }
+
+            if (spawnPosition == null)
+            {
+                Log.Msg($"Could not find free position for pirate");
+                return false;
+            }
+
+            SpawnInfo pirateSpawn = new SpawnInfo();
+            pirateSpawn.Type = SpawnType.Pirate;
+            pirateSpawn.Position = spawnPosition.Value;
+            pirateSpawn.RemoveAt = spawn.RemoveAt;
+            pirateSpawn.Name = $"AnomPirate#{spawn.AnomalyId}";
+            pirateSpawn.PrefabName = config.PiratePrefab;
+            pirateSpawn.PirateAntenna = spawnPrefab.PirateAntenna;
+            pirateSpawn.AnomalyId = spawn.AnomalyId;
+
+            MyVisualScriptLogicProvider.SpawnPrefab(config.PiratePrefab, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, pirateOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SetAuthorship);
+
+            currentSpawns.Spawns.Add(pirateSpawn);
+            spawn.PiratesEnabled = false; //Stop pirates spawning again.
             return true;
         }
 
@@ -219,11 +276,12 @@ namespace ZoneControl.Spawner
             //    var bigOwner = cubeGrid?.BigOwners.Count > 0 ? cubeGrid?.BigOwners[0] : 0;
             //    Log.Msg($"Grid name={prefabName} BigOwners Count={cubeGrid?.BigOwners.Count} BigOwners[0]={bigOwner} FactionOwner={factionOwnerId}");
             //}
-            if (cubeGrid?.BigOwners.Count == 0 || cubeGrid?.BigOwners[0] != factionOwnerId)
+            if (cubeGrid?.BigOwners.Count == 0 || (cubeGrid?.BigOwners[0] != factionOwnerId && cubeGrid?.BigOwners[0] != pirateOwnerId))
             {
                 //if (Log.Debug) Log.Msg($"Rejecting name={prefabName}");
                 return;
             }
+
             if (Log.Debug) Log.Msg($"Prefab spawned id={entityId}, name={prefabName}");
 
             foreach (var spawn in currentSpawns.Spawns)
@@ -234,8 +292,22 @@ namespace ZoneControl.Spawner
                 {
                     cubeGrid.IsStatic = true;
                     spawn.EntityId = entityId;
-                    CheckSubZone(spawn);
-                    if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' prefab={spawn.PrefabName} GroupId={spawn.GroupId} ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
+                    if (spawn.Type == SpawnType.Wreck)
+                    {
+                        CheckSubZone(spawn);
+                        if (Log.Debug) Log.Msg($"Spawned '{spawn.Name}' prefab={spawn.PrefabName} GroupId={spawn.GroupId} ZoneId={spawn.ZoneId} RemoveAt={new DateTime(spawn.RemoveAt)}");
+
+                    }
+                    else
+                    {
+                        foreach (var antenna in cubeGrid.GetFatBlocks<IMyRadioAntenna>())
+                        {
+                            antenna.CustomName = spawn.PirateAntenna;
+                            antenna.EnableBroadcasting = true;
+                            antenna.Enabled = true;
+                        }
+                        if (Log.Debug) Log.Msg($"Spawned pirate '{spawn.Name}' prefab={spawn.PrefabName} PirateAntenna={spawn.PirateAntenna} RemoveAt={new DateTime(spawn.RemoveAt)}");
+                    }
 
                     SaveCurrentSpawns();
                     return;
@@ -259,7 +331,7 @@ namespace ZoneControl.Spawner
         private void RemoveSpawn(SpawnInfo spawn, bool save = true)
         {
             //remove anomally
-            if (spawn.ZoneId >= 0)
+            if (spawn.Type == SpawnType.Wreck && spawn.ZoneId >= 0)
             {
                 ZonesSession.Instance.SubZoneTable.RemoveZone(spawn.ZoneId);
                 if (Log.Debug) Log.Msg($"Removed SubZone {spawn.ZoneId}");
@@ -267,7 +339,7 @@ namespace ZoneControl.Spawner
 
             //close grid
             var cubeGrid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId) as IMyCubeGrid;
-            if (cubeGrid != null)
+            if (cubeGrid != null && spawn.Type == SpawnType.Wreck)
             {
                 bool factionOwned = cubeGrid?.BigOwners.Count > 0 && cubeGrid?.BigOwners[0] == factionOwnerId;
 
@@ -290,6 +362,21 @@ namespace ZoneControl.Spawner
                     if (Log.Debug) Log.Msg($"Spawn moved, not being removed: '{spawn.Name}'");
                 }
             }
+            else
+            {
+                if (Log.Debug) Log.Msg($"Closing '{cubeGrid.DisplayName}' ");
+                List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
+                cubeGrid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
+                foreach (var subGrid in cubeGrids)
+                {
+                    foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())
+                    {
+                        cockpit.RemovePilot();
+                    }
+                    subGrid.Close();
+                }
+            }
+
             currentSpawns.Spawns.Remove(spawn);
             if (save)
                 SaveCurrentSpawns();
@@ -316,7 +403,7 @@ namespace ZoneControl.Spawner
 
         private void CheckSubZone(SpawnInfo spawn)
         {
-            if (spawn.ZoneId >= 0)
+            if (spawn.ZoneId >= 0 || spawn.Type != SpawnType.Wreck)
                 return;
             //ZoneId has not been set, add a zone
             {

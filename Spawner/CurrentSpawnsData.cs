@@ -4,6 +4,12 @@ using VRageMath;
 
 namespace ZoneControl.Spawner
 {
+    public enum SpawnType
+    {
+        Wreck,
+        Pirate
+    }
+
     [ProtoContract]
     public class SpawnInfo
     {
@@ -25,20 +31,26 @@ namespace ZoneControl.Spawner
         public string PrefabName = "";
         [ProtoMember(9)]
         public int GroupId = -1;
+        [ProtoMember(10)]
+        public SpawnType Type = SpawnType.Wreck;
+        [ProtoMember(11)]
+        public string PirateAntenna = "";
+        [ProtoMember(12)]
+        public bool PiratesEnabled = false;
 
         public SpawnInfo() { }
 
-        public SpawnInfo(SpawnInfo spawnInfo)
-        {
-            Name = spawnInfo.Name;
-            Position = new Vector3D(spawnInfo.Position);
-            RemoveAt = spawnInfo.RemoveAt;
-            SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
-            EntityId = spawnInfo.EntityId;
-            ZoneId = spawnInfo.ZoneId;
-            AnomalyId = spawnInfo.AnomalyId;
+        /*        public SpawnInfo(SpawnInfo spawnInfo)
+                {
+                    Name = spawnInfo.Name;
+                    Position = new Vector3D(spawnInfo.Position);
+                    RemoveAt = spawnInfo.RemoveAt;
+                    SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
+                    EntityId = spawnInfo.EntityId;
+                    ZoneId = spawnInfo.ZoneId;
+                    AnomalyId = spawnInfo.AnomalyId;
 
-        }
+                }*/
     }
 
     [ProtoContract]
@@ -62,6 +74,19 @@ namespace ZoneControl.Spawner
                     return true;
             }
             return false;
+        }
+
+        public SpawnInfo FindZoneId(int zoneId)
+        {
+            if (zoneId < 0)
+                return null;
+
+            for (int i = 0; i < Spawns.Count; i++)
+            {
+                if (Spawns[i].ZoneId == zoneId)
+                    return Spawns[i];
+            }
+            return null;
         }
 
     }

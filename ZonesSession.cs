@@ -38,7 +38,6 @@ namespace ZoneControl
         private int nextPlayerIndex = 0;
         private int warnMsgCounter = DefaultWarnMsgCounter;
         private int urgentMsgCounter = DefaultUrgentMsgCounter;
-        private ZoneInfoInternal currentZone = null;
         private HashSet<long> punishAdminSet = new HashSet<long>();
 
 
@@ -419,12 +418,10 @@ namespace ZoneControl
                 }
 
                 //Look for subZones
-                CheckPlayerPosition(SubZoneTable);
+                CallSpawnPirate(CheckPlayerPosition(SubZoneTable));
 
-                //isIntruder not set, check position
-                currentZone = CheckPlayerPosition(zoneTable);
-                // check if intruding
-                if (CheckIfIntruding(currentZone))
+                //isIntruder not set, check if intruding
+                if (CheckIfIntruding(CheckPlayerPosition(zoneTable)))
                 {
                     ps.IsIntruder = true;
 
@@ -451,6 +448,14 @@ namespace ZoneControl
             }
 
             SpawnerSession.Instance?.Update(currentFrame);
+        }
+
+        private void CallSpawnPirate(ZoneInfoInternal subZone)
+        {
+            if (subZone?.Type == ZoneInfoInternal.ZoneType.Anomaly)
+            {
+                SpawnerSession.Instance.SpawnPirate(subZone.Id);
+            }
         }
 
         private void RefreshPlayers()

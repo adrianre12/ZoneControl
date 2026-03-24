@@ -1,6 +1,4 @@
-﻿
-
-using Sandbox.ModAPI;
+﻿using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
@@ -39,6 +37,8 @@ namespace ZoneControl
         public string DataPadMessage = "An Anomaly has been detected and a navigation warning zone established.\n\nDetails:\n   Identifier: [NAME]\n   Reason: Collision hazard, wreckage detected.\n   Position: [GPS]\n\nNotes:\nThe position is approximate.\nAnomalies collapse is instantaneous, if instabilities are detected attempts will be made to notify Engineers in the vicinity.";
         public string GPScolourHex = "#FFFFFFFF";
         public string FactionTag = "ANOM";
+        public string PirateTag = "SPRT";
+        public string PiratePrefab = "Sentinel";
         public List<SpawningSector> Sectors = new List<SpawningSector>();
 
         public void Verify()
@@ -57,7 +57,9 @@ namespace ZoneControl
             DataPadTitle = DataPadTitle ?? "";
             DataPadMessage = DataPadMessage ?? "";
             GPScolourHex = GPScolourHex ?? "#FFFFFFFF";
-            FactionTag = FactionTag ?? "";
+            FactionTag = FactionTag ?? "ANOM";
+            PirateTag = PirateTag ?? "SPRT";
+            PiratePrefab = PiratePrefab ?? "Sentinel";
         }
 
         public class SpawningSector
@@ -76,6 +78,9 @@ namespace ZoneControl
             public float Weighting = 1.0f;
             public float LifetimeMin = 12;
             public float LifetimeMax = 48;
+            public bool EnablePirates = false;
+            public string PirateAntenna = "Scanning Antenna";
+            public float PirateRadius = 1000;
         }
 
         public static SpawnerConfig LoadConfig()
@@ -156,6 +161,9 @@ namespace ZoneControl
         public double WeightNorm = 0;
         public float LifetimeMin = 12;
         public float LifetimeMax = 48;
+        public bool EnablePirates = false;
+        public string PirateAntenna = "Scanning Antenna";
+        public float PirateRadius = 1000;
         public SectorInfoInternal SectorInfo = new SectorInfoInternal();
 
         public PrefabInfoInternal(SpawnerConfig.PrefabInfo prefab, SectorInfoInternal sectorInfo)
@@ -165,6 +173,9 @@ namespace ZoneControl
             Weighting = prefab.Weighting;
             LifetimeMin = prefab.LifetimeMin;
             LifetimeMax = prefab.LifetimeMax;
+            EnablePirates = prefab.EnablePirates;
+            PirateAntenna = prefab.PirateAntenna;
+            PirateRadius = prefab.PirateRadius;
             SectorInfo = sectorInfo;
         }
     }

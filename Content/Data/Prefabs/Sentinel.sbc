@@ -1,0 +1,331 @@
+<?xml version="1.0"?>
+<Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Prefabs>
+		<Prefab xsi:type="MyObjectBuilder_PrefabDefinition">
+			<Id Type="MyObjectBuilder_PrefabDefinition" Subtype="Sentinel" />
+			<CubeGrids>
+				<CubeGrid>
+					<SubtypeName />
+					<EntityId>131513021424060418</EntityId>
+					<PersistentFlags>CastShadows InScene</PersistentFlags>
+					<Name>131513021424060418</Name>
+					<PositionAndOrientation>
+						<Position x="0" y="0" z="0" />
+						<Forward x="0.107714504" y="-0.785850644" z="0.6089634" />
+						<Up x="0.8571551" y="-0.2369088" z="-0.457339436" />
+						<Orientation>
+							<X>0.7664107</X>
+							<Y>0.465935975</Y>
+							<Z>0.176264137</Z>
+							<W>-0.405523449</W>
+						</Orientation>
+					</PositionAndOrientation>
+					<LocalPositionAndOrientation xsi:nil="true" />
+					<GridSizeEnum>Small</GridSizeEnum>
+					<CubeBlocks>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_BatteryBlock">
+							<SubtypeName>SmallBlockSmallBatteryBlock</SubtypeName>
+							<EntityId>143230424194611317</EntityId>
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+							<ShowOnHUD>false</ShowOnHUD>
+							<ShowInTerminal>true</ShowInTerminal>
+							<ShowInToolbarConfig>true</ShowInToolbarConfig>
+							<ShowInInventory>true</ShowInInventory>
+							<NumberInGrid>1</NumberInGrid>
+							<Enabled>true</Enabled>
+							<CurrentStoredPower>0.05</CurrentStoredPower>
+							<ProducerEnabled>true</ProducerEnabled>
+							<MaxStoredPower>0</MaxStoredPower>
+							<SemiautoEnabled>false</SemiautoEnabled>
+							<OnlyDischargeEnabled>false</OnlyDischargeEnabled>
+							<ChargeMode>0</ChargeMode>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_RadioAntenna">
+							<SubtypeName>SmallBlockRadioAntenna</SubtypeName>
+							<EntityId>125485163509148087</EntityId>
+							<Min x="0" y="-2" z="0" />
+							<BlockOrientation Forward="Down" Up="Backward" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+							<ShareMode>Faction</ShareMode>
+							<ShowOnHUD>false</ShowOnHUD>
+							<ShowInTerminal>true</ShowInTerminal>
+							<ShowInToolbarConfig>true</ShowInToolbarConfig>
+							<ShowInInventory>true</ShowInInventory>
+							<NumberInGrid>1</NumberInGrid>
+							<Enabled>true</Enabled>
+							<BroadcastRadius>2000</BroadcastRadius>
+							<ShowShipName>false</ShowShipName>
+							<EnableBroadcasting>true</EnableBroadcasting>
+							<AttachedPB>0</AttachedPB>
+							<IgnoreAllied>false</IgnoreAllied>
+							<IgnoreOther>true</IgnoreOther>
+							<HudText />
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-1" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="0" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-2" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-3" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-3" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-3" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-2" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="-1" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="0" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="1" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="1" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="0" y="1" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-3" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-2" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-1" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="0" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="1" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-3" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-2" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-1" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="0" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="1" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-3" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-2" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="-1" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="0" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="-1" y="1" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-3" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-2" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-1" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="0" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="1" z="-1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="1" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="0" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-1" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-2" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-3" z="0" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-3" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-2" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="-1" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="0" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+						<MyObjectBuilder_CubeBlock xsi:type="MyObjectBuilder_CubeBlock">
+							<SubtypeName>SmallHeavyBlockArmorBlock</SubtypeName>
+							<Min x="1" y="1" z="1" />
+							<ColorMaskHSV x="0" y="-0.8" z="-0.45" />
+							<SkinSubtypeId>CarbonFibre_Armor</SkinSubtypeId>
+						</MyObjectBuilder_CubeBlock>
+					</CubeBlocks>
+					<DisplayName>Sentinel</DisplayName>
+					<DestructibleBlocks>true</DestructibleBlocks>
+					<CreatePhysics>false</CreatePhysics>
+					<IsRespawnGrid>false</IsRespawnGrid>
+					<LocalCoordSys>0</LocalCoordSys>
+					<TargetingTargets />
+					<NPCGridClaimElapsed xsi:nil="true" />
+				</CubeGrid>
+			</CubeGrids>
+			<EnvironmentType>None</EnvironmentType>
+		</Prefab>
+	</Prefabs>
+</Definitions>

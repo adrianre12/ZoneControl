@@ -30,9 +30,9 @@ namespace ZoneControl.Spawner
         private int defaultRefreshPeriodTicks;
 
         private int updateRndMultiplier = 0;
-        private List<PrefabInfoInternal> prefabs = new List<PrefabInfoInternal>(); //all prefabs with weighting.
-
+        private Dictionary<string, PrefabInfoInternal> prefabs = new Dictionary<string, PrefabInfoInternal>();  //all prefabs with weighting
         private long factionOwnerId;
+        private long pirateOwnerId;
         private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
 
 
@@ -135,13 +135,13 @@ namespace ZoneControl.Spawner
                         }
                         if (args.Count < 3)
                         {
-                            AddSpawn(true);
+                            AddWreckSpawn(true);
                             Log.Msg("Spawning random prefab requested", playerId);
                         }
                         else
                         {
                             string prefabName = args[2].Trim(new char[] { ' ', '"' });
-                            if (AddSpawn(true, prefabName))
+                            if (AddWreckSpawn(true, prefabName))
                                 Log.Msg($"Spawning prefab '{prefabName}' requested", playerId);
                             else
                                 Log.Msg($"Failed to submit '{prefabName}' see log", playerId);
@@ -183,11 +183,11 @@ namespace ZoneControl.Spawner
                         var sb = new StringBuilder();
                         sb.AppendLine("PrefabList:");
                         int i = 0;
-                        foreach (var prefab in prefabs)
+                        foreach (var prefab in prefabs.Values)
                         {
                             if (i == 0)
-                                sb.AppendLine("PrefabName WeightNorm Sector");
-                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm:0.000} \"{prefab.SectorInfo.UniqueName}\"");
+                                sb.AppendLine("PrefabName WeightNorm Sector EnablePirates");
+                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm:0.000} \"{prefab.SectorInfo.UniqueName}\" {prefab.EnablePirates}");
                             ++i;
                             if (i == 10)
                             {
@@ -294,6 +294,7 @@ namespace ZoneControl.Spawner
         private void BeforeStartHost()
         {
             factionOwnerId = FindFactionId(config.FactionTag);
+            pirateOwnerId = FindFactionId(config.PirateTag);
 
             double totalWeighting = 0;
             foreach (var sector in config.Sectors)
@@ -302,12 +303,12 @@ namespace ZoneControl.Spawner
                 foreach (var prefab in sector.Prefabs)
                 {
                     PrefabInfoInternal prefabInfo = new PrefabInfoInternal(prefab, sectorInfo);
-                    prefabs.Add(prefabInfo);
+                    prefabs[prefabInfo.Subtype] = prefabInfo;
                     totalWeighting += prefabInfo.Weighting;
                 }
             }
 
-            foreach (PrefabInfoInternal pi in prefabs)
+            foreach (PrefabInfoInternal pi in prefabs.Values)
             {
                 pi.WeightNorm = pi.Weighting / totalWeighting;
                 Log.Msg($"Prefab loaded {pi.Subtype} Sector={pi.SectorInfo.UniqueName} WeightNorm={pi.WeightNorm}");
