@@ -186,8 +186,8 @@ namespace ZoneControl.Spawner
                         foreach (var prefab in prefabs.Values)
                         {
                             if (i == 0)
-                                sb.AppendLine("PrefabName WeightNorm Sector EnablePirates");
-                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm:0.000} \"{prefab.SectorInfo.UniqueName}\" {prefab.EnablePirates}");
+                                sb.AppendLine("PrefabName WeightNorm Sector PirateProbability");
+                            sb.AppendLine($"\"{prefab.Subtype}\" {prefab.WeightNorm:0.000} \"{prefab.SectorInfo.UniqueName}\" {prefab.PirateProbability:0.00}");
                             ++i;
                             if (i == 10)
                             {
@@ -303,6 +303,8 @@ namespace ZoneControl.Spawner
                 foreach (var prefab in sector.Prefabs)
                 {
                     PrefabInfoInternal prefabInfo = new PrefabInfoInternal(prefab, sectorInfo);
+                    if (string.IsNullOrEmpty(prefabInfo.PiratePrefab))
+                        prefabInfo.PiratePrefab = config.PiratePrefab;
                     prefabs[prefabInfo.Subtype] = prefabInfo;
                     totalWeighting += prefabInfo.Weighting;
                 }

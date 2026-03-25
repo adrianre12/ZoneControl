@@ -185,9 +185,9 @@ namespace ZoneControl.Spawner
             newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
             newSpawn.PrefabName = selectedPrefab.Subtype;
             newSpawn.GroupId = selectedPrefab.GroupId;
-            newSpawn.PiratesEnabled = selectedPrefab.EnablePirates;
+            newSpawn.PiratesEnabled = selectedPrefab.PirateProbability > rng.NextDouble();
 
-            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, selectedPrefab.EnablePirates ? pirateOwnerId : factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
+            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, newSpawn.PiratesEnabled ? pirateOwnerId : factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
 
             currentSpawns.Spawns.Add(newSpawn);
             return true;
@@ -215,10 +215,10 @@ namespace ZoneControl.Spawner
 
             //MyPrefabDefinition prefabDefinition = MyDefinitionManager.Static.GetPrefabDefinition(prefabName);
 
-            PrefabInfoInternal spawnPrefab = null;
-            if (!prefabs.TryGetValue(spawn.PrefabName, out spawnPrefab))
+            PrefabInfoInternal piratePrefab = null;
+            if (!prefabs.TryGetValue(spawn.PrefabName, out piratePrefab))
             {
-                Log.Msg($"Could not find spawn prefab '{spawn.PrefabName}'");
+                Log.Msg($"Could not find pirate prefab '{spawn.PrefabName}'");
                 return false;
             }
 
@@ -229,7 +229,7 @@ namespace ZoneControl.Spawner
             while (i > 0 && spawnPosition == null)
             {
                 --i;
-                spawnPosition = spawn.Position + spawnPrefab.PirateRadius * MyUtils.GetRandomVector3Normalized();
+                spawnPosition = spawn.Position + piratePrefab.PirateDistance * MyUtils.GetRandomVector3Normalized();
 
                 if (MyAPIGateway.GravityProviderSystem.IsPositionInNaturalGravity(spawnPosition.Value, 2000))  //more than 2Km outside grav
                     continue;
@@ -248,11 +248,11 @@ namespace ZoneControl.Spawner
             pirateSpawn.Position = spawnPosition.Value;
             pirateSpawn.RemoveAt = spawn.RemoveAt;
             pirateSpawn.Name = $"AnomPirate#{spawn.AnomalyId}";
-            pirateSpawn.PrefabName = config.PiratePrefab;
-            pirateSpawn.PirateAntenna = spawnPrefab.PirateAntenna;
+            pirateSpawn.PrefabName = piratePrefab.PiratePrefab;
+            pirateSpawn.PirateAntenna = piratePrefab.PirateAntenna;
             pirateSpawn.AnomalyId = spawn.AnomalyId;
 
-            MyVisualScriptLogicProvider.SpawnPrefab(config.PiratePrefab, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, pirateOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SetAuthorship);
+            MyVisualScriptLogicProvider.SpawnPrefab(piratePrefab.PiratePrefab, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, pirateOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SetAuthorship);
 
             currentSpawns.Spawns.Add(pirateSpawn);
             spawn.PiratesEnabled = false; //Stop pirates spawning again.
@@ -302,8 +302,10 @@ namespace ZoneControl.Spawner
                     {
                         foreach (var antenna in cubeGrid.GetFatBlocks<IMyRadioAntenna>())
                         {
-                            antenna.CustomName = spawn.PirateAntenna;
                             antenna.EnableBroadcasting = true;
+                            if (antenna.Enabled == false)
+                                continue;
+                            antenna.CustomName = spawn.PirateAntenna;
                             antenna.Enabled = true;
                         }
                         if (Log.Debug) Log.Msg($"Spawned pirate '{spawn.Name}' prefab={spawn.PrefabName} PirateAntenna={spawn.PirateAntenna} RemoveAt={new DateTime(spawn.RemoveAt)}");

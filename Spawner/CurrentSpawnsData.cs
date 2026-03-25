@@ -39,18 +39,6 @@ namespace ZoneControl.Spawner
         public bool PiratesEnabled = false;
 
         public SpawnInfo() { }
-
-        /*        public SpawnInfo(SpawnInfo spawnInfo)
-                {
-                    Name = spawnInfo.Name;
-                    Position = new Vector3D(spawnInfo.Position);
-                    RemoveAt = spawnInfo.RemoveAt;
-                    SubZonePosition = new Vector3D(spawnInfo.SubZonePosition);
-                    EntityId = spawnInfo.EntityId;
-                    ZoneId = spawnInfo.ZoneId;
-                    AnomalyId = spawnInfo.AnomalyId;
-
-                }*/
     }
 
     [ProtoContract]

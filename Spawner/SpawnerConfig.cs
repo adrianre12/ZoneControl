@@ -78,9 +78,10 @@ namespace ZoneControl
             public float Weighting = 1.0f;
             public float LifetimeMin = 12;
             public float LifetimeMax = 48;
-            public bool EnablePirates = false;
+            public float PirateProbability = 0;
+            public string PiratePrefab = "";
             public string PirateAntenna = "Scanning Antenna";
-            public float PirateRadius = 1000;
+            public float PirateDistance = 1000;
         }
 
         public static SpawnerConfig LoadConfig()
@@ -161,9 +162,10 @@ namespace ZoneControl
         public double WeightNorm = 0;
         public float LifetimeMin = 12;
         public float LifetimeMax = 48;
-        public bool EnablePirates = false;
+        public float PirateProbability = 0;
+        public string PiratePrefab = "";
         public string PirateAntenna = "Scanning Antenna";
-        public float PirateRadius = 1000;
+        public float PirateDistance = 1000;
         public SectorInfoInternal SectorInfo = new SectorInfoInternal();
 
         public PrefabInfoInternal(SpawnerConfig.PrefabInfo prefab, SectorInfoInternal sectorInfo)
@@ -173,9 +175,10 @@ namespace ZoneControl
             Weighting = prefab.Weighting;
             LifetimeMin = prefab.LifetimeMin;
             LifetimeMax = prefab.LifetimeMax;
-            EnablePirates = prefab.EnablePirates;
+            PirateProbability = prefab.PirateProbability;
+            PiratePrefab = prefab.PiratePrefab ?? "";
             PirateAntenna = prefab.PirateAntenna;
-            PirateRadius = prefab.PirateRadius;
+            PirateDistance = prefab.PirateDistance;
             SectorInfo = sectorInfo;
         }
     }
