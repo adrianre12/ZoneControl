@@ -70,7 +70,7 @@ namespace ZoneControl
             return $"GPS:{name}:{position.X:0.00}:{position.Y:0.00}:{position.Z:0.00}:{colour}:";
         }
 
-        internal static long FindFactionId(string tag)
+        internal static IMyFaction FindFaction(string tag)
         {
             IMyFaction faction = null;
             if (tag != null)
@@ -78,15 +78,26 @@ namespace ZoneControl
             if (faction != null)
             {
                 Log.Msg($"Spawnwer using faction {tag}");
-                return faction.FounderId;
+                return faction;
             }
             faction = MyAPIGateway.Session.Factions.TryGetFactionByTag("UNKN");
             if (faction != null)
             {
                 Log.Msg($"Spawnwer using default faction UNKN");
+                return faction;
+            }
+            Log.Msg($"Spawnwer Faction {tag} not found");
+            return null;
+        }
+
+        internal static long FindFactionFounderId(IMyFaction faction)
+        {
+            if (faction != null)
+            {
                 return faction.FounderId;
             }
-            Log.Msg($"Spawnwer UNKN not found using NOBODY");
+
+            Log.Msg($"Spawnwer Faction is null, using NOBODY");
             return 0;
         }
 

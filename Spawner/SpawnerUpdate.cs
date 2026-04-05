@@ -22,6 +22,7 @@ namespace ZoneControl.Spawner
         private int nextSummaryRefreshFrame = DefaultSummaryUpdatePeriodTicks;
         private CurrentSpawnsData currentSpawns = new CurrentSpawnsData();
         private SpawnSummary spawnSummary = new SpawnSummary();
+        private HashSet<int> playerInAnomaly = new HashSet<int>();
 
         internal void Update(int currentFrame)
         {
@@ -179,7 +180,7 @@ namespace ZoneControl.Spawner
 
             newSpawn.Position = spawnPosition.Value;
             newSpawn.SubZonePosition = spawnPosition.Value + 0.8f * config.AlertRadius * (float)rng.NextDouble() * MyUtils.GetRandomVector3Normalized();
-            newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(DateTimeTicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * rng.NextDouble())));
+            newSpawn.RemoveAt = DateTime.Now.Ticks + (long)(TimeSpan.TicksPerHour * (selectedPrefab.LifetimeMin + ((selectedPrefab.LifetimeMax - selectedPrefab.LifetimeMin) * rng.NextDouble())));
             ++currentSpawns.SpawnCounter;
             newSpawn.AnomalyId = currentSpawns.SpawnCounter;
             newSpawn.Name = $"Anomaly#{currentSpawns.SpawnCounter}";
@@ -187,26 +188,44 @@ namespace ZoneControl.Spawner
             newSpawn.GroupId = selectedPrefab.GroupId;
             newSpawn.PiratesEnabled = selectedPrefab.PirateProbability > rng.NextDouble();
 
-            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, newSpawn.PiratesEnabled ? pirateOwnerId : factionOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
+            MyVisualScriptLogicProvider.SpawnPrefab(selectedPrefab.Subtype, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, factionFounderId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SpawnRandomCargo | SpawningOptions.SetAuthorship);
 
             currentSpawns.Spawns.Add(newSpawn);
             return true;
         }
 
-        public void SpawnPirate(int zoneId)
+        public void PlayerInAnomaly(int zoneId)
         {
+            if (playerInAnomaly.Contains(zoneId))
+            {
+                //if (Log.Debug) Log.Msg($"playerInAnomaly contains {zoneId}");
+                return;
+            }
+            playerInAnomaly.Add(zoneId);
+            //if (Log.Debug) Log.Msg($"playerInAnomaly adding {zoneId}");
+
             SpawnInfo spawn = currentSpawns.FindZoneId(zoneId);
             if (spawn == null)
             {
                 Log.Msg($"Spawn not found for ZoneId={zoneId}");
                 return;
             }
-            if (!spawn.PiratesEnabled)
+
+            long nowTicks = DateTime.Now.Ticks;
+            long minTicks = nowTicks + DateTimeTicksUpdateAnomalyExpiaryPeriodMin;
+            long maxTicks = nowTicks + DateTimeTicksUpdateAnomalyExpiaryPeriodMax;
+            if (spawn.RemoveAt > maxTicks)
+                spawn.RemoveAt = maxTicks;
+            else if (spawn.RemoveAt < minTicks)
+                spawn.RemoveAt = minTicks;
+
+            if (Log.Debug) Log.Msg($"{spawn.Name} RemoveAt time updated to {new DateTime(spawn.RemoveAt)}");
+
+            if (spawn.PiratesEnabled)
             {
-                //if (Log.Debug) Log.Msg($"spawn '{spawn.Name}' PiratesEnabled = False;");
-                return;
+                if (Log.Debug) Log.Msg($"spawn '{spawn.Name}' PiratesEnabled = True;");
+                AddPirateSpawn(spawn);
             }
-            AddPirateSpawn(spawn);
         }
 
         private bool AddPirateSpawn(SpawnInfo spawn)
@@ -252,7 +271,7 @@ namespace ZoneControl.Spawner
             pirateSpawn.PirateAntenna = piratePrefab.PirateAntenna;
             pirateSpawn.AnomalyId = spawn.AnomalyId;
 
-            MyVisualScriptLogicProvider.SpawnPrefab(piratePrefab.PiratePrefab, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, pirateOwnerId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SetAuthorship);
+            MyVisualScriptLogicProvider.SpawnPrefab(piratePrefab.PiratePrefab, spawnPosition.Value, Vector3D.Forward, Vector3D.Up, pirateFounderId, spawningOptions: SpawningOptions.UseOnlyWorldMatrix | SpawningOptions.SetAuthorship);
 
             currentSpawns.Spawns.Add(pirateSpawn);
             spawn.PiratesEnabled = false; //Stop pirates spawning again.
@@ -276,7 +295,7 @@ namespace ZoneControl.Spawner
             //    var bigOwner = cubeGrid?.BigOwners.Count > 0 ? cubeGrid?.BigOwners[0] : 0;
             //    Log.Msg($"Grid name={prefabName} BigOwners Count={cubeGrid?.BigOwners.Count} BigOwners[0]={bigOwner} FactionOwner={factionOwnerId}");
             //}
-            if (cubeGrid?.BigOwners.Count == 0 || (cubeGrid?.BigOwners[0] != factionOwnerId && cubeGrid?.BigOwners[0] != pirateOwnerId))
+            if (cubeGrid?.BigOwners.Count == 0 || (cubeGrid?.BigOwners[0] != factionFounderId && cubeGrid?.BigOwners[0] != pirateFounderId))
             {
                 //if (Log.Debug) Log.Msg($"Rejecting name={prefabName}");
                 return;
@@ -341,11 +360,32 @@ namespace ZoneControl.Spawner
 
             //close grid
             var cubeGrid = MyAPIGateway.Entities.GetEntityById(spawn.EntityId) as IMyCubeGrid;
-            if (cubeGrid != null && spawn.Type == SpawnType.Wreck)
+            if (cubeGrid != null)
             {
-                bool factionOwned = cubeGrid?.BigOwners.Count > 0 && cubeGrid?.BigOwners[0] == factionOwnerId;
+                if (spawn.Type == SpawnType.Wreck)
+                {
+                    bool factionOwned = cubeGrid?.BigOwners.Count > 0 && cubeGrid?.BigOwners[0] == factionFounderId;
 
-                if (Vector3D.Distance(cubeGrid.GetPosition(), spawn.SubZonePosition) < config.AlertRadius || factionOwned)
+                    if (Vector3D.Distance(cubeGrid.GetPosition(), spawn.SubZonePosition) < config.AlertRadius || factionOwned)
+                    {
+                        if (Log.Debug) Log.Msg($"Closing '{cubeGrid.DisplayName}' ");
+                        List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
+                        cubeGrid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
+                        foreach (var subGrid in cubeGrids)
+                        {
+                            foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())
+                            {
+                                cockpit.RemovePilot();
+                            }
+                            subGrid.Close();
+                        }
+                    }
+                    else
+                    {
+                        if (Log.Debug) Log.Msg($"Spawn moved, not being removed: '{spawn.Name}'");
+                    }
+                }
+                else
                 {
                     if (Log.Debug) Log.Msg($"Closing '{cubeGrid.DisplayName}' ");
                     List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
@@ -359,25 +399,10 @@ namespace ZoneControl.Spawner
                         subGrid.Close();
                     }
                 }
-                else
-                {
-                    if (Log.Debug) Log.Msg($"Spawn moved, not being removed: '{spawn.Name}'");
-                }
             }
-            else
-            {
-                if (Log.Debug) Log.Msg($"Closing '{cubeGrid.DisplayName}' ");
-                List<IMyCubeGrid> cubeGrids = new List<IMyCubeGrid>();
-                cubeGrid.GetGridGroup(GridLinkTypeEnum.Mechanical).GetGrids(cubeGrids);
-                foreach (var subGrid in cubeGrids)
-                {
-                    foreach (var cockpit in subGrid.GetFatBlocks<IMyCockpit>())
-                    {
-                        cockpit.RemovePilot();
-                    }
-                    subGrid.Close();
-                }
-            }
+
+            if (playerInAnomaly.Contains(spawn.ZoneId))
+                playerInAnomaly.Remove(spawn.ZoneId);
 
             currentSpawns.Spawns.Remove(spawn);
             if (save)

@@ -13,7 +13,7 @@ using static ZoneControl.Utils;
 
 namespace ZoneControl
 {
-    public partial class SpawnerConfig
+    public class SpawnerConfig
     {
         internal const string configFilename = "Config-ZoneSpawner.xml";
 

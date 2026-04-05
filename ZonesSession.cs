@@ -418,7 +418,7 @@ namespace ZoneControl
                 }
 
                 //Look for subZones
-                CallSpawnPirate(CheckPlayerPosition(SubZoneTable));
+                NotifySpawner(CheckPlayerPosition(SubZoneTable));
 
                 //isIntruder not set, check if intruding
                 if (CheckIfIntruding(CheckPlayerPosition(zoneTable)))
@@ -450,11 +450,11 @@ namespace ZoneControl
             SpawnerSession.Instance?.Update(currentFrame);
         }
 
-        private void CallSpawnPirate(ZoneInfoInternal subZone)
+        private void NotifySpawner(ZoneInfoInternal subZone)
         {
             if (subZone?.Type == ZoneInfoInternal.ZoneType.Anomaly)
             {
-                SpawnerSession.Instance.SpawnPirate(subZone.Id);
+                SpawnerSession.Instance.PlayerInAnomaly(subZone.Id);
             }
         }
 

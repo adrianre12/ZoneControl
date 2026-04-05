@@ -15,24 +15,24 @@ namespace ZoneControl.Spawner
     internal partial class SpawnerSession : MySessionComponentBase
     {
         const string VariableId = nameof(SpawnerSession);
-        const long DateTimeTicksPerHour = 36000000000L;
-        const long DateTimeTicksPerMin = 600000000L;
+        const long DateTimeTicksUpdateAnomalyExpiaryPeriodMin = 40 * TimeSpan.TicksPerMinute;
+        const long DateTimeTicksUpdateAnomalyExpiaryPeriodMax = 60 * TimeSpan.TicksPerMinute;
+
 
         public static SpawnerSession Instance;
 
         private SpawnerConfig config;
 
         private int updatePeriodMins;
-        private int urgentMsgPeriodMins;
-        private int warnMsgPeriodMins;
+
         private long dateTimeTicksUrgentMsgPeriod;
         private long dateTimeTicksWarnMsgPeriod;
         private int defaultRefreshPeriodTicks;
 
         private int updateRndMultiplier = 0;
         private Dictionary<string, PrefabInfoInternal> prefabs = new Dictionary<string, PrefabInfoInternal>();  //all prefabs with weighting
-        private long factionOwnerId;
-        private long pirateOwnerId;
+        private long factionFounderId;
+        private long pirateFounderId;
         private Queue<CmdMsg> cmdQueue = new Queue<CmdMsg>();
 
 
@@ -269,10 +269,8 @@ namespace ZoneControl.Spawner
                 updatePeriodMins = 5;
             Log.Msg($"Spawner UpdatePeriodMins={updatePeriodMins}");
 
-            urgentMsgPeriodMins = 2 * updatePeriodMins;
-            warnMsgPeriodMins = 30;
-            dateTimeTicksUrgentMsgPeriod = urgentMsgPeriodMins * DateTimeTicksPerMin;
-            dateTimeTicksWarnMsgPeriod = warnMsgPeriodMins * DateTimeTicksPerMin;
+            dateTimeTicksUrgentMsgPeriod = 2 * updatePeriodMins * TimeSpan.TicksPerMinute;
+            dateTimeTicksWarnMsgPeriod = 30 * TimeSpan.TicksPerMinute;
             defaultRefreshPeriodTicks = 60 * 60 * updatePeriodMins;
 
             updateRndMultiplier = 60 / (updatePeriodMins * Math.Max(Math.Min(config.SpawnRateMultiplier, 60 / updatePeriodMins), 0));
@@ -293,8 +291,13 @@ namespace ZoneControl.Spawner
 
         private void BeforeStartHost()
         {
-            factionOwnerId = FindFactionId(config.FactionTag);
-            pirateOwnerId = FindFactionId(config.PirateTag);
+            IMyFaction faction = FindFaction(config.FactionTag);
+            factionFounderId = FindFactionFounderId(faction);
+            IMyFaction pirate = FindFaction(config.PirateTag);
+            pirateFounderId = FindFactionFounderId(pirate);
+
+            MyAPIGateway.Session.Factions.SetReputation(faction.FactionId, pirate.FactionId, 1000);
+            if (Log.Debug) Log.Msg($"Relation = {MyAPIGateway.Session.Factions.GetRelationBetweenFactions(faction.FactionId, pirate.FactionId)} Reputation = {MyAPIGateway.Session.Factions.GetReputationBetweenFactions(faction.FactionId, pirate.FactionId)}");
 
             double totalWeighting = 0;
             foreach (var sector in config.Sectors)
