@@ -157,13 +157,13 @@ namespace ZoneControl.Spawner
                         sb.AppendLine($"Enabled: {config.Enabled}");
                         sb.AppendLine($"Spawns: {currentSpawns.Spawns.Count} of {config.MaxSpawns}");
                         sb.AppendLine($"Date Now: {DateTime.Now.ToString("dd/MMM HH:mm")}");
-
+                        sb.AppendLine("AnomalyId PrefabName Pirates RemoveAt");
                         int i = 0;
                         foreach (var spawn in currentSpawns.Spawns)
                         {
                             if (sb.Length == 0)
                                 sb.AppendLine();
-                            sb.AppendLine($"#{spawn.AnomalyId} '{spawn.PrefabName}'  {new DateTime(spawn.RemoveAt).ToString("dd/MMM HH:mm")}");
+                            sb.AppendLine($"#{spawn.AnomalyId} '{spawn.PrefabName}' {spawn.PiratesEnabled} {new DateTime(spawn.RemoveAt).ToString("dd/MMM HH:mm")}");
                             ++i;
                             if (i == 10)
                             {
