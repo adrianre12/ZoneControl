@@ -14,6 +14,7 @@ namespace ZoneControl.Wormhole
     public static class TerminalControls
     {
         const string IdPrefix = "ZoneControl_Wormhole_";
+        const float DefaultJumpRadius = 2000;
         static bool Done = false;
 
         public static void DoOnce(IMyModContext context)
@@ -193,7 +194,7 @@ namespace ZoneControl.Wormhole
                     charger.JumpButtonPressed = true;
                     //Log.Msg($"ActionJump to '{target.Name}' position={target.Position}");
                     MyVisualScriptLogicProvider.ShowNotification($"Jumping to {target.Name}", 1500, "Green");
-                    wd.JumpTarget.Value = target.Position; // trigger jump on server
+                    wd.JumpTarget.Value = FindFreePlace(target.Position); // trigger jump on server
 
                 };
 
@@ -264,6 +265,31 @@ namespace ZoneControl.Wormhole
 
                 MyAPIGateway.TerminalControls.AddAction<IMyJumpDrive>(a);
             }
+        }
+
+        static Vector3D FindFreePlace(Vector3D target)
+        {
+            //find free position
+            int i = 4;
+            Vector3D? newPosition = target;
+            while (i-- > 0)
+            {
+                newPosition = MyAPIGateway.Entities.FindFreePlace(newPosition.Value, 100, 20, 5, 1);
+
+                if (newPosition != null && MyAPIGateway.GravityProviderSystem.IsPositionInNaturalGravity(newPosition.Value, 2000))  //more than 2Km outside grav
+                    continue;
+
+                if (newPosition != null)
+                {
+                    Log.Msg($"Try {i} return {newPosition.Value}");
+                    return newPosition.Value;
+                }
+                newPosition = target + DefaultJumpRadius * MyUtils.GetRandomVector3Normalized();
+            }
+            MyVisualScriptLogicProvider.ShowNotification("Could not find free position, trying jump anyway.", 5000, "Red");
+
+            Log.Msg($"Could not find free position");
+            return target;
         }
 
 
