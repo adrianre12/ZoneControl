@@ -1,5 +1,4 @@
 ﻿using Sandbox.ModAPI;
-using System;
 using System.Collections.Generic;
 using VRageMath;
 
@@ -24,18 +23,42 @@ namespace ZoneControl.Spawner
 
         public void UpdateSelected(CurrentSpawnsData currentSpawns)
         {
+            /*            Selected.Clear();
+                        int numRows = Math.Min(3, currentSpawns.Spawns.Count);
+                        for (int i = 0; i < numRows; i++)
+                        {
+                            if (summaryPtr >= currentSpawns.Spawns.Count)
+                                summaryPtr = 0;
+                            SummaryItem summaryItem = new SummaryItem(currentSpawns.Spawns[summaryPtr]);
+                            Selected.Add(summaryItem);
+                            //if (Log.Debug) Log.Msg($"Selected {summaryPtr} {summaryItem.Name}");
+                            summaryPtr++;
+                        }
+                        UpdatedAtFrame = MyAPIGateway.Session.GameplayFrameCounter;*/
+
             Selected.Clear();
-            int numRows = Math.Min(3, currentSpawns.Spawns.Count);
-            for (int i = 0; i < numRows; i++)
+            UpdatedAtFrame = MyAPIGateway.Session.GameplayFrameCounter;
+            if (currentSpawns.Spawns.Count == 0)
+            {
+                summaryPtr = 0;
+                return;
+            }
+            int startPtr = summaryPtr;
+            while (Selected.Count < 3)
             {
                 if (summaryPtr >= currentSpawns.Spawns.Count)
                     summaryPtr = 0;
-                SummaryItem summaryItem = new SummaryItem(currentSpawns.Spawns[summaryPtr]);
-                Selected.Add(summaryItem);
+                var spawn = currentSpawns.Spawns[summaryPtr];
+                if (spawn.Type == SpawnType.Wreck)
+                {
+                    SummaryItem summaryItem = new SummaryItem(spawn);
+                    Selected.Add(summaryItem);
+                }
                 //if (Log.Debug) Log.Msg($"Selected {summaryPtr} {summaryItem.Name}");
                 summaryPtr++;
+                if (summaryPtr == startPtr)
+                    break;
             }
-            UpdatedAtFrame = MyAPIGateway.Session.GameplayFrameCounter;
         }
     }
 

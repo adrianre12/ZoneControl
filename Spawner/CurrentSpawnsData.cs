@@ -77,6 +77,16 @@ namespace ZoneControl.Spawner
             return null;
         }
 
+        public int Count(SpawnType type)
+        {
+            int count = 0;
+            for (int i = 0; i < Spawns.Count; i++)
+            {
+                if (type == Spawns[i].Type) count++;
+            }
+            return count;
+        }
+
     }
 
 }

@@ -76,7 +76,7 @@ namespace ZoneControl.Spawner
                 }
 
                 //All done
-                if (config.Enabled && currentSpawns.Spawns.Count < config.MaxSpawns)
+                if (config.Enabled && currentSpawns.Count(SpawnType.Wreck) < config.MaxSpawns)
                 {
                     AddWreckSpawn();
                 }

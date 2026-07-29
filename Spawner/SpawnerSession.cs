@@ -128,7 +128,7 @@ namespace ZoneControl.Spawner
                             break;
                         }
 
-                        if (currentSpawns.Spawns.Count >= config.MaxSpawns)
+                        if (currentSpawns.Count(SpawnType.Wreck) >= config.MaxSpawns)
                         {
                             Log.Msg("Already at MaxSpawns", playerId);
                             break;
@@ -155,7 +155,7 @@ namespace ZoneControl.Spawner
                         var sb = new StringBuilder();
                         sb.AppendLine("Status:");
                         sb.AppendLine($"Enabled: {config.Enabled}");
-                        sb.AppendLine($"Spawns: {currentSpawns.Spawns.Count} of {config.MaxSpawns}");
+                        sb.AppendLine($"Spawns: {currentSpawns.Count(SpawnType.Wreck)} of {config.MaxSpawns}");
                         sb.AppendLine($"Date Now: {DateTime.Now.ToString("dd/MMM HH:mm")}");
                         sb.AppendLine("AnomalyId PrefabName Pirates RemoveAt");
                         int i = 0;
