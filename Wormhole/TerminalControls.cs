@@ -271,7 +271,7 @@ namespace ZoneControl.Wormhole
         {
             //find free position
             int i = 4;
-            Vector3D? newPosition = target;
+            Vector3D? newPosition = target + DefaultJumpRadius * MyUtils.GetRandomVector3Normalized();
             while (i-- > 0)
             {
                 newPosition = MyAPIGateway.Entities.FindFreePlace(newPosition.Value, 100, 20, 5, 1);
